@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>分布式软总线 - OS IS TOO HARD</title><meta name="Description" content="Some notes"><meta property="og:title" content="分布式软总线" />
+<meta property="og:description" content="分布式软总线 1	介绍 1.1	什么是总线？ 总线(Bus)是嵌入式系统和计算机系统的重要基础技术，通过它，多个不同的设备可以互相连接和通讯。总之，总线可以把一些不同的设备，通过约定的协议连接在一起。总线协议会给每个设备分配相应的地址，并且协调调度各设备对总线资源的访问。在总线协议基础上，应用开发不需要关心设备之间的连接，只需要按照协议所分配的地址进行应用数据的发送和接收。
+1.2	什么是分布式软总线？ 华为所提出的1&#43;8&#43;N概念：1指的是手机，8指的是车机、音箱、耳机、手表/手环、平板、大屏、PC、AR/VR，N指的是其他IOT设备。软总线就是在这个大的框架下所提出的，就是为了解决所有1&#43;8&#43;N设备之间的互联问题。
+软总线计数最大的特点是不同协议的异构网络进行组网。==传统场景下==，需要蓝牙传输的两台设备必须具有蓝牙，需要wifi传输的设备必须都具有wifi，而 蓝牙和wifi之间是无法进行数据通信的。软总线提出蓝牙/wifi融合网络组网技术，解决了==不同协议设备进行·通信的问题==，使得多个鸿蒙设备能够自动构建一个逻辑全连接的网络，用户或者业务开发者无需关心组网方式和物理协议，只需聚焦业务逻辑的实现，无需关注组网方式与底层协议。软总线模块实现的能力有：服务发布、数据传输、安全通信。
+分布式软总线是基于开源COAP(Constrained Application Protocal)协议，C语言实现的，属于一种底层基于UDP的应用层协议。鸿蒙使用COAP协议因为考虑到harmonyOS的设备除了硬件性能较好的手机电脑设备外，还有资源受限的物联网设备，这些设备的ram、rom相对较小。coap协议支持轻量的可靠传输，采用coap协议，可以扩大组网的范围。
+软总线屏蔽了各种设备底层协议的差异，如不同设备支持wifi、蓝牙、BT、NFC等协议无法互通，但是通过软总线可以使得支持不同设备协议的互通，使得应用层不用在关心设备的底层协议。注：真机实测需要不用设备登录同一个华为账号，设置-超级终端-允许附近设备发现我，同时在同一局域网或蓝牙。远程模拟不需要登录同一个华为账号，默认在同一个局域网下。
+框架图可以看到，分布式软总线最主要的几大功能是：发现、连接、组网/拓扑管理、任务总线、数据总线；
+发现：指的是搜索周围是否有相关设备 连接：指的是与所发现的设备建立连接 组网/拓扑管理：指的是对所有发现的设备进行网络拓扑管理，比如组成星状网络拓扑，或者是组成Mesh网络拓扑 任务总线：指的是在所建立的网络拓扑基础上，用于传输小数据量信息的通路 数据总线：指的是用于传输较大数据量信息的通路 根据示意图可以得出以下几个结论：
+协议栈和软硬协同层屏蔽各种硬件设备协议的差异
+总线中枢负责解析命令，完成设备间的发现与连接，基于COAP协议的设备发现功能
+安全模块负责通信的加密；设备认证模块通过交换主控设备与配件设备的身份标识来建立点对点信任关系，设备认证模块的关键技术点HiChain机制数据接收管理、PAKE协议、STS协议流程
+提供统一的基于Session的认证，传输功能，上层业务系统可以通过Sessionid收发数据或获取相关基本属性，实现业务消息、流、控制指令等交互操作
+软总线功能代码路径Openharmony3.1.4/foundation/communication/dsoftbus/core。
+discovery模块：提供基于COAP协议的设备发现机制 connection模块：提供基于COAP协议的设备链接机制 authentication模块：提供设备认证机制和知识库管理功能 transmission模块：基于系统内核提供的socket通信，向authmanager模块提供设备认证通道管理和设备认证数据传输；向业务模块提供session管理和基于session的数据收发功能，并且通过GCM模块的加密功能提供收发报文的加解密保护； adapter模块：操作系统适配层，根据不同的硬件进行适配。在应用层为何不能去做分布式软总线，难点便在于此，无法知道各个设备的硬件，而鸿蒙是很容易知道硬件的。 bus_center：组网代码 common：通用代码 frame：框架代码 需要注意的是，软总线启动后，设备在发现阶段基于coap协议使用udp数据报进行通讯。当设备认证通过后，确认连接后，将会使用TCP协议进行更加安全可靠的通讯
+基于分布式软总线设备交互过程示意图
+具体过程：发现端（如手机端）在广播发送discover请求后，使用coap协议在局域网内发送广播 ；被发现端设备使用PublishService接口发布服务，接收端收到广播后，发送coap协议单播给发现端；发现端设备收到报文后会更新设备信息进而建立连接
+1.3	为什么需要分布式软总线？ 以往手机外围设备比较少的时候，用户通过手动操作的方式进行设备之间的连接。比如，手机连接蓝牙耳机。随着外围设备越来越多，手动操作的方式不方便，甚至会影响用户的体验。而且，有的外围设备之间还不支持直接连接。HarmonyOS的分布式总线技术是为了能够让所有的设备之间能够方便、高效的互联。
+2 分布式软总线特性 鸿蒙分布式软总线的设计目标在于推进==极简通信协议==技术，在设备安全场景下，即连即用。关键技术特性覆盖设备的自动发现&amp;连接、组网(多跳自组网、多协议混合组网）、传输(多元化协议与算法、智能感知与决策）。
+2.1	分布式软总线关键技术”发现与组网“ 分布式软总线技术可以自动发现周围的其它设备，并且将他们连接形成网络，分布式软总线提出了异构网络组网，自动构建一个逻辑全连接网络，以解决设备间不同协议交互的问题。下图显示的是自动发现设备之后形成的Mesh网络的示意图。
+2.2	分布式软总线关键技术“软时钟” 把众多外围设备连接形成网络后，有一个问题需要解决。就是各个设备存在硬件、软件性能各方面的差异，导致时间上的不同步。比如，iot设备由于成本方面的原因，晶振的质量比较差，会存在相对较大的频飘。不同设备之间多方面的差异，如果没有时钟同步，他们之间的通信将无法展开。下面是分布式软总线关键技术之一的软时钟介绍，它通过时钟同步算法，将不同设备原本不同步的时钟做到统一的同步时钟。 2.3	分布式软总线关键技术“调度” 所有被组成MESH网络的设备在软时钟算法的同步下，就可以进行资源的调度。软总线技术中提出了LaneHub的概念，可以理解为调度管理各通信通路的模块。比如，不同的设备有不同的连接方式，手机有BLE、wifi、NFC三种连接方式，PAD有wifi、UWB两种连接方式，PC有USB、wifi两种连接方式。通过软总线的LaneHub可以对这三个连接的设备进行统一的资源调度。比如，手机与PAD通过BLE连接、手机与PC通过wifi连接，软总线协议调度他们的通信时间、频谱，达到减少干扰、提升速率的目的。
+2.4	分布式软总线关键技术“传输” 2.4.1	多径传输技术 近年来，高清音视频、动画等多媒体资源日益增长，实现通用高效率文件传输成为一项极其重要的需求。然而传统的文件传输，往往依赖一条链路直接进行传输。文件的传输效率完全依赖链路本身的传输能力，鲁棒性和传输效率均不足。
+为了适应新互联时代的需求，实现高效率文件传输，分布式软总线多径传输技术应运而生。多径传输技术基本思路是最大化利用不同路径的传输能力，原本一条链路上的文件传输，通过文件分割，将分割后的文件不同部分从多条路径进行传输，最终在目标侧聚合成原有文件。通过智能均衡不同链路的传输负载，实现了对文件的分割和传输，能力强的链路多分些文件占比，能力弱的少分些文件占比，甚至可以不分。这样就实现了文件的高效快速传输，给用户带来不一样的快速传输体验。
+2.4.2	智能时延控制技术 在网络传输过程中，很大一块开销是序列化和协议编码占据的。进一步优化这部分开销，对传输时延和空间资源有着重要意义。智能时延控制技术正是通过==智能序列化技术==和==极简传输协议==两项重要子技术，实现了序列化和协议编码的极大压缩。
+智能序列化技术 在RPC（remote procedure call，远程过程调用）通信流程中，百KB级别的RPC消息序列化需要计算侧耗时4~5ms，网络侧耗时约10~15ms，系统加速比低，严重影响了系统的运行性能。
+智能序列化技术通过对计算侧、网络侧和能耗侧进行综合建模，通过最优化方法和智能决策策略实现了智能的序列化方案，使计算侧和网络侧总时延降至8ms，缩减60%&#43;。
+极简传输协议 随着文件及流媒体文件对传输效率和速度提出更高的要求，用户对全场景传输效率的需求进一步提升，正是为了适应这样的新要求，极简传输协议应运而生。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-03-18T14:37:58+08:00" />
+<meta property="article:modified_time" content="2023-03-18T14:37:58+08:00" /><meta property="og:site_name" content="jiejiesks site" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="分布式软总线"/>
+<meta name="twitter:description" content="分布式软总线 1	介绍 1.1	什么是总线？ 总线(Bus)是嵌入式系统和计算机系统的重要基础技术，通过它，多个不同的设备可以互相连接和通讯。总之，总线可以把一些不同的设备，通过约定的协议连接在一起。总线协议会给每个设备分配相应的地址，并且协调调度各设备对总线资源的访问。在总线协议基础上，应用开发不需要关心设备之间的连接，只需要按照协议所分配的地址进行应用数据的发送和接收。
+1.2	什么是分布式软总线？ 华为所提出的1&#43;8&#43;N概念：1指的是手机，8指的是车机、音箱、耳机、手表/手环、平板、大屏、PC、AR/VR，N指的是其他IOT设备。软总线就是在这个大的框架下所提出的，就是为了解决所有1&#43;8&#43;N设备之间的互联问题。
+软总线计数最大的特点是不同协议的异构网络进行组网。==传统场景下==，需要蓝牙传输的两台设备必须具有蓝牙，需要wifi传输的设备必须都具有wifi，而 蓝牙和wifi之间是无法进行数据通信的。软总线提出蓝牙/wifi融合网络组网技术，解决了==不同协议设备进行·通信的问题==，使得多个鸿蒙设备能够自动构建一个逻辑全连接的网络，用户或者业务开发者无需关心组网方式和物理协议，只需聚焦业务逻辑的实现，无需关注组网方式与底层协议。软总线模块实现的能力有：服务发布、数据传输、安全通信。
+分布式软总线是基于开源COAP(Constrained Application Protocal)协议，C语言实现的，属于一种底层基于UDP的应用层协议。鸿蒙使用COAP协议因为考虑到harmonyOS的设备除了硬件性能较好的手机电脑设备外，还有资源受限的物联网设备，这些设备的ram、rom相对较小。coap协议支持轻量的可靠传输，采用coap协议，可以扩大组网的范围。
+软总线屏蔽了各种设备底层协议的差异，如不同设备支持wifi、蓝牙、BT、NFC等协议无法互通，但是通过软总线可以使得支持不同设备协议的互通，使得应用层不用在关心设备的底层协议。注：真机实测需要不用设备登录同一个华为账号，设置-超级终端-允许附近设备发现我，同时在同一局域网或蓝牙。远程模拟不需要登录同一个华为账号，默认在同一个局域网下。
+框架图可以看到，分布式软总线最主要的几大功能是：发现、连接、组网/拓扑管理、任务总线、数据总线；
+发现：指的是搜索周围是否有相关设备 连接：指的是与所发现的设备建立连接 组网/拓扑管理：指的是对所有发现的设备进行网络拓扑管理，比如组成星状网络拓扑，或者是组成Mesh网络拓扑 任务总线：指的是在所建立的网络拓扑基础上，用于传输小数据量信息的通路 数据总线：指的是用于传输较大数据量信息的通路 根据示意图可以得出以下几个结论：
+协议栈和软硬协同层屏蔽各种硬件设备协议的差异
+总线中枢负责解析命令，完成设备间的发现与连接，基于COAP协议的设备发现功能
+安全模块负责通信的加密；设备认证模块通过交换主控设备与配件设备的身份标识来建立点对点信任关系，设备认证模块的关键技术点HiChain机制数据接收管理、PAKE协议、STS协议流程
+提供统一的基于Session的认证，传输功能，上层业务系统可以通过Sessionid收发数据或获取相关基本属性，实现业务消息、流、控制指令等交互操作
+软总线功能代码路径Openharmony3.1.4/foundation/communication/dsoftbus/core。
+discovery模块：提供基于COAP协议的设备发现机制 connection模块：提供基于COAP协议的设备链接机制 authentication模块：提供设备认证机制和知识库管理功能 transmission模块：基于系统内核提供的socket通信，向authmanager模块提供设备认证通道管理和设备认证数据传输；向业务模块提供session管理和基于session的数据收发功能，并且通过GCM模块的加密功能提供收发报文的加解密保护； adapter模块：操作系统适配层，根据不同的硬件进行适配。在应用层为何不能去做分布式软总线，难点便在于此，无法知道各个设备的硬件，而鸿蒙是很容易知道硬件的。 bus_center：组网代码 common：通用代码 frame：框架代码 需要注意的是，软总线启动后，设备在发现阶段基于coap协议使用udp数据报进行通讯。当设备认证通过后，确认连接后，将会使用TCP协议进行更加安全可靠的通讯
+基于分布式软总线设备交互过程示意图
+具体过程：发现端（如手机端）在广播发送discover请求后，使用coap协议在局域网内发送广播 ；被发现端设备使用PublishService接口发布服务，接收端收到广播后，发送coap协议单播给发现端；发现端设备收到报文后会更新设备信息进而建立连接
+1.3	为什么需要分布式软总线？ 以往手机外围设备比较少的时候，用户通过手动操作的方式进行设备之间的连接。比如，手机连接蓝牙耳机。随着外围设备越来越多，手动操作的方式不方便，甚至会影响用户的体验。而且，有的外围设备之间还不支持直接连接。HarmonyOS的分布式总线技术是为了能够让所有的设备之间能够方便、高效的互联。
+2 分布式软总线特性 鸿蒙分布式软总线的设计目标在于推进==极简通信协议==技术，在设备安全场景下，即连即用。关键技术特性覆盖设备的自动发现&amp;连接、组网(多跳自组网、多协议混合组网）、传输(多元化协议与算法、智能感知与决策）。
+2.1	分布式软总线关键技术”发现与组网“ 分布式软总线技术可以自动发现周围的其它设备，并且将他们连接形成网络，分布式软总线提出了异构网络组网，自动构建一个逻辑全连接网络，以解决设备间不同协议交互的问题。下图显示的是自动发现设备之后形成的Mesh网络的示意图。
+2.2	分布式软总线关键技术“软时钟” 把众多外围设备连接形成网络后，有一个问题需要解决。就是各个设备存在硬件、软件性能各方面的差异，导致时间上的不同步。比如，iot设备由于成本方面的原因，晶振的质量比较差，会存在相对较大的频飘。不同设备之间多方面的差异，如果没有时钟同步，他们之间的通信将无法展开。下面是分布式软总线关键技术之一的软时钟介绍，它通过时钟同步算法，将不同设备原本不同步的时钟做到统一的同步时钟。 2.3	分布式软总线关键技术“调度” 所有被组成MESH网络的设备在软时钟算法的同步下，就可以进行资源的调度。软总线技术中提出了LaneHub的概念，可以理解为调度管理各通信通路的模块。比如，不同的设备有不同的连接方式，手机有BLE、wifi、NFC三种连接方式，PAD有wifi、UWB两种连接方式，PC有USB、wifi两种连接方式。通过软总线的LaneHub可以对这三个连接的设备进行统一的资源调度。比如，手机与PAD通过BLE连接、手机与PC通过wifi连接，软总线协议调度他们的通信时间、频谱，达到减少干扰、提升速率的目的。
+2.4	分布式软总线关键技术“传输” 2.4.1	多径传输技术 近年来，高清音视频、动画等多媒体资源日益增长，实现通用高效率文件传输成为一项极其重要的需求。然而传统的文件传输，往往依赖一条链路直接进行传输。文件的传输效率完全依赖链路本身的传输能力，鲁棒性和传输效率均不足。
+为了适应新互联时代的需求，实现高效率文件传输，分布式软总线多径传输技术应运而生。多径传输技术基本思路是最大化利用不同路径的传输能力，原本一条链路上的文件传输，通过文件分割，将分割后的文件不同部分从多条路径进行传输，最终在目标侧聚合成原有文件。通过智能均衡不同链路的传输负载，实现了对文件的分割和传输，能力强的链路多分些文件占比，能力弱的少分些文件占比，甚至可以不分。这样就实现了文件的高效快速传输，给用户带来不一样的快速传输体验。
+2.4.2	智能时延控制技术 在网络传输过程中，很大一块开销是序列化和协议编码占据的。进一步优化这部分开销，对传输时延和空间资源有着重要意义。智能时延控制技术正是通过==智能序列化技术==和==极简传输协议==两项重要子技术，实现了序列化和协议编码的极大压缩。
+智能序列化技术 在RPC（remote procedure call，远程过程调用）通信流程中，百KB级别的RPC消息序列化需要计算侧耗时4~5ms，网络侧耗时约10~15ms，系统加速比低，严重影响了系统的运行性能。
+智能序列化技术通过对计算侧、网络侧和能耗侧进行综合建模，通过最优化方法和智能决策策略实现了智能的序列化方案，使计算侧和网络侧总时延降至8ms，缩减60%&#43;。
+极简传输协议 随着文件及流媒体文件对传输效率和速度提出更高的要求，用户对全场景传输效率的需求进一步提升，正是为了适应这样的新要求，极简传输协议应运而生。"/>
+<meta name="application-name" content="jiejiesks site">
+<meta name="apple-mobile-web-app-title" content="jiejiesks site"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/" /><link rel="prev" href="http://example.org/posts/6.s081_lab1/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css"></noscript><link rel="preload" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "分布式软总线",
+        "inLanguage": "en",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/example.org\/posts\/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF\/"
+        },"genre": "posts","wordcount":  891 ,
+        "url": "http:\/\/example.org\/posts\/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF\/","datePublished": "2023-03-18T14:37:58+08:00","dateModified": "2023-03-18T14:37:58+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "zxj"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="OS IS TOO HARD">Xingjie Zhou&#39;s Blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> Posts </a><a class="menu-item" href="/tags/"> Tags </a><a class="menu-item" href="/categories/"> Categories </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="OS IS TOO HARD">Xingjie Zhou&#39;s Blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">Posts</a><a class="menu-item" href="/tags/" title="">Tags</a><a class="menu-item" href="/categories/" title="">Categories</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">分布式软总线</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-03-18">2023-03-18</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;891 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;5 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#1介绍">1	介绍</a>
+      <ul>
+        <li><a href="#11什么是总线">1.1	什么是总线？</a></li>
+        <li><a href="#12什么是分布式软总线">1.2	什么是分布式软总线？</a></li>
+        <li><a href="#13为什么需要分布式软总线">1.3	为什么需要分布式软总线？</a></li>
+      </ul>
+    </li>
+    <li><a href="#2-分布式软总线特性">2 	分布式软总线特性</a>
+      <ul>
+        <li><a href="#21分布式软总线关键技术发现与组网">2.1	分布式软总线关键技术”发现与组网“</a></li>
+        <li><a href="#22分布式软总线关键技术软时钟">2.2	分布式软总线关键技术“软时钟”</a></li>
+        <li><a href="#23分布式软总线关键技术调度">2.3	分布式软总线关键技术“调度”</a></li>
+        <li><a href="#24分布式软总线关键技术传输">2.4	分布式软总线关键技术“传输”</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-软总线协议coap">3	 软总线协议COAP</a>
+      <ul>
+        <li><a href="#31coap协议特征">3.1	COAP协议特征</a></li>
+        <li><a href="#32coap协议传输">3.2	COAP协议传输</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-软总线相关流程代码分析openharmony314-release">4 	软总线相关流程代码分析（Openharmony3.1.4 Release）</a>
+      <ul>
+        <li><a href="#41发现">4.1	发现</a></li>
+        <li><a href="#42组网">4.2	组网</a></li>
+        <li><a href="#43传输">4.3	传输</a></li>
+        <li><a href="#44认证">4.4	认证</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="分布式软总线">分布式软总线</h1>
+<h2 id="1介绍">1	介绍</h2>
+<h3 id="11什么是总线">1.1	什么是总线？</h3>
+<p>总线(Bus)是嵌入式系统和计算机系统的重要基础技术，通过它，多个不同的设备可以互相连接和通讯。总之，总线可以把一些不同的设备，通过约定的协议连接在一起。总线协议会给每个设备分配相应的地址，并且协调调度各设备对总线资源的访问。在总线协议基础上，应用开发不需要关心设备之间的连接，只需要按照协议所分配的地址进行应用数据的发送和接收。</p>
+<h3 id="12什么是分布式软总线">1.2	什么是分布式软总线？</h3>
+<ul>
+<li>
+<p>华为所提出的1+8+N概念：1指的是手机，8指的是车机、音箱、耳机、手表/手环、平板、大屏、PC、AR/VR，N指的是其他IOT设备。软总线就是在这个大的框架下所提出的，就是为了解决所有1+8+N设备之间的互联问题。</p>
+</li>
+<li>
+<p>软总线计数最大的特点是不同协议的异构网络进行组网。==传统场景下==，需要蓝牙传输的两台设备必须具有蓝牙，需要wifi传输的设备必须都具有wifi，而 蓝牙和wifi之间是无法进行数据通信的。软总线提出蓝牙/wifi融合网络组网技术，解决了==不同协议设备进行·通信的问题==，使得多个鸿蒙设备能够自动构建一个逻辑全连接的网络，用户或者业务开发者无需关心组网方式和物理协议，只需聚焦业务逻辑的实现，无需关注组网方式与底层协议。软总线模块实现的能力有：服务发布、数据传输、安全通信。</p>
+</li>
+<li>
+<p>分布式软总线是基于开源COAP(Constrained Application Protocal)协议，C语言实现的，属于一种底层基于UDP的应用层协议。鸿蒙使用COAP协议因为考虑到harmonyOS的设备除了硬件性能较好的手机电脑设备外，还有资源受限的物联网设备，这些设备的ram、rom相对较小。coap协议支持轻量的可靠传输，采用coap协议，可以扩大组网的范围。</p>
+</li>
+<li>
+<p>软总线屏蔽了各种设备底层协议的差异，如不同设备支持wifi、蓝牙、BT、NFC等协议无法互通，但是通过软总线可以使得支持不同设备协议的互通，使得应用层不用在关心设备的底层协议。注：真机实测需要不用设备登录同一个华为账号，设置-超级终端-允许附近设备发现我，同时在同一局域网或蓝牙。远程模拟不需要登录同一个华为账号，默认在同一个局域网下。</p>
+</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0000000000011111111.20221216164517.332009953465979845045625749138795053121509463028005C968573621056C34D82E501E661B6AA7B8BD34BBE340EAEDB4BBE611DD83ECE.png"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0000000000011111111.20221216164517.332009953465979845045625749138795053121509463028005C968573621056C34D82E501E661B6AA7B8BD34BBE340EAEDB4BBE611DD83ECE.png, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0000000000011111111.20221216164517.332009953465979845045625749138795053121509463028005C968573621056C34D82E501E661B6AA7B8BD34BBE340EAEDB4BBE611DD83ECE.png 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0000000000011111111.20221216164517.332009953465979845045625749138795053121509463028005C968573621056C34D82E501E661B6AA7B8BD34BBE340EAEDB4BBE611DD83ECE.png 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/0000000000011111111.20221216164517.332009953465979845045625749138795053121509463028005C968573621056C34D82E501E661B6AA7B8BD34BBE340EAEDB4BBE611DD83ECE.png"
+        title="0000000000011111111.20221216164517.33200995346597984504562574913879:50531215094630:2800:5C968573621056C34D82E501E661B6AA7B8BD34BBE340EAEDB4BBE611DD83ECE.png" /></p>
+<p>框架图可以看到，分布式软总线最主要的几大功能是：发现、连接、组网/拓扑管理、任务总线、数据总线；</p>
+<ul>
+<li>发现：指的是搜索周围是否有相关设备</li>
+<li>连接：指的是与所发现的设备建立连接</li>
+<li>组网/拓扑管理：指的是对所有发现的设备进行网络拓扑管理，比如组成星状网络拓扑，或者是组成Mesh网络拓扑</li>
+<li>任务总线：指的是在所建立的网络拓扑基础上，用于传输小数据量信息的通路</li>
+<li>数据总线：指的是用于传输较大数据量信息的通路</li>
+</ul>
+<p>根据示意图可以得出以下几个结论：</p>
+<ul>
+<li>
+<p>协议栈和软硬协同层屏蔽各种硬件设备协议的差异</p>
+</li>
+<li>
+<p>总线中枢负责解析命令，完成设备间的发现与连接，基于COAP协议的设备发现功能</p>
+</li>
+<li>
+<p>安全模块负责通信的加密；设备认证模块通过交换主控设备与配件设备的身份标识来建立点对点信任关系，设备认证模块的关键技术点<a href="https://blog.csdn.net/weixin_46669761/article/details/125073282" target="_blank" rel="noopener noreffer ">HiChain机制数据接收管理、PAKE协议、STS协议流程</a></p>
+</li>
+<li>
+<p>提供统一的基于Session的认证，传输功能，上层业务系统可以通过Sessionid收发数据或获取相关基本属性，实现业务消息、流、控制指令等交互操作</p>
+</li>
+<li>
+<p>软总线功能代码路径Openharmony3.1.4/foundation/communication/dsoftbus/core。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/image-20230212152924827.png"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/image-20230212152924827.png, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/image-20230212152924827.png 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/image-20230212152924827.png 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/image-20230212152924827.png"
+        title="image-20230212152924827" /></p>
+<ul>
+<li>discovery模块：提供基于COAP协议的设备发现机制</li>
+<li>connection模块：提供基于COAP协议的设备链接机制</li>
+<li>authentication模块：提供设备认证机制和知识库管理功能</li>
+<li>transmission模块：基于系统内核提供的socket通信，向authmanager模块提供设备认证通道管理和设备认证数据传输；向业务模块提供session管理和基于session的数据收发功能，并且通过GCM模块的加密功能提供收发报文的加解密保护；</li>
+<li>adapter模块：操作系统适配层，根据不同的硬件进行适配。在应用层为何不能去做分布式软总线，难点便在于此，无法知道各个设备的硬件，而鸿蒙是很容易知道硬件的。</li>
+<li>bus_center：组网代码</li>
+<li>common：通用代码</li>
+<li>frame：框架代码</li>
+</ul>
+</li>
+<li>
+<p>需要注意的是，软总线启动后，设备在发现阶段基于coap协议使用udp数据报进行通讯。当设备认证通过后，确认连接后，将会使用TCP协议进行更加安全可靠的通讯</p>
+</li>
+<li>
+<p>基于分布式软总线设备交互过程示意图</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/image-20230212160609244.png"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/image-20230212160609244.png, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/image-20230212160609244.png 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/image-20230212160609244.png 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/image-20230212160609244.png"
+        title="image-20230212160609244" /></p>
+</li>
+</ul>
+<p>具体过程：发现端（如手机端）在广播发送discover请求后，使用coap协议在局域网内发送广播 ；被发现端设备使用PublishService接口发布服务，接收端收到广播后，发送coap协议单播给发现端；发现端设备收到报文后会更新设备信息进而建立连接</p>
+<h3 id="13为什么需要分布式软总线">1.3	为什么需要分布式软总线？</h3>
+<p>以往手机外围设备比较少的时候，用户通过手动操作的方式进行设备之间的连接。比如，手机连接蓝牙耳机。随着外围设备越来越多，手动操作的方式不方便，甚至会影响用户的体验。而且，有的外围设备之间还不支持直接连接。HarmonyOS的分布式总线技术是为了能够让所有的设备之间能够方便、高效的互联。</p>
+<h2 id="2-分布式软总线特性">2 	分布式软总线特性</h2>
+<p>鸿蒙分布式软总线的设计目标在于推进==极简通信协议==技术，在设备安全场景下，即连即用。关键技术特性覆盖设备的自动发现&amp;连接、组网(多跳自组网、多协议混合组网）、传输(多元化协议与算法、智能感知与决策）。</p>
+<h3 id="21分布式软总线关键技术发现与组网">2.1	分布式软总线关键技术”发现与组网“</h3>
+<p>分布式软总线技术可以自动发现周围的其它设备，并且将他们连接形成网络，分布式软总线提出了异构网络组网，自动构建一个逻辑全连接网络，以解决设备间不同协议交互的问题。下图显示的是自动发现设备之后形成的Mesh网络的示意图。<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBATGlua0V2ZXJ5dGhpbmc=,size_20,color_FFFFFF,t_70,g_se,x_16-16761897387854.png"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16-16761897387854.png, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16-16761897387854.png 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16-16761897387854.png 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBATGlua0V2ZXJ5dGhpbmc=,size_20,color_FFFFFF,t_70,g_se,x_16-16761897387854.png"
+        title="img" /></p>
+<h3 id="22分布式软总线关键技术软时钟">2.2	分布式软总线关键技术“软时钟”</h3>
+<p>把众多外围设备连接形成网络后，有一个问题需要解决。就是各个设备存在硬件、软件性能各方面的差异，导致时间上的不同步。比如，iot设备由于成本方面的原因，晶振的质量比较差，会存在相对较大的频飘。不同设备之间多方面的差异，如果没有时钟同步，他们之间的通信将无法展开。下面是分布式软总线关键技术之一的软时钟介绍，它通过时钟同步算法，将不同设备原本不同步的时钟做到统一的同步时钟。
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBATGlua0V2ZXJ5dGhpbmc=,size_20,color_FFFFFF,t_70,g_se,x_16.png"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16.png, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16.png 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16.png 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBATGlua0V2ZXJ5dGhpbmc=,size_20,color_FFFFFF,t_70,g_se,x_16.png"
+        title="img" /></p>
+<h3 id="23分布式软总线关键技术调度">2.3	分布式软总线关键技术“调度”</h3>
+<p>所有被组成MESH网络的设备在软时钟算法的同步下，就可以进行资源的调度。软总线技术中提出了LaneHub的概念，可以理解为调度管理各通信通路的模块。比如，不同的设备有不同的连接方式，手机有BLE、wifi、NFC三种连接方式，PAD有wifi、UWB两种连接方式，PC有USB、wifi两种连接方式。通过软总线的LaneHub可以对这三个连接的设备进行统一的资源调度。比如，手机与PAD通过BLE连接、手机与PC通过wifi连接，软总线协议调度他们的通信时间、频谱，达到减少干扰、提升速率的目的。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBATGlua0V2ZXJ5dGhpbmc=,size_20,color_FFFFFF,t_70,g_se,x_16-16761897355812.png"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16-16761897355812.png, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16-16761897355812.png 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/watermark%2ctype_d3F5LXplbmhlaQ%2cshadow_50%2ctext_Q1NETiBATGlua0V2ZXJ5dGhpbmc=%2csize_20%2ccolor_FFFFFF%2ct_70%2cg_se%2cx_16-16761897355812.png 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBATGlua0V2ZXJ5dGhpbmc=,size_20,color_FFFFFF,t_70,g_se,x_16-16761897355812.png"
+        title="img" /></p>
+<h3 id="24分布式软总线关键技术传输">2.4	分布式软总线关键技术“传输”</h3>
+<h4 id="241多径传输技术">2.4.1	多径传输技术</h4>
+<p>近年来，高清音视频、动画等多媒体资源日益增长，实现通用高效率文件传输成为一项极其重要的需求。然而传统的文件传输，往往依赖一条链路直接进行传输。文件的传输效率完全依赖链路本身的传输能力，鲁棒性和传输效率均不足。</p>
+<p>为了适应新互联时代的需求，实现高效率文件传输，分布式软总线多径传输技术应运而生。多径传输技术基本思路是最大化利用不同路径的传输能力，原本一条链路上的文件传输，通过文件分割，将分割后的文件不同部分从多条路径进行传输，最终在目标侧聚合成原有文件。通过智能均衡不同链路的传输负载，实现了对文件的分割和传输，能力强的链路多分些文件占比，能力弱的少分些文件占比，甚至可以不分。这样就实现了文件的高效快速传输，给用户带来不一样的快速传输体验。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092514.73931271669229354100157744417253505402130921472800499CF43E6BD925942F60B60D7A0159E6D11250D0DED7BA1587C5B5EE9A8F25F1.jpg"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092514.73931271669229354100157744417253505402130921472800499CF43E6BD925942F60B60D7A0159E6D11250D0DED7BA1587C5B5EE9A8F25F1.jpg, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092514.73931271669229354100157744417253505402130921472800499CF43E6BD925942F60B60D7A0159E6D11250D0DED7BA1587C5B5EE9A8F25F1.jpg 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092514.73931271669229354100157744417253505402130921472800499CF43E6BD925942F60B60D7A0159E6D11250D0DED7BA1587C5B5EE9A8F25F1.jpg 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/0260086000103404958.20211123092514.73931271669229354100157744417253505402130921472800499CF43E6BD925942F60B60D7A0159E6D11250D0DED7BA1587C5B5EE9A8F25F1.jpg"
+        title="2.jpg" /></p>
+<h4 id="242智能时延控制技术">2.4.2	智能时延控制技术</h4>
+<p>在网络传输过程中，很大一块开销是序列化和协议编码占据的。进一步优化这部分开销，对传输时延和空间资源有着重要意义。智能时延控制技术正是通过==智能序列化技术==和==极简传输协议==两项重要子技术，实现了序列化和协议编码的极大压缩。</p>
+<ul>
+<li>智能序列化技术</li>
+</ul>
+<p>在RPC（remote procedure call，远程过程调用）通信流程中，百KB级别的RPC消息序列化需要计算侧耗时4~5ms，网络侧耗时约10~15ms，系统加速比低，严重影响了系统的运行性能。</p>
+<p>智能序列化技术通过对计算侧、网络侧和能耗侧进行综合建模，通过最优化方法和智能决策策略实现了智能的序列化方案，使计算侧和网络侧总时延降至8ms，缩减60%+。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092551.00840133705731546875748338046856505402130921472800A7BF3EE939214A6BD972CDF81703CC8ADA8F02A0F5055113CAE1B4683F15F55E.jpg"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092551.00840133705731546875748338046856505402130921472800A7BF3EE939214A6BD972CDF81703CC8ADA8F02A0F5055113CAE1B4683F15F55E.jpg, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092551.00840133705731546875748338046856505402130921472800A7BF3EE939214A6BD972CDF81703CC8ADA8F02A0F5055113CAE1B4683F15F55E.jpg 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092551.00840133705731546875748338046856505402130921472800A7BF3EE939214A6BD972CDF81703CC8ADA8F02A0F5055113CAE1B4683F15F55E.jpg 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/0260086000103404958.20211123092551.00840133705731546875748338046856505402130921472800A7BF3EE939214A6BD972CDF81703CC8ADA8F02A0F5055113CAE1B4683F15F55E.jpg"
+        title="3.jpg" /></p>
+<ul>
+<li>极简传输协议</li>
+</ul>
+<p>随着文件及流媒体文件对传输效率和速度提出更高的要求，用户对全场景传输效率的需求进一步提升，正是为了适应这样的新要求，极简传输协议应运而生。</p>
+<p>极简传输协议，将OSI模型中表示层、会话层、传输层和网络层协议栈精简为一层，通过报文简化、包头简化、交互简化，场景感知的缓冲机制等方式，提升有效的传输荷载、突破 TCP/IP 协议的传输限制，带来了传输效率与速度的跨越式提升，是分布式软总线的核心技术之一。相较传统协议，时延缩减70%+。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092625.431113898976483924510222778344075054021309214728007310B8A9F446E3C7BDBDA06A04FACD14B9DDB0BFAA74FFC2505E390B0F508E70.jpg"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092625.431113898976483924510222778344075054021309214728007310B8A9F446E3C7BDBDA06A04FACD14B9DDB0BFAA74FFC2505E390B0F508E70.jpg, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092625.431113898976483924510222778344075054021309214728007310B8A9F446E3C7BDBDA06A04FACD14B9DDB0BFAA74FFC2505E390B0F508E70.jpg 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092625.431113898976483924510222778344075054021309214728007310B8A9F446E3C7BDBDA06A04FACD14B9DDB0BFAA74FFC2505E390B0F508E70.jpg 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/0260086000103404958.20211123092625.431113898976483924510222778344075054021309214728007310B8A9F446E3C7BDBDA06A04FACD14B9DDB0BFAA74FFC2505E390B0F508E70.jpg"
+        title="4.jpg" /></p>
+<h4 id="243高效动态资源调度技术">2.4.3	高效动态资源调度技术</h4>
+<p>多设备协同场景下，设备间竞争、干扰和冲突避让等机制严重限制了空口的原有能力，带宽急剧降低，同时时延不可预期。就这个问题，软总线团队在多设备场景上长期深耕，推出了高效动态资源调度技术。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092651.09164290265889276067867063124442505402130921472800B11147C6362654D9468CF5F803C9C8294CE37CDC969195BF6E989CB3CB589C60.jpg"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092651.09164290265889276067867063124442505402130921472800B11147C6362654D9468CF5F803C9C8294CE37CDC969195BF6E989CB3CB589C60.jpg, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092651.09164290265889276067867063124442505402130921472800B11147C6362654D9468CF5F803C9C8294CE37CDC969195BF6E989CB3CB589C60.jpg 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/0260086000103404958.20211123092651.09164290265889276067867063124442505402130921472800B11147C6362654D9468CF5F803C9C8294CE37CDC969195BF6E989CB3CB589C60.jpg 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/0260086000103404958.20211123092651.09164290265889276067867063124442505402130921472800B11147C6362654D9468CF5F803C9C8294CE37CDC969195BF6E989CB3CB589C60.jpg"
+        title="5.jpg" /></p>
+<h2 id="3-软总线协议coap">3	 软总线协议COAP</h2>
+<p>COAP(Constrained Application Protocol)的主要目标之一是设计一个通用的Web协议,保持非常低的开销,以满足受限环境的特殊要求，如能源、楼宇自动化或其它M2M应用。实现REST的一个通用HTTP子集，针对M2M应用做了简化，而非盲目压缩HTTP。COAP协议可很容易转换为HTTP，方便和现有WEB体系转化，同时还能满足诸如内置发现、组播支持和异步消息传输等。</p>
+<h3 id="31coap协议特征">3.1	COAP协议特征</h3>
+<ul>
+<li>
+<p>COAP协议网络传输层由TCP改为UDP;</p>
+</li>
+<li>
+<p>基于REST，server的资源地址也类似URL格式，客户端同样有POST，GET，PUT，DELETE方法来访问server，对HTTP做了简化；</p>
+</li>
+<li>
+<p>COAP是二进制格式，HTTP是文本格式，COAP比HTTP更加紧凑；</p>
+</li>
+<li>
+<p>小巧、轻量化，最小长度仅仅4 Bytes，一个HTTP的head都要几十Bytes;</p>
+</li>
+<li>
+<p>支持可靠传输，数据重传，块传输;</p>
+</li>
+<li>
+<p>==支持IP多播==, 可同时向多个设备发送请求,鸿蒙设备的发现功能就是用的这个特性；</p>
+</li>
+<li>
+<p>非长连接通信，适用于低功耗物联网场景；</p>
+</li>
+<li>
+<p>支持观察模式；</p>
+</li>
+</ul>
+<h3 id="32coap协议传输">3.2	COAP协议传输</h3>
+<p>传输方式为客户端和服务器端模式，通过socket进行通信，服务器端启动COAP包的监听服务。</p>
+<h2 id="4-软总线相关流程代码分析openharmony314-release">4 	软总线相关流程代码分析（Openharmony3.1.4 Release）</h2>
+<h3 id="41发现">4.1	发现</h3>
+<ul>
+<li><strong>发布流程</strong></li>
+</ul>
+<ol>
+<li>
+<p>上层应用需要对外发布自身能力时，调用服务发布接口发布自身能力。foundation/communication/dsoftbus/interfaces/kits/discovery/discovery_service.h</p>
+<pre tabindex="0"><code> // 发布回调
+    typedef struct {
+        void (*OnPublishSuccess)(int publishId); //发布成功时回调
+        void (*OnPublishFail)(int publishId, PublishFailReason reason);//发布失败时回调
+    } IPublishCallback;
+
+    // 发布服务
+    int PublishService(const char *pkgName, const PublishInfo *info, const IPublishCallback *cb);
+</code></pre></li>
+<li>
+<p>PublishService实现中会先去检查参数是否合法，均为合法后调用PublishServiceInner()函数</p>
+<pre tabindex="0"><code>int32_t PublishServiceInner(const char *packageName, const PublishInfo *info, const IPublishCallback *cb)
+{
+    g_discInfo-&gt;publishCb = *cb;
+
+    int32_t ret = ServerIpcPublishService(packageName, info);
+    if (ret != SOFTBUS_OK) {
+        SoftBusLog(SOFTBUS_LOG_DISC, SOFTBUS_LOG_ERROR, &#34;Server PublishService failed, ret = %d&#34;, ret);
+        return ret;
+    }
+
+    return SOFTBUS_OK;
+}
+</code></pre></li>
+<li>
+<p>在PublishServiceInner()函数中接着调用ServerIpcPublishService()函数继续去判断参数</p>
+<pre tabindex="0"><code>int32_t ServerIpcPublishService(const char *pkgName, const PublishInfo *info)
+{
+    return DiscIpcPublishService(pkgName, info);
+}
+
+int32_t DiscIpcPublishService(const char *packageName, const PublishInfo *info)
+{
+    int32_t ret = DiscPublishService(packageName, info);
+    if (ret != SOFTBUS_OK) {
+        SoftBusLog(SOFTBUS_LOG_DISC, SOFTBUS_LOG_ERROR, &#34;ServerPublishService failed&#34;);
+        (void)ClientIpcOnPublishFail(packageName, info-&gt;publishId, PublishErroCodeProcess(ret));
+        return ret;
+    }
+    SoftBusLog(SOFTBUS_LOG_DISC, SOFTBUS_LOG_INFO, &#34;ServerPublishService success!&#34;);
+    (void)ClientIpcOnPublishSuccess(packageName, info-&gt;publishId);
+    return SOFTBUS_OK;
+}
+
+int32_t ClientIpcOnPublishSuccess(const char *pkgName, int publishId)
+{
+    sptr&lt;DiscClientProxy&gt; clientProxy = GetClientProxy(pkgName);
+    if (clientProxy == nullptr) {
+        SoftBusLog(SOFTBUS_LOG_DISC, SOFTBUS_LOG_ERROR, &#34;softbus client proxy is nullptr!\n&#34;);
+        return SOFTBUS_ERR;
+    }
+    clientProxy-&gt;OnPublishSuccess(publishId);
+    return SOFTBUS_OK;
+}
+</code></pre><p>在DiscIpcPublishService()函数中会去判断发布是否成功，根据结果选择最后的回调函数</p>
+</li>
+<li>
+<p>上层应用不再需要对外发布自身能力时，调用UnpublishService接口注销服务。</p>
+<pre tabindex="0"><code>// 注销服务
+    int UnPublishService(const char *pkgName, int publishId);
+</code></pre></li>
+</ol>
+<ul>
+<li><strong>发现流程</strong></li>
+</ul>
+<ol>
+<li>
+<p>上层应用需要发现特定能力设备时，调用发现接口启动发现。</p>
+<p>foundation/communication/dsoftbus/interfaces/kits/discovery/discovery_service.h</p>
+<pre tabindex="0"><code>// 发现回调
+    typedef struct {
+        void (*OnDeviceFound)(const DeviceInfo *device); //发现设备回调
+        void (*OnDiscoverFailed)(int subscribeId, DiscoveryFailReason failReason); //启动发现失败回调
+        void (*OnDiscoverySuccess)(int subscribeId); //启动发现成功回调
+    } IDiscoveryCallback;
+
+    // 发现服务
+    int StartDiscovery(const char *pkgName, const SubscribeInfo *info, const IDiscoveryCallback *cb);
+</code></pre></li>
+<li>
+<p>当软总线发现到设备时，通过回调接口通知业务所发现的设备信息。</p>
+</li>
+<li>
+<p>上层应用不再需要发现时，调用StopRefreshLNN接口停止设备发现。</p>
+<pre tabindex="0"><code>// 停止服务
+int StopDiscovery(const char *pkgName, int subscribeId);
+</code></pre></li>
+</ol>
+<h3 id="42组网">4.2	组网</h3>
+<ol>
+<li>
+<p>发起组网请求，携带组网连接地址信息，并且提供组网执行结果回调函数。foundation/communication/dsoftbus/interfaces/kits/bus_center/softbus_bus_center.h</p>
+<pre tabindex="0"><code>// 组网连接地址
+typedef struct {
+    ConnectionAddrType type;
+    union {
+        struct BrAddr {
+            char brMac[BT_MAC_LEN];
+        } br;
+        struct BleAddr {
+            char bleMac[BT_MAC_LEN];
+            uint8_t udidHash[UDID_HASH_LEN];
+        } ble;
+        struct IpAddr {
+            char ip[IP_STR_MAX_LEN];
+            uint16_t port; 
+        } ip;
+    } info;
+    char peerUid[MAX_ACCOUNT_HASH_LEN];
+} ConnectionAddr;
+
+// 组网连接地址类型
+typedef enum {
+    CONNECTION_ADDR_WLAN = 0,
+    CONNECTION_ADDR_BR,
+    CONNECTION_ADDR_BLE,
+    CONNECTION_ADDR_ETH,
+    CONNECTION_ADDR_MAX
+} ConnectionAddrType;
+
+// 组网请求执行结果回调
+typedef void (*OnJoinLNNResult)(ConnectionAddr *addr, const char *networkId, int32_t retCode);
+
+// 发起组网请求
+int32_t JoinLNN(const char *pkgName, ConnectionAddr *target, OnJoinLNNResult cb);
+</code></pre></li>
+<li>
+<p>等待组网结果，JoinLNN()返回成功表示软总线接受了组网请求，组网结果通过回调函数通知业务；组网回调函数中addr参数内容和JoinLNN()的入参互相匹配；retCode如果为0，表示组网成功，此时networkId为有效值，后续传输、退网等接口均需使用该参数；retCode如果不为0，表示组网失败，此时networkId为无效值。</p>
+</li>
+<li>
+<p>使用传输相关接口进行数据传输。</p>
+</li>
+<li>
+<p>发送退网请求，携带组网成功后返回的networkId，并且提供退网执行结果回调。</p>
+<pre tabindex="0"><code>// 退网执行结果回调
+typedef void (*OnLeaveLNNResult)(const char *networkId, int32_t retCode);
+
+// 退网请求
+int32_t LeaveLNN(const char *pkgName, const char *networkId, OnLeaveLNNResult cb);
+</code></pre></li>
+<li>
+<p>等待退网完成，OnLeaveLNNResult()的networkId和退网请求接口中的networkId互相匹配；retCode为0表示退网成功，否则退网失败。退网成功后，networkId变为无效值，后续不应该被继续使用。</p>
+</li>
+<li>
+<p>使用节点（即设备）注册和注销接口，监听网络中节点状态变化等事件。</p>
+<pre tabindex="0"><code>// 事件掩码
+#define EVENT_NODE_STATE_ONLINE 0x1
+#define EVENT_NODE_STATE_OFFLINE 0x02
+#define EVENT_NODE_STATE_INFO_CHANGED 0x04
+#define EVENT_NODE_STATUS_CHANGED 0x08
+#define EVENT_NODE_STATE_MASK 0x15
+
+// 节点信息
+typedef struct {
+    char networkId[NETWORK_ID_BUF_LEN];
+    char deviceName[DEVICE_NAME_BUF_LEN];
+    uint16_t deviceTypeId;
+} NodeBasicInfo;
+
+// 节点状态事件回调
+typedef struct {
+    uint32_t events; // 组网事件掩码
+    void (*onNodeOnline)(NodeBasicInfo *info);   // 节点上线事件回调
+    void (*onNodeOffline)(NodeBasicInfo *info);  // 节点下线事件回调
+    void (*onNodeBasicInfoChanged)(NodeBasicInfoType type, NodeBasicInfo *info); // 节点信息变化事件回调
+    void (*onNodeStatusChanged)(NodeStatusType type, NodeStatus *status); // 设备运行状态变化事件回调
+} INodeStateCb;
+
+//  注册节点状态事件回调
+int32_t RegNodeDeviceStateCb(const char *pkgName, INodeStateCb *callback);
+
+// 注销节点状态事件回调
+int32_t UnregNodeDeviceStateCb(INodeStateCb *callback);
+</code></pre></li>
+</ol>
+<h3 id="43传输">4.3	传输</h3>
+<ol>
+<li>
+<p>创建会话服务，并设置会话相关回调，用户可在回调中处理打开/关闭和消息接收事件。</p>
+<pre tabindex="0"><code>// 会话管理回调
+typedef struct {
+    int (*OnSessionOpened)(int sessionId, int result);
+    void (*OnSessionClosed)(int sessionId);
+    void (*OnBytesReceived)(int sessionId, const void *data, unsigned int dataLen);
+    void (*OnMessageReceived)(int sessionId, const void *data, unsigned int dataLen);
+    void (*OnStreamReceived)(int sessionId, const StreamData *data, const StreamData *ext, const StreamFrameInfo *param);
+    void (*OnQosEvent)(int sessionId, int eventId, int tvCount, const QosTv *tvList);
+} ISessionListener;
+
+// 创建会话服务
+int CreateSessionServer(const char *pkgName, const char *sessionName, const ISessionListener* listener);
+</code></pre></li>
+<li>
+<p>[可选] 如果需要完成文件的发送和接收，可以注册文件传输回调， 用户可在回调中处理文件发送/接收事件。</p>
+<pre tabindex="0"><code>// 文件发送回调
+typedef struct {
+    int (*OnSendFileProcess)(int sessionId, uint64_t bytesUpload, uint64_t bytesTotal);
+    int (*OnSendFileFinished)(int sessionId, const char *firstFile);
+    void (*OnFileTransError)(int sessionId);
+} IFileSendListener;
+
+// 注册文件发送回调
+int SetFileSendListener(const char *pkgName, const char *sessionName, const IFileSendListener *sendListener);
+
+// 文件接收回调
+typedef struct {
+    int (*OnReceiveFileStarted)(int sessionId, const char *files, int fileCnt);
+    int (*OnReceiveFileProcess)(int sessionId, const char *firstFile, uint64_t bytesUpload, uint64_t bytesTotal);
+    void (*OnReceiveFileFinished)(int sessionId, const char *files, int fileCnt);
+    void (*OnFileTransError)(int sessionId);
+} IFileReceiveListener;
+
+// 注册文件接收回调
+int SetFileReceiveListener(const char *pkgName, const char *sessionName,const IFileReceiveListener *recvListener, const char *rootDir);
+</code></pre></li>
+<li>
+<p>创建会话 ，用于收发数据。</p>
+<pre tabindex="0"><code>// 创建会话
+int OpenSession(const char *mySessionName, const char *peerSessionName, const char *peerNetworkId, const char *groupId, const SessionAttribute* attr);
+</code></pre></li>
+<li>
+<p>通过sessionId向对端设备发送数据。</p>
+<pre tabindex="0"><code>// 发送字节数据
+int SendBytes(int sessionId, const void *data, unsigned int len);
+// 发送消息数据
+int SendMessage(int sessionId, const void *data, unsigned int len);
+// 发送流数据
+int SendStream(int sessionId, const StreamData *data, const StreamData *ext, const StreamFrameInfo *param);
+// 发送文件
+int SendFile(int sessionId, const char *sFileList[], const char *dFileList[], uint32_t fileCnt);
+</code></pre></li>
+<li>
+<p>通过sessionId关闭会话。</p>
+<pre tabindex="0"><code>// 关闭会话
+void CloseSession(int sessionId);
+</code></pre></li>
+<li>
+<p>删除会话服务。</p>
+<pre tabindex="0"><code>// 删除会话服务
+int RemoveSessionServer(const char *pkgName, const char *sessionName);
+</code></pre></li>
+</ol>
+<h3 id="44认证">4.4	认证</h3>
+<p>设备之间互联是基于系统的IoT设备（如AI音箱、智能家居、智能穿戴等设备）与IoT主控设备（手机、平板等）间建立点对点的信任关系，并在具备信任关系的设备间，搭建安全的连接通道，实现用户数据端到端加密传输。</p>
+<p>IoT主控设备和IoT设备建立点对点信任关系的过程，实际上是相互交换IoT设备的身份标识的过程。</p>
+<p>authentication是openharmony为设备提供认证机制的模块，模块内的处理流程为</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/up-eefc5e1201b40a126b24fd411e72ec3e6fc.png"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/up-eefc5e1201b40a126b24fd411e72ec3e6fc.png, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/up-eefc5e1201b40a126b24fd411e72ec3e6fc.png 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/up-eefc5e1201b40a126b24fd411e72ec3e6fc.png 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/up-eefc5e1201b40a126b24fd411e72ec3e6fc.png"
+        title="https://oscimg.oschina.net/oscnet/up-eefc5e1201b40a126b24fd411e72ec3e6fc.png" /></p>
+<p>为了实现用户数据在设备互联场景下在各个设备之间的安全流转，需要保证设备之间相互正确可信，即设备和设备之间建立信任关系，并能够在验证信任关系后，搭建安全的连接通道，实现用户数据的安全传输。设备之间的信任关系在本文档中涉及IoT主控设备和IoT设备之间建立的可信关系。</p>
+<ul>
+<li>
+<p>打开服务器监听</p>
+<pre tabindex="0"><code>typedef struct {
+    AuthLinkType type; /* WIFI_WLAN and WIFI_P2P are supported. */
+    union {
+        struct {
+            char ip[IP_STR_MAX_LEN];
+            uint16_t port;
+        } ipInfo;
+    } info;
+} AuthListennerInfo;
+
+//开始监听
+int32_t AuthStartListening(const AuthListennerInfo *info);
+</code></pre></li>
+<li>
+<p>初始化连接请求</p>
+<pre tabindex="0"><code>typedef struct {
+    /**
+     * @brief Called when an auth connection is opened successfully.
+     *
+     * @param requestId indicates the open request.
+     * @param authId id of auth connection.
+     */
+     //成功时的回调函数
+    void (*onConnOpened)(uint32_t requestId, int64_t authId);
+    /**
+     * @brief Called when an auth connection is opened failed.
+     *
+     * @param requestId indicates the open request.
+     * @param reason error code.
+     */
+     //失败时的回调函数
+    void (*onConnOpenFailed)(uint32_t requestId, int32_t reason);
+} AuthConnCallback;
+
+//打开连接
+int32_t AuthOpenConn(const AuthConnInfo *info, uint32_t requestId, const AuthConnCallback *callback);
+</code></pre></li>
+<li>
+<p>加解密接口</p>
+<pre tabindex="0"><code>uint32_t AuthGetEncryptHeadLen(void);
+int32_t AuthEncrypt(const ConnectOption *option, AuthSideFlag *side, uint8_t *data, uint32_t len, OutBuf *outBuf);//加密接口
+int32_t AuthDecrypt(const ConnectOption *option, AuthSideFlag side, uint8_t *data, uint32_t len, OutBuf *outbuf);//解密接口
+int32_t AuthEncryptBySeq(int32_t seq, AuthSideFlag *side, uint8_t *data, uint32_t len, OutBuf *outBuf);
+</code></pre></li>
+<li>
+<p>鸿蒙设备互联安全参考图</p>
+</li>
+</ul>
+<p>实现用户数据在设备互联场景下，在各个设备之间的安全流转，实现用户数据的安全传输。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/e658b0b452ca31cad59494a430e24368.png"
+        data-srcset="/%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/e658b0b452ca31cad59494a430e24368.png, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/e658b0b452ca31cad59494a430e24368.png 1.5x, /%e5%88%86%e5%b8%83%e5%bc%8f%e8%bd%af%e6%80%bb%e7%ba%bf.assets/e658b0b452ca31cad59494a430e24368.png 2x"
+        data-sizes="auto"
+        alt="/分布式软总线.assets/e658b0b452ca31cad59494a430e24368.png"
+        title="img" /></p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2023-03-18</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/" data-title="分布式软总线"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/" data-title="分布式软总线"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/" data-title="分布式软总线"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@7.3.0/icons/line.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/" data-title="分布式软总线"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/6.s081_lab1/" class="prev" rel="prev" title="6.s081_lab1"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>6.s081_lab1</a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">zxj</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0 国际许可协议</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

@@ -3,5 +3,6 @@
         <title>Tags - Tag - OS IS TOO HARD</title>
         <link>http://example.org/tags/</link>
         <description>Tags - Tag - OS IS TOO HARD</description>
-        <generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="http://example.org/tags/" rel="self" type="application/rss+xml" /></channel>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><managingEditor>xjzhou2022@163.com (zxj)</managingEditor>
+            <webMaster>xjzhou2022@163.com (zxj)</webMaster><atom:link href="http://example.org/tags/" rel="self" type="application/rss+xml" /></channel>
 </rss>
