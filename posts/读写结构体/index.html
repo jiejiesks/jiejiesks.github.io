@@ -180,8 +180,6 @@ ssize_t vfs_write(struct file* filp, const char __user* buffer, size_t len, loff
 </code></pre><p>还有一些其它的内核函数也有用__user修饰的参数，在kernel中需要用kernel空间的内存代替时，都可以使用类似办法。</p>
 <p>使用vfs_read()和vfs_write()最后需要注意的一点是最后的参数loff_t * pos，pos所指向的值要初始化，表明从文件的什么地方开始读写。</p>
 <p>在新版的kernel中，通过kernel_read和kernel_write封装上述烦琐的过程。</p>
-</li>
-</ul>
 <pre tabindex="0"><code>798 int kernel_read(struct file *file, loff_t offset,
 799                 char *addr, unsigned long count)
 800 {
@@ -191,13 +189,13 @@ ssize_t vfs_write(struct file* filp, const char __user* buffer, size_t len, loff
 804 
 805         old_fs = get_fs();
 806         set_fs(get_ds());
-807         /* The cast to a user pointer is valid due to the 							set_fs() */
+807         /* The cast to a user pointer is valid due to the set_fs() */
 808         result = vfs_read(file, (void __user *)addr, count, &amp;pos);
 809         set_fs(old_fs);
 810         return result;
 811 }
 812 
-</code></pre><ul>
+</code></pre></li>
 <li>
 <p>在将结构体写入文件时，由于指针所指向的空间已经被内容填充，直接调用函数即可。</p>
 <pre tabindex="0"><code>writefile = filp_open(&#34;~/Desktop/file_and_path.txt&#34;, O_RDWR | O_APPEND | O_CREAT, 0);
