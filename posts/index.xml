@@ -4,7 +4,15 @@
         <link>http://example.org/posts/</link>
         <description>All Posts | OS IS TOO HARD</description>
         <generator>Hugo -- gohugo.io</generator><language>en</language><managingEditor>xjzhou2022@163.com (zxj)</managingEditor>
-            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Tue, 21 Mar 2023 20:59:22 &#43;0800</lastBuildDate><atom:link href="http://example.org/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Wed, 22 Mar 2023 21:39:36 &#43;0800</lastBuildDate><atom:link href="http://example.org/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>读写结构体</title>
+    <link>http://example.org/posts/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93/</link>
+    <pubDate>Wed, 22 Mar 2023 21:39:36 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93/</guid>
+    <description><![CDATA[关于结构体的读写 user space 可以通过fread和rwrite进行结构体的读写。 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) ptr − This is the pointer to a block of memory with a minimum size of size*nmemb bytes. size − This is the size in bytes of each element to be read. nmemb − This is the number of elements, each one with a size of size bytes. stream − This is the pointer to a FILE object that specifies an input stream.]]></description>
+</item>
+<item>
     <title>6.s081_lab2</title>
     <link>http://example.org/posts/6.s081_lab2/</link>
     <pubDate>Tue, 21 Mar 2023 20:59:22 &#43;0800</pubDate>
@@ -26,7 +34,7 @@ _entry的指令设置了一个栈区，这样xv6就可以运行C代码。Xv6在*
 TIPS
 注：mret执行返回，返回到先前状态，由于start函数将前模式改为了管理模式且返回地址改为了main,因此mret将返回到main函数，并以管理模式运行
 在main(*kernel/main.c*:11)初始化几个设备和子系统后，便通过调用userinit (*kernel/proc.c*:212)创建第一个进程，第一个进程执行一个用RISC-V程序集写的小型程序：*initcode. S* (***user/initcode.S:***1)，它通过调用exec系统调用重新进入内核。正如我们在第1章中看到的，exec用一个新程序（本例中为 /init）替换当前进程的内存和寄存器。一旦内核完成exec，它就返回/init进程中的用户空间。如果需要，init(*user/init.c*:15)将创建一个新的控制台设备文件，然后以文件描述符0、1和2打开它。然后它在控制台上启动一个shell。系统就这样启动了。
-lab2 system call tracing trace系统调用有一个参数，这个参数是一个整数“掩码”（mask），它的比特位指定要跟踪的系统调用。例如，要跟踪fork系统调用，程序调用trace(1 &lt;&lt; SYS_fork)，其中SYS_fork是kernel/syscall.h中的系统调用编号，这个掩码是01也即2。32是read的系统调用，因为1&laquo;5为32，100000。1111……1共31个1，即2147483647，这个掩码代表追踪所有的系统调用。
+lab2 system call tracing trace系统调用有一个参数，这个参数是一个整数“掩码”（mask），它的比特位指定要跟踪的系统调用。例如，要跟踪fork系统调用，程序调用trace(1 &lt;&lt; SYS_fork)，其中SYS_fork是kernel/syscall.h中的系统调用编号，这个掩码是10也即2。32是read的系统调用，因为1&laquo;5为32，100000。1111……1共31个1，即2147483647，这个掩码代表追踪所有的系统调用。
 我们提供了一个用户级程序版本的trace，它运行另一个启用了跟踪的程序（参见user/trace.c）。完成后，您应该看到如下输出：
 $ trace 32 grep hello README 3: syscall read -&gt; 1023 3: syscall read -&gt; 966 3: syscall read -&gt; 70 3: syscall read -&gt; 0 $ $ trace 2147483647 grep hello README 4: syscall trace -&gt; 0 4: syscall exec -&gt; 3 4: syscall open -&gt; 3 4: syscall read -&gt; 1023 4: syscall read -&gt; 966 4: syscall read -&gt; 70 4: syscall read -&gt; 0 4: syscall close -&gt; 0 $ $ grep hello README $ $ trace 2 usertests forkforkfork usertests starting test forkforkfork: 407: syscall fork -&gt; 408 408: syscall fork -&gt; 409 409: syscall fork -&gt; 410 410: syscall fork -&gt; 411 409: syscall fork -&gt; 412 410: syscall fork -&gt; 413 409: syscall fork -&gt; 414 411: syscall fork -&gt; 415 .]]></description>
 </item>
