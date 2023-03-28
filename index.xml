@@ -4,9 +4,29 @@
         <link>http://example.org/</link>
         <description>Some notes</description>
         <generator>Hugo -- gohugo.io</generator><language>en</language><managingEditor>xjzhou2022@163.com (zxj)</managingEditor>
-            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Wed, 22 Mar 2023 21:39:36 &#43;0800</lastBuildDate>
+            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Tue, 28 Mar 2023 21:06:56 &#43;0800</lastBuildDate>
             <atom:link href="http://example.org/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>6.s081_lab3</title>
+    <link>http://example.org/posts/6.s081_lab3/</link>
+    <pubDate>Tue, 28 Mar 2023 21:06:56 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab3/</guid>
+    <description><![CDATA[Chapter 3 3.1页式硬件 该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中的每一个PTE都包含该树最后一级的512个PTE。分别使用virtual address 的L2,L1,L0各9位（2^9=512）去确定页表页的哪一个PTE。最终的Physical address是由最后一级的PPN和Virtual address的最开始的12位offset组成。
+每个PTE包含10位的标志位。这些标志位告诉分页硬件允许如何使用关联的虚拟地址。PTE_V指示PTE是否存在：如果它没有被设置，对页面的引用会导致异常（即不允许）。PTE_R控制是否允许指令读取到页面。PTE_W控制是否允许指令写入到页面。PTE_X控制CPU是否可以将页面内容解释为指令并执行它们。PTE_U控制用户模式下的指令是否被允许访问页面；如果没有设置PTE_U，PTE只能在管理模式下使用。图3.2显示了它是如何工作的。标志和所有其他与页面硬件相关的结构在（*kernel/riscv.h*）中定义。
+为了告诉硬件使用页表，内核必须将根页表页的物理地址写入到satp寄存器中（satp的作用是存放根页表页在物理内存中的地址）。每个CPU都有自己的satp，一个CPU将使用自己的satp指向的页表转换后续指令生成的所有地址。每个CPU都有自己的satp，因此不同的CPU就可以运行不同的进程，每个进程都有自己的页表描述的私有地址空间。
+3.2内核地址空间 Xv6为每个进程维护一个页表，用以描述每个进程的用户地址空间，外加一个单独描述内核地址空间的页表。内核配置其地址空间的布局，以允许自己以可预测的虚拟地址访问物理内存和各种硬件资源。图3.3显示了这种布局如何将内核虚拟地址映射到物理地址。文件(*kernel/memlayout.h*) 声明了xv6内核内存布局的常量。
+QEMU模拟了一台计算机，它包括从物理地址0x80000000开始并至少到0x86400000结束的RAM（物理内存），xv6称结束地址为PHYSTOP。QEMU模拟还包括I/O设备，如磁盘接口。QEMU将设备接口作为内存映射控制寄存器暴露给软件，这些寄存器位于物理地址空间0x80000000以下。内核可以通过读取/写入这些特殊的物理地址与设备交互；这种读取和写入与设备硬件而不是RAM通信。第4章解释了xv6如何与设备进行交互。
+内核使用“直接映射”获取内存和内存映射设备寄存器；也就是说，将资源映射到等于物理地址的虚拟地址。例如，内核本身在虚拟地址空间和物理内存中都位于KERNBASE=0x80000000。直接映射简化了读取或写入物理内存的内核代码。例如，当fork为子进程分配用户内存时，分配器返回该内存的物理地址；fork在将父进程的用户内存复制到子进程时直接将该地址用作虚拟地址。
+有几个内核虚拟地址不是直接映射：
+蹦床页面(trampoline page)。它映射在虚拟地址空间的顶部；用户页表具有相同的映射。第4章讨论了蹦床页面的作用，但我们在这里看到了一个有趣的页表用例；一个物理页面（持有蹦床代码）在内核的虚拟地址空间中映射了两次：一次在虚拟地址空间的顶部，一次直接映射。 内核栈页面。每个进程都有自己的内核栈，它将映射到偏高一些的地址，这样xv6在它之下就可以留下一个未映射的保护页(guard page)。保护页的PTE是无效的（也就是说PTE_V没有设置），所以如果内核溢出内核栈就会引发一个异常，内核触发panic。如果没有保护页，栈溢出将会覆盖其他内核内存，引发错误操作。恐慌崩溃（panic crash）是更可取的方案。（注：Guard page不会浪费物理内存，它只是占据了虚拟地址空间的一段靠后的地址，但并不映射到物理地址空间。） 3.3创建一个地址空间 大多数用于操作地址空间和页表的xv6代码都写在 vm.c* (kernel/vm.c:1) 中。其核心数据结构是pagetable_t，它实际上是指向RISC-V根页表页的指针；一个pagetable_t可以是内核页表，也可以是一个进程页表。最核心的函数是walk和mappages，前者为虚拟地址找到PTE，后者为新映射装载PTE。名称以kvm开头的函数操作内核页表；以uvm开头的函数操作用户页表；其他函数用于二者。copyout和copyin复制数据到用户虚拟地址或从用户虚拟地址复制数据，这些虚拟地址作为系统调用参数提供; 由于它们需要显式地翻译这些地址，以便找到相应的物理内存，故将它们写在**vm.c***中。
+在启动的初期，main会调用kvminit，kvminit首先会分配一个物理内存页用来装根页表，后续调用kvmmap去安装内核需要的内存，这些转换包括 内核的指令和数据，到PHYSTOP的物理内存，以及实际上是设备的内存范围。实际上是设备。（即上图中的CLINT PLIC UARTO VIRTIO KERNBASE PHYSTOP TRAMPOLINE）
+kvmmap(*kernel/vm.c*:127)调用mappages(*kernel/vm.c*:138)，mappages将范围虚拟地址到同等范围物理地址的映射装载到一个页表中。它以页面大小为间隔，为范围内的每个虚拟地址单独执行此操作。对于要映射的每个虚拟地址，mappages调用walk来查找该地址的PTE地址。然后，它初始化PTE以保存相关的物理页号、所需权限（PTE_W、PTE_X和/或PTE_R）以及用于标记PTE有效的PTE_V(*kernel/vm.c*:153)。先通过walk找到PTE，然后通过mappages装载PTE
+在查找PTE中的虚拟地址（参见图3.2）时，walk(*kernel/vm.c*:72)模仿RISC-V分页硬件。walk一次从3级页表中获取9个比特位。它使用上一级的9位虚拟地址来查找下一级页表或最终页面的PTE (*kernel/vm.c*:78)。如果PTE无效，则所需的页面还没有分配；如果设置了alloc参数，walk就会分配一个新的页表页面，并将其物理地址放在PTE中。它返回树中最低一级的PTE地址(*kernel/vm.c*:88)。
+上面的代码依赖于直接映射到内核虚拟地址空间中的物理内存。例如，当walk降低页表的级别时，它从PTE (*kernel/vm.c*:80)中提取下一级页表的（物理）地址，然后使用该地址作为虚拟地址来获取下一级的PTE (*kernel/vm.c*:78)。
+for(int level = 2; level &gt; 0; level--) { pte_t *pte = &amp;pagetable[PX(level, va)]; if(*pte &amp; PTE_V) { pagetable = (pagetable_t)PTE2PA(*pte); } else { if(!alloc || (pagetable = (pde_t*)kalloc()) == 0) return 0; memset(pagetable, 0, PGSIZE); *pte = PA2PTE(pagetable) | PTE_V; } } 由于虚拟地址和物理地址直接映射，在这个函数中把va先当做虚拟地址获取第一个9位来获取根页表的PTE，获取到二级页表的物理地址后（每页4096B，所以低12位为0，获取pte之后由于pte的低10位是标志位，pte&raquo;10&laquo;12便是物理地址），将这个地址转换为虚拟地址即是二级页表的虚拟地址，然后便可以在通过va&raquo;12+level*9获取到PTE进而找到最后一级页表]]></description>
+</item>
+<item>
     <title>读写结构体</title>
     <link>http://example.org/posts/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93/</link>
     <pubDate>Wed, 22 Mar 2023 21:39:36 &#43;0800</pubDate>
