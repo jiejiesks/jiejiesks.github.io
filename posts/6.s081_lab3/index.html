@@ -309,9 +309,7 @@ for(int level = 2; level &gt; 0; level--) { pte_t *pte = &amp;pagetable[PX(level
 <pre tabindex="0"><code>void            vmprint(pagetable_t);
 </code></pre><h2 id="a-kernel-page-table-per-process">A kernel page table per process</h2>
 <p>Xv6有一个单独的用于在内核中执行程序时的内核页表。内核页表直接映射（恒等映射）到物理地址，也就是说内核虚拟地址<code>x</code>映射到物理地址仍然是<code>x</code>。Xv6还为每个进程的用户地址空间提供了一个单独的页表，只包含该进程用户内存的映射，从虚拟地址0开始。因为内核页表不包含这些映射，所以用户地址在内核中无效。因此，当内核需要使用在系统调用中传递的用户指针（例如，传递给<code>write()</code>的缓冲区指针）时，内核必须首先将指针转换为物理地址。本节和下一节的目标是允许内核直接解引用用户指针。</p>
-<blockquote>
-<pre tabindex="0"><code>你的第一项工作是修改内核来让每一个进程在内核中执行时使用它自己的内核页表的副本。修改struct proc来为每一个进程维护一个内核页表，修改调度程序使得切换进程时也切换内核页表。对于这个步骤，每个进程的内核页表都应当与现有的的全局内核页表完全一致。如果你的usertests程序正确运行了，那么你就通过了这个实验。
-</code></pre></blockquote>
+<p>你的第一项工作是修改内核来让每一个进程在内核中执行时使用它自己的内核页表的副本。修改struct proc来为每一个进程维护一个内核页表，修改调度程序使得切换进程时也切换内核页表。对于这个步骤，每个进程的内核页表都应当与现有的的全局内核页表完全一致。如果你的usertests程序正确运行了，那么你就通过了这个实验。</p>
 <ul>
 <li>首先在kernel/proc.h的proc结构体中添加进程的内核页表成员变量</li>
 </ul>
