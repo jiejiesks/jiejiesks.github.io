@@ -162,18 +162,18 @@ for(int level = 2; level &gt; 0; level--) { pte_t *pte = &amp;pagetable[PX(level
 <p><code>kvmmap</code>(*<strong>kernel/vm.c*</strong>:127)调用<code>mappages</code>(*<strong>kernel/vm.c*</strong>:138)，<code>mappages</code>将范围虚拟地址到同等范围物理地址的映射装载到一个页表中。它以页面大小为间隔，为范围内的每个虚拟地址单独执行此操作。对于要映射的每个虚拟地址，<code>mappages</code>调用<code>walk</code>来查找该地址的PTE地址。然后，它初始化PTE以保存相关的物理页号、所需权限（<code>PTE_W</code>、<code>PTE_X</code>和/或<code>PTE_R</code>）以及用于标记PTE有效的<code>PTE_V</code>(*<strong>kernel/vm.c*</strong>:153)。先通过walk找到PTE，然后通过mappages装载PTE</p>
 <p>在查找PTE中的虚拟地址（参见图3.2）时，<code>walk</code>(*<strong>kernel/vm.c*</strong>:72)模仿RISC-V分页硬件。<code>walk</code>一次从3级页表中获取9个比特位。它使用上一级的9位虚拟地址来查找下一级页表或最终页面的PTE (*<strong>kernel/vm.c*</strong>:78)。如果PTE无效，则所需的页面还没有分配；如果设置了<code>alloc</code>参数，<code>walk</code>就会分配一个新的页表页面，并将其物理地址放在PTE中。它返回树中最低一级的PTE地址(*<strong>kernel/vm.c*</strong>:88)。</p>
 <p>上面的代码依赖于直接映射到内核虚拟地址空间中的物理内存。例如，当<code>walk</code>降低页表的级别时，它从PTE (*<strong>kernel/vm.c*</strong>:80)中提取下一级页表的（物理）地址，然后使用该地址作为虚拟地址来获取下一级的PTE (*<strong>kernel/vm.c*</strong>:78)。</p>
-<pre tabindex="0"><code> for(int level = 2; level &gt; 0; level--) {
-    pte_t *pte = &amp;pagetable[PX(level, va)];
-    if(*pte &amp; PTE_V) {
-      pagetable = (pagetable_t)PTE2PA(*pte);
-    } else {
-      if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
-        return 0;
-      memset(pagetable, 0, PGSIZE);
-      *pte = PA2PTE(pagetable) | PTE_V;
-    }
-  }
-</code></pre><p><img
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"> <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">level</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">;</span> <span class="n">level</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">pte_t</span> <span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">pagetable</span><span class="p">[</span><span class="nf">PX</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">va</span><span class="p">)];</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">(</span><span class="o">*</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_V</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="n">pagetable</span> <span class="o">=</span> <span class="p">(</span><span class="kt">pagetable_t</span><span class="p">)</span><span class="nf">PTE2PA</span><span class="p">(</span><span class="o">*</span><span class="n">pte</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">alloc</span> <span class="o">||</span> <span class="p">(</span><span class="n">pagetable</span> <span class="o">=</span> <span class="p">(</span><span class="kt">pde_t</span><span class="o">*</span><span class="p">)</span><span class="nf">kalloc</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">memset</span><span class="p">(</span><span class="n">pagetable</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="nf">PA2PTE</span><span class="p">(</span><span class="n">pagetable</span><span class="p">)</span> <span class="o">|</span> <span class="n">PTE_V</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span></code></pre></div><p><img
         class="lazyload"
         src="/svg/loading.min.svg"
         data-src="/lab3.assets/image-20230323213441931.png"
@@ -247,70 +247,72 @@ for(int level = 2; level &gt; 0; level--) { pte_t *pte = &amp;pagetable[PX(level
 <p>然后观察kernel/vm.c中的freewalk方法</p>
 </li>
 </ul>
-<pre tabindex="0"><code>// Recursively free page-table pages.
-// All leaf mappings must already have been removed.
-void
-freewalk(pagetable_t pagetable)
-{
-  // there are 2^9 = 512 PTEs in a page table.
-  for(int i = 0; i &lt; 512; i++){
-    pte_t pte = pagetable[i];
-    if((pte &amp; PTE_V) &amp;&amp; (pte &amp; (PTE_R|PTE_W|PTE_X)) == 0){
-      // this PTE points to a lower-level page table.
-      uint64 child = PTE2PA(pte);
-      freewalk((pagetable_t)child);
-      pagetable[i] = 0;
-    } else if(pte &amp; PTE_V){
-      panic(&#34;freewalk: leaf&#34;);
-    }
-  }
-  kfree((void*)pagetable);
-}
-</code></pre><p>首先会遍历第一级页表，当遇到有效的页表并且不是最后一级，就会递归。RWX均为0表示不是最后一层，因为最后一层页表中的页表项至少有一个为1</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Recursively free page-table pages.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// All leaf mappings must already have been removed.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">freewalk</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// there are 2^9 = 512 PTEs in a page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">512</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">pte_t</span> <span class="n">pte</span> <span class="o">=</span> <span class="n">pagetable</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">((</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_V</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">PTE_R</span><span class="o">|</span><span class="n">PTE_W</span><span class="o">|</span><span class="n">PTE_X</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="c1">// this PTE points to a lower-level page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="n">uint64</span> <span class="n">child</span> <span class="o">=</span> <span class="nf">PTE2PA</span><span class="p">(</span><span class="n">pte</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">freewalk</span><span class="p">((</span><span class="kt">pagetable_t</span><span class="p">)</span><span class="n">child</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="n">pagetable</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_V</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;freewalk: leaf&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">kfree</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">pagetable</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>首先会遍历第一级页表，当遇到有效的页表并且不是最后一级，就会递归。RWX均为0表示不是最后一层，因为最后一层页表中的页表项至少有一个为1</p>
 <p>根据freewalk函数便可去仿照写出vmprint函数</p>
-<pre tabindex="0"><code>/**
- * @param pagetable 所要打印的页表
- * @param level 页表的层级
- */
-void
-_vmprint(pagetable_t pagetable, int level){
-  // there are 2^9 = 512 PTEs in a page table.
-  for(int i = 0; i &lt; 512; i++){
-    pte_t pte = pagetable[i];
-    // PTE_V is a flag for whether the page table is valid
-    if(pte &amp; PTE_V){
-      for (int j = 0; j &lt; level; j++){
-        if (j) printf(&#34; &#34;);
-        printf(&#34;..&#34;);
-      }
-      uint64 child = PTE2PA(pte);
-      printf(&#34;%d: pte %p pa %p\n&#34;, i, pte, child);
-      if((pte &amp; (PTE_R|PTE_W|PTE_X)) == 0){
-        // this PTE points to a lower-level page table.
-        _vmprint((pagetable_t)child, level + 1);
-      }
-    }
-  }
-}
-
-/**
- * @brief vmprint 打印页表
- * @param pagetable 所要打印的页表
- */
-void
-vmprint(pagetable_t pagetable){
-  printf(&#34;page table %p\n&#34;, pagetable);
-  _vmprint(pagetable, 1);
-}
-</code></pre><p>在<code>_vmprint</code>中，首先判断是否有效，并根据level打印出对应的..表示第几层，如果其还有下层页表，那么就递归调用<code>_vmprint</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/**
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * @param pagetable 所要打印的页表
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * @param level 页表的层级
+</span></span></span><span class="line"><span class="cl"><span class="cm"> */</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">_vmprint</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">,</span> <span class="kt">int</span> <span class="n">level</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// there are 2^9 = 512 PTEs in a page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">512</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">pte_t</span> <span class="n">pte</span> <span class="o">=</span> <span class="n">pagetable</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// PTE_V is a flag for whether the page table is valid
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_V</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">level</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="nf">printf</span><span class="p">(</span><span class="s">&#34; &#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;..&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">      <span class="n">uint64</span> <span class="n">child</span> <span class="o">=</span> <span class="nf">PTE2PA</span><span class="p">(</span><span class="n">pte</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%d: pte %p pa %p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pte</span><span class="p">,</span> <span class="n">child</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="k">if</span><span class="p">((</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">PTE_R</span><span class="o">|</span><span class="n">PTE_W</span><span class="o">|</span><span class="n">PTE_X</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// this PTE points to a lower-level page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="nf">_vmprint</span><span class="p">((</span><span class="kt">pagetable_t</span><span class="p">)</span><span class="n">child</span><span class="p">,</span> <span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cm">/**
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * @brief vmprint 打印页表
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * @param pagetable 所要打印的页表
+</span></span></span><span class="line"><span class="cl"><span class="cm"> */</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">vmprint</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;page table %p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">pagetable</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">_vmprint</span><span class="p">(</span><span class="n">pagetable</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>在<code>_vmprint</code>中，首先判断是否有效，并根据level打印出对应的..表示第几层，如果其还有下层页表，那么就递归调用<code>_vmprint</code></p>
 <ul>
 <li>最后在kernel/defs.h加上新增函数的声明</li>
 </ul>
 <pre tabindex="0"><code>void            vmprint(pagetable_t);
 </code></pre><h2 id="a-kernel-page-table-per-process">A kernel page table per process</h2>
 <p>Xv6有一个单独的用于在内核中执行程序时的内核页表。内核页表直接映射（恒等映射）到物理地址，也就是说内核虚拟地址<code>x</code>映射到物理地址仍然是<code>x</code>。Xv6还为每个进程的用户地址空间提供了一个单独的页表，只包含该进程用户内存的映射，从虚拟地址0开始。因为内核页表不包含这些映射，所以用户地址在内核中无效。因此，当内核需要使用在系统调用中传递的用户指针（例如，传递给<code>write()</code>的缓冲区指针）时，内核必须首先将指针转换为物理地址。本节和下一节的目标是允许内核直接解引用用户指针。</p>
+<blockquote>
 <pre tabindex="0"><code>你的第一项工作是修改内核来让每一个进程在内核中执行时使用它自己的内核页表的副本。修改struct proc来为每一个进程维护一个内核页表，修改调度程序使得切换进程时也切换内核页表。对于这个步骤，每个进程的内核页表都应当与现有的的全局内核页表完全一致。如果你的usertests程序正确运行了，那么你就通过了这个实验。
-</code></pre><ul>
+</code></pre></blockquote>
+<ul>
 <li>首先在kernel/proc.h的proc结构体中添加进程的内核页表成员变量</li>
 </ul>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl">  <span class="kt">pagetable_t</span> <span class="n">kernelpt</span><span class="p">;</span>      <span class="c1">// Kernel page table
@@ -425,8 +427,8 @@ vmprint(pagetable_t pagetable){
 </span></span><span class="line"><span class="cl">  <span class="nf">kfree</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">kernelpt</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><ul>
-<li>
-<p>修改<code>vm.c</code>中的<code>kvmpa</code>，将原先的<code>kernel_pagetable</code>改成<code>myproc()-&gt;kernelpt</code>，使用进程的内核页表。</p>
+<li>修改<code>vm.c</code>中的<code>kvmpa</code>，将原先的<code>kernel_pagetable</code>改成<code>myproc()-&gt;kernelpt</code>，使用进程的内核页表。</li>
+</ul>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;spinlock.h&#34; </span><span class="cp">
 </span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;proc.h&#34;</span><span class="cp">
 </span></span></span><span class="line"><span class="cl"><span class="cp"></span>
@@ -445,10 +447,8 @@ vmprint(pagetable_t pagetable){
 </span></span><span class="line"><span class="cl">  <span class="n">pa</span> <span class="o">=</span> <span class="nf">PTE2PA</span><span class="p">(</span><span class="o">*</span><span class="n">pte</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="n">pa</span><span class="o">+</span><span class="n">off</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div></li>
-<li>
-<p>最后讲定义的函数加入kernel/defs.h</p>
-</li>
+</span></span></code></pre></div><ul>
+<li>最后讲定义的函数加入kernel/defs.h</li>
 </ul>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span>            <span class="nf">proc_freekernelpt</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="kt">void</span>            <span class="nf">uvmmap</span><span class="p">(</span><span class="kt">pagetable_t</span><span class="p">,</span> <span class="n">uint64</span><span class="p">,</span> <span class="n">uint64</span><span class="p">,</span> <span class="n">uint64</span><span class="p">,</span> <span class="kt">int</span><span class="p">);</span>
@@ -476,8 +476,8 @@ vmprint(pagetable_t pagetable){
         alt="/lab3.assets/image-20230328210424802.png"
         title="image-20230328210424802" /></p>
 <ul>
-<li>
-<p>首先添加复制函数。需要注意的是，在内核模式下，无法访问设置了<code>PTE_U</code>的页面，所以我们要将其移除。</p>
+<li>首先添加复制函数。需要注意的是，在内核模式下，无法访问设置了<code>PTE_U</code>的页面，所以我们要将其移除。</li>
+</ul>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span>
 </span></span><span class="line"><span class="cl"><span class="nf">u2kvmcopy</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">,</span> <span class="kt">pagetable_t</span> <span class="n">kernelpt</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">oldsz</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">newsz</span><span class="p">){</span>
 </span></span><span class="line"><span class="cl">  <span class="kt">pte_t</span> <span class="o">*</span><span class="n">pte_from</span><span class="p">,</span> <span class="o">*</span><span class="n">pte_to</span><span class="p">;</span>
@@ -492,7 +492,7 @@ vmprint(pagetable_t pagetable){
 </span></span><span class="line"><span class="cl">    <span class="o">*</span><span class="n">pte_to</span> <span class="o">=</span> <span class="nf">PA2PTE</span><span class="p">(</span><span class="n">pa</span><span class="p">)</span> <span class="o">|</span> <span class="n">flags</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">  <span class="p">}</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div></li>
+</span></span></code></pre></div><ul>
 <li>
 <p>然后在内核更改进程的用户映射的每一处 （<code>fork()</code>, <code>exec()</code>, 和<code>sbrk()</code>），都复制一份到进程的内核页表。</p>
 <ul>

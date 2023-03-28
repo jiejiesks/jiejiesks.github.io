@@ -191,98 +191,98 @@ $ trace 32 grep hello README 3: syscall read -&gt; 1023 3: syscall read -&gt; 96
 <li>在Makefile的<strong>UPROGS</strong>中添加<code>$U/_trace</code></li>
 <li>在user/user.h中添加原型</li>
 </ul>
-<pre tabindex="0"><code>int trace(int);
-</code></pre><p>添加存根到user/usys.pl</p>
-<pre tabindex="0"><code>entry(&#34;trace&#34;);
-</code></pre><p>添加系统调用号到kernel/syscall.h</p>
-<pre tabindex="0"><code>#define SYS_trace  22
-</code></pre><p>在syscall.c中添加trace相关的定义</p>
-<pre tabindex="0"><code>extern uint64 sys_trace(void);
-[SYS_trace]   sys_trace,
-</code></pre><p>现在make qemu可以通过编译，但是内核中还没有实现系统调用，执行测试trace 32 grep hello README将失败</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">trace</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+</span></span></code></pre></div><p>添加存根到user/usys.pl</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">entry</span><span class="p">(</span><span class="s">&#34;trace&#34;</span><span class="p">);</span>
+</span></span></code></pre></div><p>添加系统调用号到kernel/syscall.h</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#define SYS_trace  22
+</span></span></span></code></pre></div><p>在syscall.c中添加trace相关的定义</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">extern</span> <span class="n">uint64</span> <span class="nf">sys_trace</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">[</span><span class="n">SYS_trace</span><span class="p">]</span>   <span class="n">sys_trace</span><span class="p">,</span>
+</span></span></code></pre></div><p>现在make qemu可以通过编译，但是内核中还没有实现系统调用，执行测试trace 32 grep hello README将失败</p>
 <ul>
 <li>
 <p>在kernel/sysproc.c中添加一个<code>sys_trace()</code>函数，它通过将参数保存到<code>proc</code>结构体（请参见kernel/proc.h）里的一个新变量中来实现新的系统调用。从用户空间检索系统调用参数的函数在kernel/syscall.c中。</p>
 <p>在proc结构体中添加成员变量mask</p>
 </li>
 </ul>
-<pre tabindex="0"><code>// Per-process state
-struct proc {
-  struct spinlock lock;
-
-  // p-&gt;lock must be held when using these:
-  enum procstate state;        // Process state
-  struct proc *parent;         // Parent process
-  void *chan;                  // If non-zero, sleeping on chan
-  int killed;                  // If non-zero, have been killed
-  int xstate;                  // Exit status to be returned to parent&#39;s wait
-  int pid;                     // Process ID
-
-  // these are private to the process, so p-&gt;lock need not be held.
-  uint64 kstack;               // Virtual address of kernel stack
-  uint64 sz;                   // Size of process memory (bytes)
-  pagetable_t pagetable;       // User page table
-  struct trapframe *trapframe; // data page for trampoline.S
-  struct context context;      // swtch() here to run process
-  struct file *ofile[NOFILE];  // Open files
-  struct inode *cwd;           // Current directory
-  char name[16];               // Process name (debugging)
-  int mask;                    // mask for system call
-};
-</code></pre><p>通过argint获取到第一个参数，将其赋值给proc的mask成员变量</p>
-<pre tabindex="0"><code>// realize trace
-// save params into struct proc
-uint64
-sys_trace(void)
-{
-  int mask;
-  if (argint(0, &amp;mask) &lt; 0)
-  {
-    return -1;
-  }
-  myproc()-&gt;mask = mask;
-  return 0;
-
-}
-</code></pre><ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Per-process state
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="n">proc</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">struct</span> <span class="n">spinlock</span> <span class="n">lock</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="c1">// p-&gt;lock must be held when using these:
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">enum</span> <span class="n">procstate</span> <span class="n">state</span><span class="p">;</span>        <span class="c1">// Process state
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">struct</span> <span class="n">proc</span> <span class="o">*</span><span class="n">parent</span><span class="p">;</span>         <span class="c1">// Parent process
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="kt">void</span> <span class="o">*</span><span class="n">chan</span><span class="p">;</span>                  <span class="c1">// If non-zero, sleeping on chan
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="kt">int</span> <span class="n">killed</span><span class="p">;</span>                  <span class="c1">// If non-zero, have been killed
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="kt">int</span> <span class="n">xstate</span><span class="p">;</span>                  <span class="c1">// Exit status to be returned to parent&#39;s wait
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="kt">int</span> <span class="n">pid</span><span class="p">;</span>                     <span class="c1">// Process ID
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// these are private to the process, so p-&gt;lock need not be held.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">uint64</span> <span class="n">kstack</span><span class="p">;</span>               <span class="c1">// Virtual address of kernel stack
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">uint64</span> <span class="n">sz</span><span class="p">;</span>                   <span class="c1">// Size of process memory (bytes)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">;</span>       <span class="c1">// User page table
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">struct</span> <span class="n">trapframe</span> <span class="o">*</span><span class="n">trapframe</span><span class="p">;</span> <span class="c1">// data page for trampoline.S
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">struct</span> <span class="n">context</span> <span class="n">context</span><span class="p">;</span>      <span class="c1">// swtch() here to run process
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">ofile</span><span class="p">[</span><span class="n">NOFILE</span><span class="p">];</span>  <span class="c1">// Open files
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">struct</span> <span class="n">inode</span> <span class="o">*</span><span class="n">cwd</span><span class="p">;</span>           <span class="c1">// Current directory
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>               <span class="c1">// Process name (debugging)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="kt">int</span> <span class="n">mask</span><span class="p">;</span>                    <span class="c1">// mask for system call
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">};</span>
+</span></span></code></pre></div><p>通过argint获取到第一个参数，将其赋值给proc的mask成员变量</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// realize trace
+</span></span></span><span class="line"><span class="cl"><span class="c1">// save params into struct proc
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">uint64</span>
+</span></span><span class="line"><span class="cl"><span class="nf">sys_trace</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">int</span> <span class="n">mask</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">if</span> <span class="p">(</span><span class="nf">argint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mask</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">myproc</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><ul>
 <li>修改<code>fork()</code>（请参阅<strong>kernel/proc.c</strong>）将跟踪掩码从父进程复制到子进程。在fork函数中将parent process的mask赋值给child process</li>
 </ul>
-<pre tabindex="0"><code>safestrcpy(np-&gt;name, p-&gt;name, sizeof(p-&gt;name));
-
-  pid = np-&gt;pid;
-
-  np-&gt;state = RUNNABLE;
-
-  np-&gt;mask = p-&gt;mask;
-
-  release(&amp;np-&gt;lock);
-
-  return pid;
-</code></pre><ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">safestrcpy</span><span class="p">(</span><span class="n">np</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="n">pid</span> <span class="o">=</span> <span class="n">np</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="n">np</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">=</span> <span class="n">RUNNABLE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="n">np</span><span class="o">-&gt;</span><span class="n">mask</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">mask</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="nf">release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">np</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="n">pid</span><span class="p">;</span>
+</span></span></code></pre></div><ul>
 <li>
 <p>修改<strong>kernel/syscall.c</strong>中的<code>syscall()</code>函数以打印跟踪输出。您将需要添加一个系统调用名称数组以建立索引。当调用trace的时候才会有mask属性，因此将掩码和系统调用号相与，为1则按要求输出即可。<code>syscall</code>（*<strong>kernel/syscall.c*</strong>:133）从陷阱帧（trapframe）中保存的<code>a7</code>中检索系统调用号（<code>p-&gt;trapframe-&gt;a7</code>），并用它索引到<code>syscalls</code>中，对于第一次系统调用，<code>a7</code>中的内容是<code>SYS_exec</code>（*<strong>kernel/syscall. h*</strong>:8），导致了对系统调用接口函数<code>sys_exec</code>的调用。</p>
 <p>当系统调用接口函数返回时，<code>syscall</code>将其返回值记录在<code>p-&gt;trapframe-&gt;a0</code>中。这将导致原始用户空间对<code>exec()</code>的调用返回该值，因为RISC-V上的C调用约定将返回值放在<code>a0</code>中。系统调用通常返回负数表示错误，返回零或正数表示成功。如果系统调用号无效，<code>syscall</code>打印错误并返回-1</p>
 </li>
 </ul>
-<pre tabindex="0"><code>void
-syscall(void)
-{
-  int num;
-  struct proc *p = myproc();//return current process
-
-  num = p-&gt;trapframe-&gt;a7;//system call number
-  if(num &gt; 0 &amp;&amp; num &lt; NELEM(syscalls) &amp;&amp; syscalls[num]) {
-    p-&gt;trapframe-&gt;a0 = syscalls[num]();//return number,if err return fushu
-    if(1&lt;&lt;num &amp; p-&gt;mask){
-      printf(&#34;%d: syscall %s -&gt; %d\n&#34;,p-&gt;pid,sysname[num],p-&gt;trapframe-&gt;a0);
-    }
-  } else {
-    printf(&#34;%d %s: unknown sys call %d\n&#34;,
-            p-&gt;pid, p-&gt;name, num);
-    p-&gt;trapframe-&gt;a0 = -1;//if syscall number is unknown return -1
-  }
-}
-</code></pre><h3 id="sysinfo">Sysinfo</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">syscall</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">int</span> <span class="n">num</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">struct</span> <span class="n">proc</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nf">myproc</span><span class="p">();</span><span class="c1">//return current process
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">  <span class="n">num</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">trapframe</span><span class="o">-&gt;</span><span class="n">a7</span><span class="p">;</span><span class="c1">//system call number
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">if</span><span class="p">(</span><span class="n">num</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">num</span> <span class="o">&lt;</span> <span class="nf">NELEM</span><span class="p">(</span><span class="n">syscalls</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">syscalls</span><span class="p">[</span><span class="n">num</span><span class="p">])</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">p</span><span class="o">-&gt;</span><span class="n">trapframe</span><span class="o">-&gt;</span><span class="n">a0</span> <span class="o">=</span> <span class="n">syscalls</span><span class="p">[</span><span class="n">num</span><span class="p">]();</span><span class="c1">//return number,if err return fushu
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="mi">1</span><span class="o">&lt;&lt;</span><span class="n">num</span> <span class="o">&amp;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">mask</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%d: syscall %s -&gt; %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span><span class="n">sysname</span><span class="p">[</span><span class="n">num</span><span class="p">],</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">trapframe</span><span class="o">-&gt;</span><span class="n">a0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%d %s: unknown sys call %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="n">p</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">num</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">p</span><span class="o">-&gt;</span><span class="n">trapframe</span><span class="o">-&gt;</span><span class="n">a0</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span><span class="c1">//if syscall number is unknown return -1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="sysinfo">Sysinfo</h3>
 <p>将添加一个系统调用<code>sysinfo</code>，它收集有关正在运行的系统的信息。系统调用采用一个参数：一个指向<code>struct sysinfo</code>的指针（参见<strong>kernel/sysinfo.h</strong>）。内核应该填写这个结构的字段：<code>freemem</code>字段应该设置为空闲内存的字节数，<code>nproc</code>字段应该设置为<code>state</code>字段不为<code>UNUSED</code>的进程数。我们提供了一个测试程序<code>sysinfotest</code>；如果输出“<strong>sysinfotest: OK</strong>”则通过。</p>
 <h4 id="解决步骤-1">解决步骤</h4>
 <ul>
@@ -293,15 +293,15 @@ syscall(void)
 <p>在user/user.h中添加原型</p>
 </li>
 </ul>
-<pre tabindex="0"><code>int sysinfo(int);
-</code></pre><p>添加存根到user/usys.pl</p>
-<pre tabindex="0"><code>entry(&#34;sysinfo&#34;);
-</code></pre><p>添加系统调用号到kernel/syscall.h</p>
-<pre tabindex="0"><code>#define SYS_sysinfo  23
-</code></pre><p>在syscall.c中添加trace相关的定义</p>
-<pre tabindex="0"><code>extern uint64 sys_sysinfo(void);
-[SYS_sysinfo]   sys_sysinfo,
-</code></pre><p>现在make qemu可以通过编译，但是内核中还没有实现系统调用，执行测试trace 32 grep hello README将失败</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">sysinfo</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+</span></span></code></pre></div><p>添加存根到user/usys.pl</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">entry</span><span class="p">(</span><span class="s">&#34;sysinfo&#34;</span><span class="p">);</span>
+</span></span></code></pre></div><p>添加系统调用号到kernel/syscall.h</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#define SYS_sysinfo  23
+</span></span></span></code></pre></div><p>在syscall.c中添加trace相关的定义</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">extern</span> <span class="n">uint64</span> <span class="nf">sys_sysinfo</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">[</span><span class="n">SYS_sysinfo</span><span class="p">]</span>   <span class="n">sys_sysinfo</span><span class="p">,</span>
+</span></span></code></pre></div><p>现在make qemu可以通过编译，但是内核中还没有实现系统调用，执行测试trace 32 grep hello README将失败</p>
 <ul>
 <li><code>sysinfo</code>需要将一个<code>struct sysinfo</code>复制回用户空间；请参阅<code>sys_fstat()</code>(<strong>kernel/sysfile.c</strong>)和<code>filestat()</code>(<strong>kernel/file.c</strong>)以获取如何使用<code>copyout()</code>执行此操作的示例。
 <ul>
@@ -312,67 +312,67 @@ syscall(void)
 </ul>
 </li>
 </ul>
-<pre tabindex="0"><code>// Copy from kernel to user.
-// Copy len bytes from src to virtual address dstva in a given page table.
-// Return 0 on success, -1 on error.
-// int
-// copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
-// {
-uint64
-sys_sysinfo(void)
-{
-  uint64 sysinfo; // user pointer to struct sysinfo
-  // get the address of sysinfo in user space
-  if (argaddr(0, &amp;sysinfo) &lt; 0)
-    return -1;
-  struct proc *p = myproc();
-  //struct sysinfo in kernel
-  struct sysinfo sys_info;
-  //kernel need to fill the struct sysinfo
-
-  //copy the struct sysinfo in kernel to the pointer to sysinfo in user space
-  if (copyout(p-&gt;pagetable, sysinfo, (char *)&amp;sys_info, sizeof(sys_info)) &lt; 0)
-    return -1;
-  return 0;
-}
-</code></pre><ul>
-<li>要获取空闲内存量，请在<strong>kernel/kalloc.c</strong>中添加一个函数。定义一个指针p指向记录空闲内存的链表的表头，每次遍历到一个num就+1，最后返回num*PAGESIZE即可</li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Copy from kernel to user.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Copy len bytes from src to virtual address dstva in a given page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Return 0 on success, -1 on error.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// int
+</span></span></span><span class="line"><span class="cl"><span class="c1">// copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
+</span></span></span><span class="line"><span class="cl"><span class="c1">// {
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">uint64</span>
+</span></span><span class="line"><span class="cl"><span class="nf">sys_sysinfo</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">uint64</span> <span class="n">sysinfo</span><span class="p">;</span> <span class="c1">// user pointer to struct sysinfo
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// get the address of sysinfo in user space
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="nf">argaddr</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sysinfo</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">struct</span> <span class="n">proc</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nf">myproc</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">//struct sysinfo in kernel
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">struct</span> <span class="n">sysinfo</span> <span class="n">sys_info</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">//kernel need to fill the struct sysinfo
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">  <span class="c1">//copy the struct sysinfo in kernel to the pointer to sysinfo in user space
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="nf">copyout</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">sysinfo</span><span class="p">,</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">sys_info</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">sys_info</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><ul>
+<li>要获取空闲内存量，请在<strong>kernel/kalloc.c</strong>中添加一个函数。定义一个指针p指向记录空闲内存的链表的表c头，每次遍历到一个num就+1，最后返回num*PAGESIZE即可</li>
 </ul>
-<pre tabindex="0"><code>uint64
-free_memory(void)
-{
-  struct run *p = kmem.freelist;
-  uint64 num = 0;
-  while (p)
-  {
-    num++;
-    p = p-&gt;next;
-  }
-  return num * PGSIZE;
-}
-</code></pre><ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">uint64</span>
+</span></span><span class="line"><span class="cl"><span class="nf">free_memory</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">struct</span> <span class="n">run</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">kmem</span><span class="p">.</span><span class="n">freelist</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">uint64</span> <span class="n">num</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">while</span> <span class="p">(</span><span class="n">p</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">num</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="n">num</span> <span class="o">*</span> <span class="n">PGSIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><ul>
 <li>要获取进程数，请在<strong>kernel/proc.c</strong>中添加一个函数。遍历proc[NPROC]，如果p的状态为UNUSED就为n加一，最后的n即为空闲的process数量。</li>
 </ul>
-<pre tabindex="0"><code>uint64 free_proc(void)
-{
-  uint64 n = 0;
-  struct proc *p;
-  for (p = proc; p &lt; &amp;proc[NPROC]; p++)
-  {
-    acquire(&amp;p-&gt;lock);
-    if (p-&gt;state != UNUSED)
-      n++;
-    release(&amp;p-&gt;lock);
-  }
-  return n;
-}
-</code></pre><ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">uint64</span> <span class="nf">free_proc</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">uint64</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">struct</span> <span class="n">proc</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">for</span> <span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="n">proc</span><span class="p">;</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="o">&amp;</span><span class="n">proc</span><span class="p">[</span><span class="n">NPROC</span><span class="p">];</span> <span class="n">p</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">acquire</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">!=</span> <span class="n">UNUSED</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">      <span class="n">n</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><ul>
 <li>最后将刚才的sysinfo系统调用补充完整，同时需要在kernel/defs.h添加上刚才所写的两个函数，才可使用。</li>
 </ul>
-<pre tabindex="0"><code> //kernel need to fill the struct sysinfo
-  sys_info.freemem=free_memory();
-  sys_info.nproc=free_proc();
-</code></pre></div><div class="post-footer" id="post-footer">
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"> <span class="c1">//kernel need to fill the struct sysinfo
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">sys_info</span><span class="p">.</span><span class="n">freemem</span><span class="o">=</span><span class="nf">free_memory</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">  <span class="n">sys_info</span><span class="p">.</span><span class="n">nproc</span><span class="o">=</span><span class="nf">free_proc</span><span class="p">();</span>
+</span></span></code></pre></div></div><div class="post-footer" id="post-footer">
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">

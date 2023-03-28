@@ -87,63 +87,63 @@
 <ul>
 <li>可以通过fread和rwrite进行结构体的读写。</li>
 </ul>
-<pre tabindex="0"><code>size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
-size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
-
-
-ptr − This is the pointer to a block of memory with a minimum size of size*nmemb bytes.
-
-size − This is the size in bytes of each element to be read.
-
-nmemb − This is the number of elements, each one with a size of size bytes.
-
-stream − This is the pointer to a FILE object that specifies an input stream.
-</code></pre><p>代码示例</p>
-<pre tabindex="0"><code>#include &lt;stdio.h&gt;
-
-/* 定义结构体, 存储一个字符串和年龄 */
-struct student
-{
-    char name[20];
-    int age;
-};
-
-int main()
-{
-    // 要写入文件的结构体
-    struct student s1 = {&#34;Tom&#34;, 18};
-
-    // 打开要写入的文件
-    FILE *p = fopen(&#34;D:/File/student.dat&#34;, &#34;w&#34;);
-    // 打开失败直接退出
-    if(p == NULL)
-        return 0;
-
-    // 将结构体写出到文件中
-    fwrite(&amp;s1, sizeof (struct student), 1 ,p);
-    // 关闭文件
-    fclose(p);
-    // 读取文件中的结构体
-    // 存储读取到的结构体数据
-    struct student s2 = {0};
-
-    // 打开文件
-    FILE *p2 = fopen(&#34;D:/File/student.dat&#34;, &#34;r&#34;);
-    // 如果打开失败, 退出
-    if(p2 == NULL)
-        return 0;
-
-    // 从文件中读取结构体信息
-    fread(&amp;s2, sizeof (struct student), 1 ,p2);
-    // 关闭文件
-    fclose(p2);
-
-    // 打印数据
-    printf(&#34;student : name=%s, age=%d\n&#34;, s2.name, s2.age);
-
-    return 0;
-}
-</code></pre><h2 id="kernel">kernel</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">size_t</span> <span class="nf">fread</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nmemb</span><span class="p">,</span> <span class="n">FILE</span> <span class="o">*</span><span class="n">stream</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="kt">size_t</span> <span class="nf">fread</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nmemb</span><span class="p">,</span> <span class="n">FILE</span> <span class="o">*</span><span class="n">stream</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">ptr</span> <span class="err">−</span> <span class="n">This</span> <span class="n">is</span> <span class="n">the</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">a</span> <span class="n">block</span> <span class="n">of</span> <span class="n">memory</span> <span class="n">with</span> <span class="n">a</span> <span class="n">minimum</span> <span class="n">size</span> <span class="n">of</span> <span class="n">size</span><span class="o">*</span><span class="n">nmemb</span> <span class="n">bytes</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">size</span> <span class="err">−</span> <span class="n">This</span> <span class="n">is</span> <span class="n">the</span> <span class="n">size</span> <span class="n">in</span> <span class="n">bytes</span> <span class="n">of</span> <span class="n">each</span> <span class="n">element</span> <span class="n">to</span> <span class="n">be</span> <span class="n">read</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">nmemb</span> <span class="err">−</span> <span class="n">This</span> <span class="n">is</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">elements</span><span class="p">,</span> <span class="n">each</span> <span class="n">one</span> <span class="n">with</span> <span class="n">a</span> <span class="n">size</span> <span class="n">of</span> <span class="n">size</span> <span class="n">bytes</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">stream</span> <span class="err">−</span> <span class="n">This</span> <span class="n">is</span> <span class="n">the</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">a</span> <span class="n">FILE</span> <span class="n">object</span> <span class="n">that</span> <span class="n">specifies</span> <span class="n">an</span> <span class="n">input</span> <span class="n">stream</span><span class="p">.</span>
+</span></span></code></pre></div><p>代码示例</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cm">/* 定义结构体, 存储一个字符串和年龄 */</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">student</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">age</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 要写入文件的结构体
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">student</span> <span class="n">s1</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#34;Tom&#34;</span><span class="p">,</span> <span class="mi">18</span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 打开要写入的文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">FILE</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nf">fopen</span><span class="p">(</span><span class="s">&#34;D:/File/student.dat&#34;</span><span class="p">,</span> <span class="s">&#34;w&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 打开失败直接退出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">p</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 将结构体写出到文件中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">fwrite</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s1</span><span class="p">,</span> <span class="k">sizeof</span> <span class="p">(</span><span class="k">struct</span> <span class="n">student</span><span class="p">),</span> <span class="mi">1</span> <span class="p">,</span><span class="n">p</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 关闭文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">fclose</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 读取文件中的结构体
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 存储读取到的结构体数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">student</span> <span class="n">s2</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 打开文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">FILE</span> <span class="o">*</span><span class="n">p2</span> <span class="o">=</span> <span class="nf">fopen</span><span class="p">(</span><span class="s">&#34;D:/File/student.dat&#34;</span><span class="p">,</span> <span class="s">&#34;r&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果打开失败, 退出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">p2</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 从文件中读取结构体信息
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">fread</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s2</span><span class="p">,</span> <span class="k">sizeof</span> <span class="p">(</span><span class="k">struct</span> <span class="n">student</span><span class="p">),</span> <span class="mi">1</span> <span class="p">,</span><span class="n">p2</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 关闭文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">fclose</span><span class="p">(</span><span class="n">p2</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 打印数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;student : name=%s, age=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">s2</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">s2</span><span class="p">.</span><span class="n">age</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="kernel">kernel</h2>
 <ul>
 <li>
 <p>kernel中并不像user space中那么简单。</p>
@@ -151,8 +151,8 @@ int main()
 <li>
 <p>打开文件</p>
 <p>filp_open()在kernel中可以打开文件，其原形如下：</p>
-<pre tabindex="0"><code>strcut file* filp_open(const char* filename, int open_mode, int mode);
-</code></pre><p>该函数返回strcut file*结构指针，供后继函数操作使用，该返回值用IS_ERR()来检验其有效性。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">strcut</span> <span class="n">file</span><span class="o">*</span> <span class="nf">filp_open</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">int</span> <span class="n">open_mode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">mode</span><span class="p">);</span>
+</span></span></code></pre></div><p>该函数返回strcut file*结构指针，供后继函数操作使用，该返回值用IS_ERR()来检验其有效性。</p>
 <p>参数说明</p>
 <p>filename： 表明要打开或创建文件的名称(包括路径部分)。在内核中打开的文件时需要注意打开的时机，很容易出现需要打开文件的驱动很早就加载并打开文件，但需要打开的文件所在设备还不有挂载到文件系统中，而导致打开失败。</p>
 <p>open_mode： 文件的打开方式，其取值与标准库中的open相应参数类似，可以取O_CREAT,O_RDWR,O_RDONLY等。</p>
@@ -162,63 +162,63 @@ int main()
 <p>读写文件</p>
 <p>kernel中文件的读写操作可以使用vfs_read()和vfs_write，在使用这两个函数前需要说明一下get_fs()和 set_fs()这两个函数。</p>
 <p>vfs_read() vfs_write()两函数的原形如下：</p>
-<pre tabindex="0"><code>ssize_t vfs_read(struct file* filp, char __user* buffer, size_t len, loff_t* pos);
-
-ssize_t vfs_write(struct file* filp, const char __user* buffer, size_t len, loff_t* pos);
-</code></pre><p>注意这两个函数的第二个参数buffer，前面都有__user修饰符，这就要求这两个buffer指针都应该指向用空的内存，如果对该参数传递kernel空间的指针，这两个函数都会返回失败-EFAULT。但在Kernel中，我们一般不容易生成用户空间的指针，或者不方便独立使用用户空间内存。要使这两个读写函数使用kernel空间的buffer指针也能正确工作，需要使用set_fs()函数或宏(set_fs()可能是宏定义)，如果为函数，其原形如下：</p>
-<pre tabindex="0"><code>void set_fs(mm_segment_t fs);
-</code></pre><p>该函数的作用是改变kernel对内存地址检查的处理方式，其实该函数的参数fs只有两个取值：USER_DS，KERNEL_DS，分别代表用户空间和内核空间，默认情况下，kernel取值为USER_DS，即对用户空间地址检查并做变换。那么要在这种对内存地址做检查变换的函数中使用内核空间地址，就需要使用set_fs(KERNEL_DS)进行设置。get_fs()一般也可能是宏定义，它的作用是取得当前的设置，这两个函数的一般用法为：</p>
-<pre tabindex="0"><code>　mm_segment_t old_fs;
-
-　old_fs = get_fs();
-
-　set_fs(KERNEL_DS);
-
-　...... //与内存有关的操作
-
-　set_fs(old_fs);
-</code></pre><p>还有一些其它的内核函数也有用__user修饰的参数，在kernel中需要用kernel空间的内存代替时，都可以使用类似办法。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">vfs_read</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="o">*</span> <span class="n">filp</span><span class="p">,</span> <span class="kt">char</span> <span class="n">__user</span><span class="o">*</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">loff_t</span><span class="o">*</span> <span class="n">pos</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">vfs_write</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="o">*</span> <span class="n">filp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">__user</span><span class="o">*</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">loff_t</span><span class="o">*</span> <span class="n">pos</span><span class="p">);</span>
+</span></span></code></pre></div><p>注意这两个函数的第二个参数buffer，前面都有__user修饰符，这就要求这两个buffer指针都应该指向用空的内存，如果对该参数传递kernel空间的指针，这两个函数都会返回失败-EFAULT。但在Kernel中，我们一般不容易生成用户空间的指针，或者不方便独立使用用户空间内存。要使这两个读写函数使用kernel空间的buffer指针也能正确工作，需要使用set_fs()函数或宏(set_fs()可能是宏定义)，如果为函数，其原形如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">set_fs</span><span class="p">(</span><span class="kt">mm_segment_t</span> <span class="n">fs</span><span class="p">);</span><span class="n">c</span>
+</span></span></code></pre></div><p>该函数的作用是改变kernel对内存地址检查的处理方式，其实该函数的参数fs只有两个取值：USER_DS，KERNEL_DS，分别代表用户空间和内核空间，默认情况下，kernel取值为USER_DS，即对用户空间地址检查并做变换。那么要在这种对内存地址做检查变换的函数中使用内核空间地址，就需要使用set_fs(KERNEL_DS)进行设置。get_fs()一般也可能是宏定义，它的作用是取得当前的设置，这两个函数的一般用法为：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="err">　</span><span class="kt">mm_segment_t</span> <span class="n">old_fs</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="err">　</span><span class="n">old_fs</span> <span class="o">=</span> <span class="nf">get_fs</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="err">　</span><span class="nf">set_fs</span><span class="p">(</span><span class="n">KERNEL_DS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="err">　</span><span class="p">......</span> <span class="c1">//与内存有关的操作
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="err">　</span><span class="nf">set_fs</span><span class="p">(</span><span class="n">old_fs</span><span class="p">);</span>
+</span></span></code></pre></div><p>还有一些其它的内核函数也有用__user修饰的参数，在kernel中需要用kernel空间的内存代替时，都可以使用类似办法。</p>
 <p>使用vfs_read()和vfs_write()最后需要注意的一点是最后的参数loff_t * pos，pos所指向的值要初始化，表明从文件的什么地方开始读写。</p>
 <p>在新版的kernel中，通过kernel_read和kernel_write封装上述烦琐的过程。</p>
-<pre tabindex="0"><code>798 int kernel_read(struct file *file, loff_t offset,
-799                 char *addr, unsigned long count)
-800 {
-801         mm_segment_t old_fs;
-802         loff_t pos = offset;
-803         int result;
-804 
-805         old_fs = get_fs();
-806         set_fs(get_ds());
-807         /* The cast to a user pointer is valid due to the set_fs() */
-808         result = vfs_read(file, (void __user *)addr, count, &amp;pos);
-809         set_fs(old_fs);
-810         return result;
-811 }
-812 
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="mi">798</span> <span class="kt">int</span> <span class="nf">kernel_read</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">loff_t</span> <span class="n">offset</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="mi">799</span>                 <span class="kt">char</span> <span class="o">*</span><span class="n">addr</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">count</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="mi">800</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="mi">801</span>         <span class="kt">mm_segment_t</span> <span class="n">old_fs</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="mi">802</span>         <span class="kt">loff_t</span> <span class="n">pos</span> <span class="o">=</span> <span class="n">offset</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="mi">803</span>         <span class="kt">int</span> <span class="n">result</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="mi">804</span> 
+</span></span><span class="line"><span class="cl"><span class="mi">805</span>         <span class="n">old_fs</span> <span class="o">=</span> <span class="nf">get_fs</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="mi">806</span>         <span class="nf">set_fs</span><span class="p">(</span><span class="nf">get_ds</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="mi">807</span>         <span class="cm">/* The cast to a user pointer is valid due to the set_fs() */</span>
+</span></span><span class="line"><span class="cl"><span class="mi">808</span>         <span class="n">result</span> <span class="o">=</span> <span class="nf">vfs_read</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">addr</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pos</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="mi">809</span>         <span class="nf">set_fs</span><span class="p">(</span><span class="n">old_fs</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="mi">810</span>         <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="mi">811</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="mi">812</span> 
+</span></span></code></pre></div></li>
 <li>
 <p>在将结构体写入文件时，由于指针所指向的空间已经被内容填充，直接调用函数即可。</p>
-<pre tabindex="0"><code>writefile = filp_open(&#34;~/Desktop/file_and_path.txt&#34;, O_RDWR | O_APPEND | O_CREAT, 0);
-if (IS_ERR(writefile))
-    {
-        printk(KERN_ERR &#34;open dir %s error.\n&#34;, path);
-        return -1;
-    }
-kernel_write(writefile, file, sizeof(struct file), &amp;wpos);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">writefile</span> <span class="o">=</span> <span class="nf">filp_open</span><span class="p">(</span><span class="s">&#34;~/Desktop/file_and_path.txt&#34;</span><span class="p">,</span> <span class="n">O_RDWR</span> <span class="o">|</span> <span class="n">O_APPEND</span> <span class="o">|</span> <span class="n">O_CREAT</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">IS_ERR</span><span class="p">(</span><span class="n">writefile</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printk</span><span class="p">(</span><span class="n">KERN_ERR</span> <span class="s">&#34;open dir %s error.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">path</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nf">kernel_write</span><span class="p">(</span><span class="n">writefile</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">wpos</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>在读入文件时，定义读入的指针时需要通过kmalloc分配空间，否则会出现空指针的BUG。</p>
-<pre tabindex="0"><code>struct file *readfile = NULL;
-struct file *testfile = kmalloc(sizeof(struct file), GFP_KERNEL);
-loff_t rpos = 0;
-readfile = filp_open(&#34;/home/zxj/Desktop/file_and_path.txt&#34;, O_RDWR | O_CREAT, 0);
-if (IS_ERR(readfile))
-    {
-        printk(KERN_ERR &#34;open dir %s error.\n&#34;, path);
-        return -1;
-    }
-kernel_read(readfile, testfile, sizeof(struct file), &amp;rpos);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">readfile</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">testfile</span> <span class="o">=</span> <span class="nf">kmalloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="p">),</span> <span class="n">GFP_KERNEL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">loff_t</span> <span class="n">rpos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">readfile</span> <span class="o">=</span> <span class="nf">filp_open</span><span class="p">(</span><span class="s">&#34;/home/zxj/Desktop/file_and_path.txt&#34;</span><span class="p">,</span> <span class="n">O_RDWR</span> <span class="o">|</span> <span class="n">O_CREAT</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">IS_ERR</span><span class="p">(</span><span class="n">readfile</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printk</span><span class="p">(</span><span class="n">KERN_ERR</span> <span class="s">&#34;open dir %s error.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">path</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nf">kernel_read</span><span class="p">(</span><span class="n">readfile</span><span class="p">,</span> <span class="n">testfile</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">rpos</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 </ul>
 </div><div class="post-footer" id="post-footer">
     <div class="post-info">

@@ -365,67 +365,67 @@ discovery模块：提供基于COAP协议的设备发现机制 connection模块�
 <ol>
 <li>
 <p>上层应用需要对外发布自身能力时，调用服务发布接口发布自身能力。foundation/communication/dsoftbus/interfaces/kits/discovery/discovery_service.h</p>
-<pre tabindex="0"><code> // 发布回调
-    typedef struct {
-        void (*OnPublishSuccess)(int publishId); //发布成功时回调
-        void (*OnPublishFail)(int publishId, PublishFailReason reason);//发布失败时回调
-    } IPublishCallback;
-
-    // 发布服务
-    int PublishService(const char *pkgName, const PublishInfo *info, const IPublishCallback *cb);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"> <span class="c1">// 发布回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnPublishSuccess</span><span class="p">)(</span><span class="kt">int</span> <span class="n">publishId</span><span class="p">);</span> <span class="c1">//发布成功时回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnPublishFail</span><span class="p">)(</span><span class="kt">int</span> <span class="n">publishId</span><span class="p">,</span> <span class="n">PublishFailReason</span> <span class="n">reason</span><span class="p">);</span><span class="c1">//发布失败时回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span> <span class="n">IPublishCallback</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 发布服务
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">int</span> <span class="nf">PublishService</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="k">const</span> <span class="n">PublishInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">,</span> <span class="k">const</span> <span class="n">IPublishCallback</span> <span class="o">*</span><span class="n">cb</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>PublishService实现中会先去检查参数是否合法，均为合法后调用PublishServiceInner()函数</p>
-<pre tabindex="0"><code>int32_t PublishServiceInner(const char *packageName, const PublishInfo *info, const IPublishCallback *cb)
-{
-    g_discInfo-&gt;publishCb = *cb;
-
-    int32_t ret = ServerIpcPublishService(packageName, info);
-    if (ret != SOFTBUS_OK) {
-        SoftBusLog(SOFTBUS_LOG_DISC, SOFTBUS_LOG_ERROR, &#34;Server PublishService failed, ret = %d&#34;, ret);
-        return ret;
-    }
-
-    return SOFTBUS_OK;
-}
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int32_t</span> <span class="nf">PublishServiceInner</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">packageName</span><span class="p">,</span> <span class="k">const</span> <span class="n">PublishInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">,</span> <span class="k">const</span> <span class="n">IPublishCallback</span> <span class="o">*</span><span class="n">cb</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">g_discInfo</span><span class="o">-&gt;</span><span class="n">publishCb</span> <span class="o">=</span> <span class="o">*</span><span class="n">cb</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">int32_t</span> <span class="n">ret</span> <span class="o">=</span> <span class="nf">ServerIpcPublishService</span><span class="p">(</span><span class="n">packageName</span><span class="p">,</span> <span class="n">info</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">!=</span> <span class="n">SOFTBUS_OK</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">SoftBusLog</span><span class="p">(</span><span class="n">SOFTBUS_LOG_DISC</span><span class="p">,</span> <span class="n">SOFTBUS_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;Server PublishService failed, ret = %d&#34;</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">SOFTBUS_OK</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div></li>
 <li>
 <p>在PublishServiceInner()函数中接着调用ServerIpcPublishService()函数继续去判断参数</p>
-<pre tabindex="0"><code>int32_t ServerIpcPublishService(const char *pkgName, const PublishInfo *info)
-{
-    return DiscIpcPublishService(pkgName, info);
-}
-
-int32_t DiscIpcPublishService(const char *packageName, const PublishInfo *info)
-{
-    int32_t ret = DiscPublishService(packageName, info);
-    if (ret != SOFTBUS_OK) {
-        SoftBusLog(SOFTBUS_LOG_DISC, SOFTBUS_LOG_ERROR, &#34;ServerPublishService failed&#34;);
-        (void)ClientIpcOnPublishFail(packageName, info-&gt;publishId, PublishErroCodeProcess(ret));
-        return ret;
-    }
-    SoftBusLog(SOFTBUS_LOG_DISC, SOFTBUS_LOG_INFO, &#34;ServerPublishService success!&#34;);
-    (void)ClientIpcOnPublishSuccess(packageName, info-&gt;publishId);
-    return SOFTBUS_OK;
-}
-
-int32_t ClientIpcOnPublishSuccess(const char *pkgName, int publishId)
-{
-    sptr&lt;DiscClientProxy&gt; clientProxy = GetClientProxy(pkgName);
-    if (clientProxy == nullptr) {
-        SoftBusLog(SOFTBUS_LOG_DISC, SOFTBUS_LOG_ERROR, &#34;softbus client proxy is nullptr!\n&#34;);
-        return SOFTBUS_ERR;
-    }
-    clientProxy-&gt;OnPublishSuccess(publishId);
-    return SOFTBUS_OK;
-}
-</code></pre><p>在DiscIpcPublishService()函数中会去判断发布是否成功，根据结果选择最后的回调函数</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int32_t</span> <span class="nf">ServerIpcPublishService</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="k">const</span> <span class="n">PublishInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nf">DiscIpcPublishService</span><span class="p">(</span><span class="n">pkgName</span><span class="p">,</span> <span class="n">info</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int32_t</span> <span class="nf">DiscIpcPublishService</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">packageName</span><span class="p">,</span> <span class="k">const</span> <span class="n">PublishInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int32_t</span> <span class="n">ret</span> <span class="o">=</span> <span class="nf">DiscPublishService</span><span class="p">(</span><span class="n">packageName</span><span class="p">,</span> <span class="n">info</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">!=</span> <span class="n">SOFTBUS_OK</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">SoftBusLog</span><span class="p">(</span><span class="n">SOFTBUS_LOG_DISC</span><span class="p">,</span> <span class="n">SOFTBUS_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;ServerPublishService failed&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">ClientIpcOnPublishFail</span><span class="p">(</span><span class="n">packageName</span><span class="p">,</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">publishId</span><span class="p">,</span> <span class="nf">PublishErroCodeProcess</span><span class="p">(</span><span class="n">ret</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SoftBusLog</span><span class="p">(</span><span class="n">SOFTBUS_LOG_DISC</span><span class="p">,</span> <span class="n">SOFTBUS_LOG_INFO</span><span class="p">,</span> <span class="s">&#34;ServerPublishService success!&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">ClientIpcOnPublishSuccess</span><span class="p">(</span><span class="n">packageName</span><span class="p">,</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">publishId</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">SOFTBUS_OK</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int32_t</span> <span class="nf">ClientIpcOnPublishSuccess</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="kt">int</span> <span class="n">publishId</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sptr</span><span class="o">&lt;</span><span class="n">DiscClientProxy</span><span class="o">&gt;</span> <span class="n">clientProxy</span> <span class="o">=</span> <span class="nf">GetClientProxy</span><span class="p">(</span><span class="n">pkgName</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">clientProxy</span> <span class="o">==</span> <span class="n">nullptr</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">SoftBusLog</span><span class="p">(</span><span class="n">SOFTBUS_LOG_DISC</span><span class="p">,</span> <span class="n">SOFTBUS_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;softbus client proxy is nullptr!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">SOFTBUS_ERR</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">clientProxy</span><span class="o">-&gt;</span><span class="nf">OnPublishSuccess</span><span class="p">(</span><span class="n">publishId</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">SOFTBUS_OK</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>在DiscIpcPublishService()函数中会去判断发布是否成功，根据结果选择最后的回调函数</p>
 </li>
 <li>
 <p>上层应用不再需要对外发布自身能力时，调用UnpublishService接口注销服务。</p>
-<pre tabindex="0"><code>// 注销服务
-    int UnPublishService(const char *pkgName, int publishId);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 注销服务
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">int</span> <span class="nf">UnPublishService</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="kt">int</span> <span class="n">publishId</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 </ol>
 <ul>
 <li><strong>发现流程</strong></li>
@@ -434,63 +434,63 @@ int32_t ClientIpcOnPublishSuccess(const char *pkgName, int publishId)
 <li>
 <p>上层应用需要发现特定能力设备时，调用发现接口启动发现。</p>
 <p>foundation/communication/dsoftbus/interfaces/kits/discovery/discovery_service.h</p>
-<pre tabindex="0"><code>// 发现回调
-    typedef struct {
-        void (*OnDeviceFound)(const DeviceInfo *device); //发现设备回调
-        void (*OnDiscoverFailed)(int subscribeId, DiscoveryFailReason failReason); //启动发现失败回调
-        void (*OnDiscoverySuccess)(int subscribeId); //启动发现成功回调
-    } IDiscoveryCallback;
-
-    // 发现服务
-    int StartDiscovery(const char *pkgName, const SubscribeInfo *info, const IDiscoveryCallback *cb);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 发现回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnDeviceFound</span><span class="p">)(</span><span class="k">const</span> <span class="n">DeviceInfo</span> <span class="o">*</span><span class="n">device</span><span class="p">);</span> <span class="c1">//发现设备回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnDiscoverFailed</span><span class="p">)(</span><span class="kt">int</span> <span class="n">subscribeId</span><span class="p">,</span> <span class="n">DiscoveryFailReason</span> <span class="n">failReason</span><span class="p">);</span> <span class="c1">//启动发现失败回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnDiscoverySuccess</span><span class="p">)(</span><span class="kt">int</span> <span class="n">subscribeId</span><span class="p">);</span> <span class="c1">//启动发现成功回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span> <span class="n">IDiscoveryCallback</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 发现服务
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">int</span> <span class="nf">StartDiscovery</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="k">const</span> <span class="n">SubscribeInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">,</span> <span class="k">const</span> <span class="n">IDiscoveryCallback</span> <span class="o">*</span><span class="n">cb</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>当软总线发现到设备时，通过回调接口通知业务所发现的设备信息。</p>
 </li>
 <li>
 <p>上层应用不再需要发现时，调用StopRefreshLNN接口停止设备发现。</p>
-<pre tabindex="0"><code>// 停止服务
-int StopDiscovery(const char *pkgName, int subscribeId);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 停止服务
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">StopDiscovery</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="kt">int</span> <span class="n">subscribeId</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 </ol>
 <h3 id="42组网">4.2	组网</h3>
 <ol>
 <li>
 <p>发起组网请求，携带组网连接地址信息，并且提供组网执行结果回调函数。foundation/communication/dsoftbus/interfaces/kits/bus_center/softbus_bus_center.h</p>
-<pre tabindex="0"><code>// 组网连接地址
-typedef struct {
-    ConnectionAddrType type;
-    union {
-        struct BrAddr {
-            char brMac[BT_MAC_LEN];
-        } br;
-        struct BleAddr {
-            char bleMac[BT_MAC_LEN];
-            uint8_t udidHash[UDID_HASH_LEN];
-        } ble;
-        struct IpAddr {
-            char ip[IP_STR_MAX_LEN];
-            uint16_t port; 
-        } ip;
-    } info;
-    char peerUid[MAX_ACCOUNT_HASH_LEN];
-} ConnectionAddr;
-
-// 组网连接地址类型
-typedef enum {
-    CONNECTION_ADDR_WLAN = 0,
-    CONNECTION_ADDR_BR,
-    CONNECTION_ADDR_BLE,
-    CONNECTION_ADDR_ETH,
-    CONNECTION_ADDR_MAX
-} ConnectionAddrType;
-
-// 组网请求执行结果回调
-typedef void (*OnJoinLNNResult)(ConnectionAddr *addr, const char *networkId, int32_t retCode);
-
-// 发起组网请求
-int32_t JoinLNN(const char *pkgName, ConnectionAddr *target, OnJoinLNNResult cb);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 组网连接地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ConnectionAddrType</span> <span class="n">type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">union</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">struct</span> <span class="n">BrAddr</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="kt">char</span> <span class="n">brMac</span><span class="p">[</span><span class="n">BT_MAC_LEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="n">br</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">struct</span> <span class="n">BleAddr</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="kt">char</span> <span class="n">bleMac</span><span class="p">[</span><span class="n">BT_MAC_LEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">            <span class="kt">uint8_t</span> <span class="n">udidHash</span><span class="p">[</span><span class="n">UDID_HASH_LEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="n">ble</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">struct</span> <span class="n">IpAddr</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="kt">char</span> <span class="n">ip</span><span class="p">[</span><span class="n">IP_STR_MAX_LEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">            <span class="kt">uint16_t</span> <span class="n">port</span><span class="p">;</span> 
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="n">ip</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="n">info</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">peerUid</span><span class="p">[</span><span class="n">MAX_ACCOUNT_HASH_LEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">ConnectionAddr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 组网连接地址类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CONNECTION_ADDR_WLAN</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CONNECTION_ADDR_BR</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CONNECTION_ADDR_BLE</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CONNECTION_ADDR_ETH</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CONNECTION_ADDR_MAX</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">ConnectionAddrType</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 组网请求执行结果回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="nf">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnJoinLNNResult</span><span class="p">)(</span><span class="n">ConnectionAddr</span> <span class="o">*</span><span class="n">addr</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">networkId</span><span class="p">,</span> <span class="kt">int32_t</span> <span class="n">retCode</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 发起组网请求
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">JoinLNN</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="n">ConnectionAddr</span> <span class="o">*</span><span class="n">target</span><span class="p">,</span> <span class="n">OnJoinLNNResult</span> <span class="n">cb</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>等待组网结果，JoinLNN()返回成功表示软总线接受了组网请求，组网结果通过回调函数通知业务；组网回调函数中addr参数内容和JoinLNN()的入参互相匹配；retCode如果为0，表示组网成功，此时networkId为有效值，后续传输、退网等接口均需使用该参数；retCode如果不为0，表示组网失败，此时networkId为无效值。</p>
 </li>
@@ -499,113 +499,113 @@ int32_t JoinLNN(const char *pkgName, ConnectionAddr *target, OnJoinLNNResult cb)
 </li>
 <li>
 <p>发送退网请求，携带组网成功后返回的networkId，并且提供退网执行结果回调。</p>
-<pre tabindex="0"><code>// 退网执行结果回调
-typedef void (*OnLeaveLNNResult)(const char *networkId, int32_t retCode);
-
-// 退网请求
-int32_t LeaveLNN(const char *pkgName, const char *networkId, OnLeaveLNNResult cb);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 退网执行结果回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="nf">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnLeaveLNNResult</span><span class="p">)(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">networkId</span><span class="p">,</span> <span class="kt">int32_t</span> <span class="n">retCode</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 退网请求
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">LeaveLNN</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">networkId</span><span class="p">,</span> <span class="n">OnLeaveLNNResult</span> <span class="n">cb</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>等待退网完成，OnLeaveLNNResult()的networkId和退网请求接口中的networkId互相匹配；retCode为0表示退网成功，否则退网失败。退网成功后，networkId变为无效值，后续不应该被继续使用。</p>
 </li>
 <li>
 <p>使用节点（即设备）注册和注销接口，监听网络中节点状态变化等事件。</p>
-<pre tabindex="0"><code>// 事件掩码
-#define EVENT_NODE_STATE_ONLINE 0x1
-#define EVENT_NODE_STATE_OFFLINE 0x02
-#define EVENT_NODE_STATE_INFO_CHANGED 0x04
-#define EVENT_NODE_STATUS_CHANGED 0x08
-#define EVENT_NODE_STATE_MASK 0x15
-
-// 节点信息
-typedef struct {
-    char networkId[NETWORK_ID_BUF_LEN];
-    char deviceName[DEVICE_NAME_BUF_LEN];
-    uint16_t deviceTypeId;
-} NodeBasicInfo;
-
-// 节点状态事件回调
-typedef struct {
-    uint32_t events; // 组网事件掩码
-    void (*onNodeOnline)(NodeBasicInfo *info);   // 节点上线事件回调
-    void (*onNodeOffline)(NodeBasicInfo *info);  // 节点下线事件回调
-    void (*onNodeBasicInfoChanged)(NodeBasicInfoType type, NodeBasicInfo *info); // 节点信息变化事件回调
-    void (*onNodeStatusChanged)(NodeStatusType type, NodeStatus *status); // 设备运行状态变化事件回调
-} INodeStateCb;
-
-//  注册节点状态事件回调
-int32_t RegNodeDeviceStateCb(const char *pkgName, INodeStateCb *callback);
-
-// 注销节点状态事件回调
-int32_t UnregNodeDeviceStateCb(INodeStateCb *callback);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 事件掩码
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="cp">#define EVENT_NODE_STATE_ONLINE 0x1
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define EVENT_NODE_STATE_OFFLINE 0x02
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define EVENT_NODE_STATE_INFO_CHANGED 0x04
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define EVENT_NODE_STATUS_CHANGED 0x08
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define EVENT_NODE_STATE_MASK 0x15
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 节点信息
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">networkId</span><span class="p">[</span><span class="n">NETWORK_ID_BUF_LEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">deviceName</span><span class="p">[</span><span class="n">DEVICE_NAME_BUF_LEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint16_t</span> <span class="n">deviceTypeId</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">NodeBasicInfo</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 节点状态事件回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint32_t</span> <span class="n">events</span><span class="p">;</span> <span class="c1">// 组网事件掩码
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">onNodeOnline</span><span class="p">)(</span><span class="n">NodeBasicInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">);</span>   <span class="c1">// 节点上线事件回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">onNodeOffline</span><span class="p">)(</span><span class="n">NodeBasicInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">);</span>  <span class="c1">// 节点下线事件回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">onNodeBasicInfoChanged</span><span class="p">)(</span><span class="n">NodeBasicInfoType</span> <span class="n">type</span><span class="p">,</span> <span class="n">NodeBasicInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">);</span> <span class="c1">// 节点信息变化事件回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">onNodeStatusChanged</span><span class="p">)(</span><span class="n">NodeStatusType</span> <span class="n">type</span><span class="p">,</span> <span class="n">NodeStatus</span> <span class="o">*</span><span class="n">status</span><span class="p">);</span> <span class="c1">// 设备运行状态变化事件回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span> <span class="n">INodeStateCb</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">//  注册节点状态事件回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">RegNodeDeviceStateCb</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="n">INodeStateCb</span> <span class="o">*</span><span class="n">callback</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 注销节点状态事件回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">UnregNodeDeviceStateCb</span><span class="p">(</span><span class="n">INodeStateCb</span> <span class="o">*</span><span class="n">callback</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 </ol>
 <h3 id="43传输">4.3	传输</h3>
 <ol>
 <li>
 <p>创建会话服务，并设置会话相关回调，用户可在回调中处理打开/关闭和消息接收事件。</p>
-<pre tabindex="0"><code>// 会话管理回调
-typedef struct {
-    int (*OnSessionOpened)(int sessionId, int result);
-    void (*OnSessionClosed)(int sessionId);
-    void (*OnBytesReceived)(int sessionId, const void *data, unsigned int dataLen);
-    void (*OnMessageReceived)(int sessionId, const void *data, unsigned int dataLen);
-    void (*OnStreamReceived)(int sessionId, const StreamData *data, const StreamData *ext, const StreamFrameInfo *param);
-    void (*OnQosEvent)(int sessionId, int eventId, int tvCount, const QosTv *tvList);
-} ISessionListener;
-
-// 创建会话服务
-int CreateSessionServer(const char *pkgName, const char *sessionName, const ISessionListener* listener);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 会话管理回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">OnSessionOpened</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="kt">int</span> <span class="n">result</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnSessionClosed</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnBytesReceived</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">dataLen</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnMessageReceived</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">dataLen</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnStreamReceived</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="n">StreamData</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="k">const</span> <span class="n">StreamData</span> <span class="o">*</span><span class="n">ext</span><span class="p">,</span> <span class="k">const</span> <span class="n">StreamFrameInfo</span> <span class="o">*</span><span class="n">param</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnQosEvent</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="kt">int</span> <span class="n">eventId</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tvCount</span><span class="p">,</span> <span class="k">const</span> <span class="n">QosTv</span> <span class="o">*</span><span class="n">tvList</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">ISessionListener</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 创建会话服务
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">CreateSessionServer</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sessionName</span><span class="p">,</span> <span class="k">const</span> <span class="n">ISessionListener</span><span class="o">*</span> <span class="n">listener</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>[可选] 如果需要完成文件的发送和接收，可以注册文件传输回调， 用户可在回调中处理文件发送/接收事件。</p>
-<pre tabindex="0"><code>// 文件发送回调
-typedef struct {
-    int (*OnSendFileProcess)(int sessionId, uint64_t bytesUpload, uint64_t bytesTotal);
-    int (*OnSendFileFinished)(int sessionId, const char *firstFile);
-    void (*OnFileTransError)(int sessionId);
-} IFileSendListener;
-
-// 注册文件发送回调
-int SetFileSendListener(const char *pkgName, const char *sessionName, const IFileSendListener *sendListener);
-
-// 文件接收回调
-typedef struct {
-    int (*OnReceiveFileStarted)(int sessionId, const char *files, int fileCnt);
-    int (*OnReceiveFileProcess)(int sessionId, const char *firstFile, uint64_t bytesUpload, uint64_t bytesTotal);
-    void (*OnReceiveFileFinished)(int sessionId, const char *files, int fileCnt);
-    void (*OnFileTransError)(int sessionId);
-} IFileReceiveListener;
-
-// 注册文件接收回调
-int SetFileReceiveListener(const char *pkgName, const char *sessionName,const IFileReceiveListener *recvListener, const char *rootDir);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 文件发送回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">OnSendFileProcess</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">bytesUpload</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">bytesTotal</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">OnSendFileFinished</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">firstFile</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnFileTransError</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">IFileSendListener</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 注册文件发送回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">SetFileSendListener</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sessionName</span><span class="p">,</span> <span class="k">const</span> <span class="n">IFileSendListener</span> <span class="o">*</span><span class="n">sendListener</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 文件接收回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">OnReceiveFileStarted</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">files</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fileCnt</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">OnReceiveFileProcess</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">firstFile</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">bytesUpload</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">bytesTotal</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnReceiveFileFinished</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">files</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fileCnt</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">OnFileTransError</span><span class="p">)(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">IFileReceiveListener</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 注册文件接收回调
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">SetFileReceiveListener</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sessionName</span><span class="p">,</span><span class="k">const</span> <span class="n">IFileReceiveListener</span> <span class="o">*</span><span class="n">recvListener</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">rootDir</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>创建会话 ，用于收发数据。</p>
-<pre tabindex="0"><code>// 创建会话
-int OpenSession(const char *mySessionName, const char *peerSessionName, const char *peerNetworkId, const char *groupId, const SessionAttribute* attr);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 创建会话
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">OpenSession</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">mySessionName</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">peerSessionName</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">peerNetworkId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">groupId</span><span class="p">,</span> <span class="k">const</span> <span class="n">SessionAttribute</span><span class="o">*</span> <span class="n">attr</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>通过sessionId向对端设备发送数据。</p>
-<pre tabindex="0"><code>// 发送字节数据
-int SendBytes(int sessionId, const void *data, unsigned int len);
-// 发送消息数据
-int SendMessage(int sessionId, const void *data, unsigned int len);
-// 发送流数据
-int SendStream(int sessionId, const StreamData *data, const StreamData *ext, const StreamFrameInfo *param);
-// 发送文件
-int SendFile(int sessionId, const char *sFileList[], const char *dFileList[], uint32_t fileCnt);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 发送字节数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">SendBytes</span><span class="p">(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 发送消息数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">SendMessage</span><span class="p">(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 发送流数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">SendStream</span><span class="p">(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="n">StreamData</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="k">const</span> <span class="n">StreamData</span> <span class="o">*</span><span class="n">ext</span><span class="p">,</span> <span class="k">const</span> <span class="n">StreamFrameInfo</span> <span class="o">*</span><span class="n">param</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 发送文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">SendFile</span><span class="p">(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sFileList</span><span class="p">[],</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">dFileList</span><span class="p">[],</span> <span class="kt">uint32_t</span> <span class="n">fileCnt</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>通过sessionId关闭会话。</p>
-<pre tabindex="0"><code>// 关闭会话
-void CloseSession(int sessionId);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 关闭会话
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span> <span class="nf">CloseSession</span><span class="p">(</span><span class="kt">int</span> <span class="n">sessionId</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>删除会话服务。</p>
-<pre tabindex="0"><code>// 删除会话服务
-int RemoveSessionServer(const char *pkgName, const char *sessionName);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// 删除会话服务
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">RemoveSessionServer</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pkgName</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sessionName</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 </ol>
 <h3 id="44认证">4.4	认证</h3>
 <p>设备之间互联是基于系统的IoT设备（如AI音箱、智能家居、智能穿戴等设备）与IoT主控设备（手机、平板等）间建立点对点的信任关系，并在具备信任关系的设备间，搭建安全的连接通道，实现用户数据端到端加密传输。</p>
@@ -623,50 +623,50 @@ int RemoveSessionServer(const char *pkgName, const char *sessionName);
 <ul>
 <li>
 <p>打开服务器监听</p>
-<pre tabindex="0"><code>typedef struct {
-    AuthLinkType type; /* WIFI_WLAN and WIFI_P2P are supported. */
-    union {
-        struct {
-            char ip[IP_STR_MAX_LEN];
-            uint16_t port;
-        } ipInfo;
-    } info;
-} AuthListennerInfo;
-
-//开始监听
-int32_t AuthStartListening(const AuthListennerInfo *info);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">AuthLinkType</span> <span class="n">type</span><span class="p">;</span> <span class="cm">/* WIFI_WLAN and WIFI_P2P are supported. */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">union</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="kt">char</span> <span class="n">ip</span><span class="p">[</span><span class="n">IP_STR_MAX_LEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">            <span class="kt">uint16_t</span> <span class="n">port</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="n">ipInfo</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="n">info</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">AuthListennerInfo</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">//开始监听
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">AuthStartListening</span><span class="p">(</span><span class="k">const</span> <span class="n">AuthListennerInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>初始化连接请求</p>
-<pre tabindex="0"><code>typedef struct {
-    /**
-     * @brief Called when an auth connection is opened successfully.
-     *
-     * @param requestId indicates the open request.
-     * @param authId id of auth connection.
-     */
-     //成功时的回调函数
-    void (*onConnOpened)(uint32_t requestId, int64_t authId);
-    /**
-     * @brief Called when an auth connection is opened failed.
-     *
-     * @param requestId indicates the open request.
-     * @param reason error code.
-     */
-     //失败时的回调函数
-    void (*onConnOpenFailed)(uint32_t requestId, int32_t reason);
-} AuthConnCallback;
-
-//打开连接
-int32_t AuthOpenConn(const AuthConnInfo *info, uint32_t requestId, const AuthConnCallback *callback);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/**
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * @brief Called when an auth connection is opened successfully.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     *
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * @param requestId indicates the open request.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * @param authId id of auth connection.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">     <span class="c1">//成功时的回调函数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">onConnOpened</span><span class="p">)(</span><span class="kt">uint32_t</span> <span class="n">requestId</span><span class="p">,</span> <span class="kt">int64_t</span> <span class="n">authId</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/**
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * @brief Called when an auth connection is opened failed.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     *
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * @param requestId indicates the open request.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * @param reason error code.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">     <span class="c1">//失败时的回调函数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">onConnOpenFailed</span><span class="p">)(</span><span class="kt">uint32_t</span> <span class="n">requestId</span><span class="p">,</span> <span class="kt">int32_t</span> <span class="n">reason</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">AuthConnCallback</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">//打开连接
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">AuthOpenConn</span><span class="p">(</span><span class="k">const</span> <span class="n">AuthConnInfo</span> <span class="o">*</span><span class="n">info</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">requestId</span><span class="p">,</span> <span class="k">const</span> <span class="n">AuthConnCallback</span> <span class="o">*</span><span class="n">callback</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>加解密接口</p>
-<pre tabindex="0"><code>uint32_t AuthGetEncryptHeadLen(void);
-int32_t AuthEncrypt(const ConnectOption *option, AuthSideFlag *side, uint8_t *data, uint32_t len, OutBuf *outBuf);//加密接口
-int32_t AuthDecrypt(const ConnectOption *option, AuthSideFlag side, uint8_t *data, uint32_t len, OutBuf *outbuf);//解密接口
-int32_t AuthEncryptBySeq(int32_t seq, AuthSideFlag *side, uint8_t *data, uint32_t len, OutBuf *outBuf);
-</code></pre></li>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">uint32_t</span> <span class="nf">AuthGetEncryptHeadLen</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int32_t</span> <span class="nf">AuthEncrypt</span><span class="p">(</span><span class="k">const</span> <span class="n">ConnectOption</span> <span class="o">*</span><span class="n">option</span><span class="p">,</span> <span class="n">AuthSideFlag</span> <span class="o">*</span><span class="n">side</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">len</span><span class="p">,</span> <span class="n">OutBuf</span> <span class="o">*</span><span class="n">outBuf</span><span class="p">);</span><span class="c1">//加密接口
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">AuthDecrypt</span><span class="p">(</span><span class="k">const</span> <span class="n">ConnectOption</span> <span class="o">*</span><span class="n">option</span><span class="p">,</span> <span class="n">AuthSideFlag</span> <span class="n">side</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">len</span><span class="p">,</span> <span class="n">OutBuf</span> <span class="o">*</span><span class="n">outbuf</span><span class="p">);</span><span class="c1">//解密接口
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">AuthEncryptBySeq</span><span class="p">(</span><span class="kt">int32_t</span> <span class="n">seq</span><span class="p">,</span> <span class="n">AuthSideFlag</span> <span class="o">*</span><span class="n">side</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">len</span><span class="p">,</span> <span class="n">OutBuf</span> <span class="o">*</span><span class="n">outBuf</span><span class="p">);</span>
+</span></span></code></pre></div></li>
 <li>
 <p>鸿蒙设备互联安全参考图</p>
 </li>
