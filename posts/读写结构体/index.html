@@ -27,7 +27,7 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "http:\/\/example.org\/posts\/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93\/"
-        },"genre": "posts","wordcount":  385 ,
+        },"genre": "posts","wordcount":  365 ,
         "url": "http:\/\/example.org\/posts\/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93\/","datePublished": "2023-03-22T21:39:36+08:00","dateModified": "2023-03-22T21:39:36+08:00","publisher": {
             "@type": "Organization",
             "name": ""},"author": {
@@ -69,7 +69,7 @@
             <div class="toc-content" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">读写结构体</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-03-22">2023-03-22</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;385 words&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-03-22">2023-03-22</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;365 words&nbsp;
                 <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;2 minutes&nbsp;</div>
         </div><div class="details toc" id="toc-static"  data-kept="">
                 <div class="details-summary toc-title">
@@ -166,7 +166,7 @@
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">vfs_write</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="o">*</span> <span class="n">filp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">__user</span><span class="o">*</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">loff_t</span><span class="o">*</span> <span class="n">pos</span><span class="p">);</span>
 </span></span></code></pre></div><p>注意这两个函数的第二个参数buffer，前面都有__user修饰符，这就要求这两个buffer指针都应该指向用空的内存，如果对该参数传递kernel空间的指针，这两个函数都会返回失败-EFAULT。但在Kernel中，我们一般不容易生成用户空间的指针，或者不方便独立使用用户空间内存。要使这两个读写函数使用kernel空间的buffer指针也能正确工作，需要使用set_fs()函数或宏(set_fs()可能是宏定义)，如果为函数，其原形如下：</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">set_fs</span><span class="p">(</span><span class="kt">mm_segment_t</span> <span class="n">fs</span><span class="p">);</span><span class="n">c</span>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">set_fs</span><span class="p">(</span><span class="kt">mm_segment_t</span> <span class="n">fs</span><span class="p">);</span>
 </span></span></code></pre></div><p>该函数的作用是改变kernel对内存地址检查的处理方式，其实该函数的参数fs只有两个取值：USER_DS，KERNEL_DS，分别代表用户空间和内核空间，默认情况下，kernel取值为USER_DS，即对用户空间地址检查并做变换。那么要在这种对内存地址做检查变换的函数中使用内核空间地址，就需要使用set_fs(KERNEL_DS)进行设置。get_fs()一般也可能是宏定义，它的作用是取得当前的设置，这两个函数的一般用法为：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="err">　</span><span class="kt">mm_segment_t</span> <span class="n">old_fs</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
@@ -180,21 +180,18 @@
 </span></span></code></pre></div><p>还有一些其它的内核函数也有用__user修饰的参数，在kernel中需要用kernel空间的内存代替时，都可以使用类似办法。</p>
 <p>使用vfs_read()和vfs_write()最后需要注意的一点是最后的参数loff_t * pos，pos所指向的值要初始化，表明从文件的什么地方开始读写。</p>
 <p>在新版的kernel中，通过kernel_read和kernel_write封装上述烦琐的过程。</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="mi">798</span> <span class="kt">int</span> <span class="nf">kernel_read</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">loff_t</span> <span class="n">offset</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl"><span class="mi">799</span>                 <span class="kt">char</span> <span class="o">*</span><span class="n">addr</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">count</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="mi">800</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl"><span class="mi">801</span>         <span class="kt">mm_segment_t</span> <span class="n">old_fs</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl"><span class="mi">802</span>         <span class="kt">loff_t</span> <span class="n">pos</span> <span class="o">=</span> <span class="n">offset</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl"><span class="mi">803</span>         <span class="kt">int</span> <span class="n">result</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl"><span class="mi">804</span> 
-</span></span><span class="line"><span class="cl"><span class="mi">805</span>         <span class="n">old_fs</span> <span class="o">=</span> <span class="nf">get_fs</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl"><span class="mi">806</span>         <span class="nf">set_fs</span><span class="p">(</span><span class="nf">get_ds</span><span class="p">());</span>
-</span></span><span class="line"><span class="cl"><span class="mi">807</span>         <span class="cm">/* The cast to a user pointer is valid due to the set_fs() */</span>
-</span></span><span class="line"><span class="cl"><span class="mi">808</span>         <span class="n">result</span> <span class="o">=</span> <span class="nf">vfs_read</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">addr</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pos</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl"><span class="mi">809</span>         <span class="nf">set_fs</span><span class="p">(</span><span class="n">old_fs</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl"><span class="mi">810</span>         <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl"><span class="mi">811</span> <span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="mi">812</span> 
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">kernel_read</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">count</span><span class="p">,</span> <span class="kt">loff_t</span> <span class="o">*</span><span class="n">pos</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">mm_segment_t</span> <span class="n">old_fs</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">ssize_t</span> <span class="n">result</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">old_fs</span> <span class="o">=</span> <span class="nf">get_fs</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">set_fs</span><span class="p">(</span><span class="n">KERNEL_DS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* The cast to a user pointer is valid due to the set_fs() */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">result</span> <span class="o">=</span> <span class="nf">vfs_read</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">buf</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">pos</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">set_fs</span><span class="p">(</span><span class="n">old_fs</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div></li>
 <li>
 <p>在将结构体写入文件时，由于指针所指向的空间已经被内容填充，直接调用函数即可。</p>
