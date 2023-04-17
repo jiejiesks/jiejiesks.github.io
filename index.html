@@ -65,6 +65,76 @@
         alt="/avator/logo.JPG"
         title="/avator/logo.JPG" /></a></div><h1 class="home-title">Xingjie Zhou's Blog</h1><div class="home-subtitle"><div id="id-1" class="typeit"></div></div><div class="links"><a href="https://github.com/jiejiesks" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github fa-fw" aria-hidden="true"></i></a><a href="https://t.me/jiejiesks" title="Telegram" target="_blank" rel="noopener noreffer me"><i class="fab fa-telegram-plane fa-fw" aria-hidden="true"></i></a><a href="https://steamcommunity.com/id/jiejiesks" title="Steam" target="_blank" rel="noopener noreffer me"><i class="fab fa-steam fa-fw" aria-hidden="true"></i></a><a href="mailto:xjzhou2022@163.com" title="Email" rel="me"><i class="far fa-envelope fa-fw" aria-hidden="true"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.s081_lab9/">6.s081_lab9</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">Chapter 8 文件系统的目的是组织和存储数据。文件系统通常支持用户和应用程序之间的数据共享，以及持久性，以便在重新启动后数据仍然可用。
+xv6文件系统提供类似于Unix的文件、目录和路径名（参见第1章），并将其数据存储在virtio磁盘上以便持久化（参见第4章）。文件系统解决了几个难题：
+注：完整计算机中的CPU被支撑硬件包围，其中大部分是以I/O接口的形式。Xv6是以qemu的“-machine virt”选项模拟的支撑硬件编写的。这包括RAM、包含引导代码的ROM、一个到用户键盘/屏幕的串行连接，以及一个用于存储的磁盘。
+文件系统需要磁盘上的数据结构来表示目录和文件名称树，记录保存每个文件内容的块的标识，以及记录磁盘的哪些区域是空闲的。 文件系统必须支持崩溃恢复（crash recovery）。也就是说，如果发生崩溃（例如，电源故障），文件系统必须在重新启动后仍能正常工作。风险在于崩溃可能会中断一系列更新，并使磁盘上的数据结构不一致（例如，一个块在某个文件中使用但同时仍被标记为空闲）。 不同的进程可能同时在文件系统上运行，因此文件系统代码必须协调以保持不变量。 访问磁盘的速度比访问内存慢几个数量级，因此文件系统必须保持常用块的内存缓存。 本章的其余部分将解释xv6如何应对这些挑战。
+8.1 概述 xv6文件系统实现分为七层，如图8.1所示。磁盘层读取和写入virtio硬盘上的块。缓冲区高速缓存层缓存磁盘块并同步对它们的访问，确保每次只有一个内核进程可以修改存储在任何特定块中的数据。日志记录层允许更高层在一次事务（transaction）中将更新包装到多个块，并确保在遇到崩溃时自动更新这些块（即，所有块都已更新或无更新）。索引结点层提供单独的文件，每个文件表示为一个索引结点，其中包含唯一的索引号（i-number）和一些保存文件数据的块。目录层将每个目录实现为一种特殊的索引结点，其内容是一系列目录项，每个目录项包含一个文件名和索引号。路径名层提供了分层路径名，如***/usr/rtm/xv6/fs.c***，并通过递归查找来解析它们。文件描述符层使用文件系统接口抽象了许多Unix资源（例如，管道、设备、文件等），简化了应用程序员的工作。
+文件描述符（File descriptor） 路径名（Pathname） 目录（Directory） 索引结点（Inode） 日志（Logging） 缓冲区高速缓存（Buffer cache） 磁盘（Disk） 图8.1 XV6文件系统的层级
+文件系统必须有将索引节点和内容块存储在磁盘上哪些位置的方案。为此，xv6将磁盘划分为几个部分，如图8.2所示。文件系统不使用块0（它保存引导扇区）。块1称为超级块：它包含有关文件系统的元数据（文件系统大小（以块为单位）、数据块数、索引节点数和日志中的块数）。从2开始的块保存日志。日志之后是索引节点，每个块有多个索引节点。然后是位图块，跟踪正在使用的数据块。其余的块是数据块：每个都要么在位图块中标记为空闲，要么保存文件或目录的内容。超级块由一个名为mkfs的单独的程序填充，该程序构建初始文件系统。
+本章的其余部分将从缓冲区高速缓存层开始讨论每一层。注意那些在较低层次上精心选择的抽象可以简化较高层次的设计的情况。
+8.2 Buffer cache层 Buffer cache有两个任务：
+同步对磁盘块的访问，以确保磁盘块在内存中只有一个副本，并且一次只有一个内核线程使用该副本 缓存常用块，以便不需要从慢速磁盘重新读取它们。代码在***bio.c***中。 Buffer cache层导出的主接口主要是bread和bwrite；前者获取一个buf，其中包含一个可以在内存中读取或修改的块的副本，后者将修改后的缓冲区写入磁盘上的相应块。内核线程必须通过调用brelse释放缓冲区。Buffer cache每个缓冲区使用一个睡眠锁，以确保每个缓冲区（因此也是每个磁盘块）每次只被一个线程使用；bread返回一个上锁的缓冲区，brelse释放该锁。
+让我们回到Buffer cache。Buffer cache中保存磁盘块的缓冲区数量固定，这意味着如果文件系统请求还未存放在缓存中的块，Buffer cache必须回收当前保存其他块内容的缓冲区。Buffer cache为新块回收最近使用最少的缓冲区。这样做的原因是认为最近使用最少的缓冲区是最不可能近期再次使用的缓冲区
+8.3 代码：Buffer cache Buffer cache是以循环双链表表示的缓冲区。main（*kernel/main.c*:27）调用的函数binit使用静态数组buf（*kernel/bio.c*:43-52）中的NBUF个缓冲区初始化列表。对Buffer cache的所有其他访问都通过bcache.head引用链表，而不是buf数组。
+struct { struct spinlock lock; struct buf buf[NBUF];//NBUF #define NBUF (MAXOPBLOCKS*3) // size of disk block cache // Linked list of all buffers, through prev/next.</div><div class="post-footer">
+        <a href="/posts/6.s081_lab9/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.s081_lab8/">6.s081_lab8</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">lab8 Memory allocator 本实验主要是解决多CPU竞争内存的问题，我们通过为每个CPU分配一个kmem锁来解决该问题，为每个CPU都维护一个空闲列表，初始时将所有的空闲内存分配到某个CPU，此后各个CPU需要内存时，如果当前CPU的空闲列表上没有，则窃取其他CPU的。例如，所有的空闲内存初始分配到CPU0，当CPU1需要内存时就会窃取CPU0的，而使用完成后就挂在CPU1的空闲列表，此后CPU1再次需要内存时就可以从自己的空闲列表中取。
+(1). 将kmem定义为一个数组，包含NCPU个元素，即每个CPU对应一个
+struct { struct spinlock lock; struct run *freelist; } kmem[NCPU]; (2). 修改kinit，为所有锁初始化以“kmem”开头的名称，该函数只会被一个CPU调用，freerange调用kfree将所有空闲内存挂在该CPU的空闲列表上
+void kinit() { char lockname[8]; for(int i = 0;i &lt; NCPU; i++) { snprintf(lockname, sizeof(lockname), &#34;kmem_%d&#34;, i); initlock(&amp;kmem[i].lock, lockname); } freerange(end, (void*)PHYSTOP); } (3). 修改kfree，使用cpuid()和它返回的结果时必须关中断，请参考《XV6使用手册》第7.4节
+void kfree(void *pa) { struct run *r; if(((uint64)pa % PGSIZE) != 0 || (char*)pa &lt; end || (uint64)pa &gt;= PHYSTOP) panic(&#34;kfree&#34;); // Fill with junk to catch dangling refs.</div><div class="post-footer">
+        <a href="/posts/6.s081_lab8/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.s081_lab7/">6.s081_lab7</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">Chapter 7 7.1 多路复用 Xv6通过在两种情况下将每个CPU从一个进程切换到另一个进程来实现多路复用（Multiplexing）。第一：当进程等待设备或管道I/O完成，或等待子进程退出，或在sleep系统调用中等待时，xv6使用睡眠（sleep）和唤醒（wakeup）机制切换。第二：xv6周期性地强制切换以处理长时间计算而不睡眠的进程。这种多路复用产生了每个进程都有自己的CPU的错觉，就像xv6使用内存分配器和硬件页表来产生每个进程都有自己内存的错觉一样。
+实现多路复用带来了一些挑战。首先，如何从一个进程切换到另一个进程？尽管上下文切换的思想很简单，但它的实现是xv6中最不透明的代码之一。第二，如何以对用户进程透明的方式强制切换？Xv6使用标准技术，通过定时器中断驱动上下文切换。第三，许多CPU可能同时在进程之间切换，使用一个用锁方案来避免争用是很有必要的。第四，进程退出时必须释放进程的内存以及其他资源，但它不能自己完成所有这一切，因为（例如）它不能在仍然使用自己内核栈的情况下释放它。第五，多核机器的每个核心必须记住它正在执行哪个进程，以便系统调用正确影响对应进程的内核状态。最后，sleep允许一个进程放弃CPU，wakeup允许另一个进程唤醒第一个进程。需要小心避免导致唤醒通知丢失的竞争。Xv6试图尽可能简单地解决这些问题，但结果代码很复杂。
+7.2 代码：上下文切换 图7.1概述了从一个用户进程（旧进程）切换到另一个用户进程（新进程）所涉及的步骤：一个到旧进程内核线程的用户-内核转换（系统调用或中断），一个到当前CPU调度程序线程的上下文切换，一个到新进程内核线程的上下文切换，以及一个返回到用户级进程的陷阱。调度程序在旧进程的内核栈上执行是不安全的：其他一些核心可能会唤醒进程并运行它，而在两个不同的核心上使用同一个栈将是一场灾难，因此xv6调度程序在每个CPU上都有一个专用线程（保存寄存器和栈）。在本节中，我们将研究在内核线程和调度程序线程之间切换的机制。
+从一个线程切换到另一个线程需要保存旧线程的CPU寄存器，并恢复新线程先前保存的寄存器；栈指针和程序计数器被保存和恢复的事实意味着CPU将切换栈和执行中的代码。
+函数swtch为内核线程切换执行保存和恢复操作。swtch对线程没有直接的了解；它只是保存和恢复寄存器集，称为上下文（contexts）。当某个进程要放弃CPU时，该进程的内核线程调用swtch来保存自己的上下文并返回到调度程序的上下文。每个上下文都包含在一个struct context（*kernel/proc.h*:2）中，这个结构体本身包含在一个进程的struct proc或一个CPU的struct cpu中。Swtch接受两个参数：struct context *old和struct context *new。它将当前寄存器保存在old中，从new中加载寄存器，然后返回。
+让我们跟随一个进程通过swtch进入调度程序。我们在第4章中看到，中断结束时的一种可能性是usertrap调用了yield。依次地：Yield调用sched，sched调用swtch将当前上下文保存在p-&gt;context中，并切换到先前保存在cpu-&gt;scheduler（*kernel/proc.c*:517）中的调度程序上下文。
+注：当前版本的XV6中调度程序上下文是cpu-&gt;context
+Swtch（*kernel/swtch.S*:3）只保存被调用方保存的寄存器（callee-saved registers）；调用方保存的寄存器（caller-saved registers）通过调用C代码保存在栈上（如果需要）。Swtch知道struct context中每个寄存器字段的偏移量。它不保存程序计数器。但swtch保存ra寄存器，该寄存器保存调用swtch的返回地址。现在，swtch从新进程的上下文中恢复寄存器，该上下文保存前一个swtch保存的寄存器值。当swtch返回时，它返回到由ra寄存器指定的指令，即新线程以前调用swtch的指令。另外，它在新线程的栈上返回。
+注：关于callee-saved registers和caller-saved registers请回看视频课程LEC5以及文档《Calling Convention》
+Note
+这里不太容易理解，这里举个课程视频中的例子：
+以cc切换到ls为例，且ls此前运行过
+XV6将cc程序的内核线程的内核寄存器保存在一个context对象中
+因为要切换到ls程序的内核线程，那么ls 程序现在的状态必然是RUNABLE ，表明ls程序之前运行了一半。这同时也意味着：
+a. ls程序的用户空间状态已经保存在了对应的trapframe中
+b. ls程序的内核线程对应的内核寄存器已经保存在对应的context对象中
+所以接下来，XV6会恢复ls程序的内核线程的context对象，也就是恢复内核线程的寄存器。
+之后ls会继续在它的内核线程栈上，完成它的中断处理程序
+恢复ls程序的trapframe中的用户进程状态，返回到用户空间的ls程序中
+最后恢复执行ls
+在我们的示例中，sched调用swtch切换到cpu-&gt;scheduler，即每个CPU的调度程序上下文。调度程序上下文之前通过scheduler对swtch（*kernel/proc.c*:475）的调用进行了保存。当我们追踪swtch到返回时，他返回到scheduler而不是sched，并且它的栈指针指向当前CPU的调用程序栈（scheduler stack）
+lab7 Uthread: switching between threads (moderate) 在xv6 book的chapter7中讲的是用户态进程切换到另一个用户态进程，通过在内核中的调度程序去进行切换。在这个实验中我们需要去写一个用户态的调度程序（其中切换寄存器需要在内核中运行）去模拟内核中的调度程序去实现用户态线程之间的切换，所以我们需要自己定义属于thread的context去保存寄存器的值。
+定义用户态的上下文结构体tcontext
+// 用户线程的上下文结构体 struct tcontext { uint64 ra; uint64 sp; // callee-saved uint64 s0; uint64 s1; uint64 s2; uint64 s3; uint64 s4; uint64 s5; uint64 s6; uint64 s7; uint64 s8; uint64 s9; uint64 s10; uint64 s11; }; 修改thread结构体，添加context字段</div><div class="post-footer">
+        <a href="/posts/6.s081_lab7/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.s081_lab6/">6.s081_lab6</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">Implement copy-on write (hard) YOUR JOB
+您的任务是在xv6内核中实现copy-on-write fork。如果修改后的内核同时成功执行cowtest和usertests程序就完成了。
+为了帮助测试你的实现方案，我们提供了一个名为cowtest的xv6程序（源代码位于*user/cowtest.c*）。cowtest运行各种测试，但在未修改的xv6上，即使是第一个测试也会失败。因此，最初您将看到：
+$ cowtest simple: fork() failed $ “simple”测试分配超过一半的可用物理内存，然后执行一系列的fork()。fork失败的原因是没有足够的可用物理内存来为子进程提供父进程内存的完整副本。
+完成本实验后，内核应该通过cowtest和usertests中的所有测试。即：
+$ cowtest simple: ok simple: ok three: zombie! ok three: zombie! ok three: zombie! ok file: ok ALL COW TESTS PASSED $ usertests ... ALL TESTS PASSED $ 这是一个合理的攻克计划：
+修改uvmcopy()将父进程的物理页映射到子进程，而不是分配新页。在子进程和父进程的PTE中清除PTE_W标志。 修改usertrap()以识别页面错误。当COW页面出现页面错误时，使用kalloc()分配一个新页面，并将旧页面复制到新页面，然后将新页面添加到PTE中并设置PTE_W。 确保每个物理页在最后一个PTE对它的引用撤销时被释放——而不是在此之前。这样做的一个好方法是为每个物理页保留引用该页面的用户页表数的“引用计数”。当kalloc()分配页时，将页的引用计数设置为1。当fork导致子进程共享页面时，增加页的引用计数；每当任何进程从其页表中删除页面时，减少页的引用计数。kfree()只应在引用计数为零时将页面放回空闲列表。可以将这些计数保存在一个固定大小的整型数组中。你必须制定一个如何索引数组以及如何选择数组大小的方案。例如，您可以用页的物理地址除以4096对数组进行索引，并为数组提供等同于***kalloc.c***中kinit()在空闲列表中放置的所有页面的最高物理地址的元素数。 修改copyout()在遇到COW页面时使用与页面错误相同的方案。 提示：
+lazy page allocation实验可能已经让您熟悉了许多与copy-on-write相关的xv6内核代码。但是，您不应该将这个实验室建立在您的lazy allocation解决方案的基础上；相反，请按照上面的说明从一个新的xv6开始。 有一种可能很有用的方法来记录每个PTE是否是COW映射。您可以使用RISC-V PTE中的RSW（reserved for software，即为软件保留的）位来实现此目的。 usertests检查cowtest不测试的场景，所以别忘两个测试都需要完全通过。 ***kernel/riscv.h***的末尾有一些有用的宏和页表标志位的定义。 如果出现COW页面错误并且没有可用内存，则应终止进程。 (1). 在***kernel/riscv.h***中选取PTE中的保留位定义标记一个页面是否为COW Fork页面的标志位
+// 记录应用了COW策略后fork的页面 #define PTE_F (1L &lt;&lt; 8) (2).</div><div class="post-footer">
+        <a href="/posts/6.s081_lab6/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.s081_lab5/">6.s081_lab5</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">lab5 Eliminate allocation from sbrk 将sys_sbrk()中的growproc函数调用删除，因为其是给新增加的堆空间分配内存的，我们现在需要惰性分配，所以并不真正分配空间。
+uint64 sys_sbrk(void) { int addr; int n; if(argint(0, &amp;n) &lt; 0) return -1; addr = myproc()-&gt;sz; // lazy allocation myproc()-&gt;sz += n; return addr; } 未分配的页表比如512项中只分配了两项，那么其余的均为0x00000000000000000。
+Lazy allocation (1). 修改usertrap()(*kernel/trap.c*)函数，使用r_scause()判断是否为页面错误，在页面错误处理的过程中，先判断发生错误的虚拟地址（r_stval()读取）是否位于栈空间之上，进程大小（虚拟地址从0开始，进程大小表征了进程的最高虚拟地址）之下，然后分配物理内存并添加映射
+uint64 cause = r_scause(); if(cause == 8) { ... } else if((which_dev = devintr()) != 0) { // ok } else if(cause == 13 || cause == 15) { // 处理页面错误 uint64 fault_va = r_stval(); // 产生页面错误的虚拟地址 char* pa; // 分配的物理地址 if(PGROUNDUP(p-&gt;trapframe-&gt;sp) - 1 &lt; fault_va &amp;&amp; fault_va &lt; p-&gt;sz &amp;&amp; (pa = kalloc()) !</div><div class="post-footer">
+        <a href="/posts/6.s081_lab5/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/6.s081_lab4/">6.s081_lab4</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-03">2023-04-03</time></span></div><div class="content">Chapter 4 4.1RISC-V陷入机制 每个RISC-V CPU都有一组控制寄存器，内核通过向这些寄存器写入内容来告诉CPU如何处理陷阱，内核可以读取这些寄存器来明确已经发生的陷阱。RISC-V文档包含了完整的内容。*riscv.h*(*kernel/riscv.h*:1)包含在xv6中使用到的内容的定义。以下是最重要的一些寄存器概述：
 stvec：内核在这里写入其陷阱处理程序的地址；RISC-V跳转到这里处理陷阱。 sepc：当发生陷阱时，RISC-V会在这里保存程序计数器pc（因为pc会被stvec覆盖）。sret（从陷阱返回）指令会将sepc复制到pc。内核可以写入sepc来控制sret的去向。 scause： RISC-V在这里放置一个描述陷阱原因的数字。 sscratch：内核在这里放置了一个值，这个值在陷阱处理程序一开始就会派上用场。 sstatus：其中的SIE位控制设备中断是否启用。如果内核清空SIE，RISC-V将推迟设备中断，直到内核重新设置SIE。SPP位指示陷阱是来自用户模式还是管理模式，并控制sret返回的模式。 上述寄存器都用于在管理模式下处理陷阱，在用户模式下不能读取或写入。在机器模式下处理陷阱有一组等效的控制寄存器，xv6仅在计时器中断的特殊情况下使用它们。
@@ -100,84 +170,15 @@ Kernelvec在保存寄存器后跳转到kerneltrap(*kernel/trap.c*:134)。kernelt
 当CPU从用户空间进入内核时，xv6将CPU的stvec设置为kernelvec；您可以在usertrap(*kernel/trap.c*:29)中看到这一点。内核执行时有一个时间窗口，但stvec设置为uservec，在该窗口中禁用设备中断至关重要。幸运的是，RISC-V总是在开始设置陷阱时禁用中断，xv6在设置stvec之前不会再次启用中断
 4.6 页面错误异常 Xv6对异常的响应相当无趣: 如果用户空间中发生异常，内核将终止故障进程。如果内核中发生异常，则内核会崩溃。真正的操作系统通常以更有趣的方式做出反应。</div><div class="post-footer">
         <a href="/posts/6.s081_lab4/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/6.s081_lab3/">6.s081_lab3</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-03-28">2023-03-28</time></span></div><div class="content">Chapter 3 3.1页式硬件 该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中的每一个PTE都包含该树最后一级的512个PTE。分别使用virtual address 的L2,L1,L0各9位（2^9=512）去确定页表页的哪一个PTE。最终的Physical address是由最后一级的PPN和Virtual address的最开始的12位offset组成。
-每个PTE包含10位的标志位。这些标志位告诉分页硬件允许如何使用关联的虚拟地址。PTE_V指示PTE是否存在：如果它没有被设置，对页面的引用会导致异常（即不允许）。PTE_R控制是否允许指令读取到页面。PTE_W控制是否允许指令写入到页面。PTE_X控制CPU是否可以将页面内容解释为指令并执行它们。PTE_U控制用户模式下的指令是否被允许访问页面；如果没有设置PTE_U，PTE只能在管理模式下使用。图3.2显示了它是如何工作的。标志和所有其他与页面硬件相关的结构在（*kernel/riscv.h*）中定义。
-为了告诉硬件使用页表，内核必须将根页表页的物理地址写入到satp寄存器中（satp的作用是存放根页表页在物理内存中的地址）。每个CPU都有自己的satp，一个CPU将使用自己的satp指向的页表转换后续指令生成的所有地址。每个CPU都有自己的satp，因此不同的CPU就可以运行不同的进程，每个进程都有自己的页表描述的私有地址空间。
-3.2内核地址空间 Xv6为每个进程维护一个页表，用以描述每个进程的用户地址空间，外加一个单独描述内核地址空间的页表。内核配置其地址空间的布局，以允许自己以可预测的虚拟地址访问物理内存和各种硬件资源。图3.3显示了这种布局如何将内核虚拟地址映射到物理地址。文件(*kernel/memlayout.h*) 声明了xv6内核内存布局的常量。
-QEMU模拟了一台计算机，它包括从物理地址0x80000000开始并至少到0x86400000结束的RAM（物理内存），xv6称结束地址为PHYSTOP。QEMU模拟还包括I/O设备，如磁盘接口。QEMU将设备接口作为内存映射控制寄存器暴露给软件，这些寄存器位于物理地址空间0x80000000以下。内核可以通过读取/写入这些特殊的物理地址与设备交互；这种读取和写入与设备硬件而不是RAM通信。第4章解释了xv6如何与设备进行交互。
-内核使用“直接映射”获取内存和内存映射设备寄存器；也就是说，将资源映射到等于物理地址的虚拟地址。例如，内核本身在虚拟地址空间和物理内存中都位于KERNBASE=0x80000000。直接映射简化了读取或写入物理内存的内核代码。例如，当fork为子进程分配用户内存时，分配器返回该内存的物理地址；fork在将父进程的用户内存复制到子进程时直接将该地址用作虚拟地址。
-有几个内核虚拟地址不是直接映射：
-蹦床页面(trampoline page)。它映射在虚拟地址空间的顶部；用户页表具有相同的映射。第4章讨论了蹦床页面的作用，但我们在这里看到了一个有趣的页表用例；一个物理页面（持有蹦床代码）在内核的虚拟地址空间中映射了两次：一次在虚拟地址空间的顶部，一次直接映射。 内核栈页面。每个进程都有自己的内核栈，它将映射到偏高一些的地址，这样xv6在它之下就可以留下一个未映射的保护页(guard page)。保护页的PTE是无效的（也就是说PTE_V没有设置），所以如果内核溢出内核栈就会引发一个异常，内核触发panic。如果没有保护页，栈溢出将会覆盖其他内核内存，引发错误操作。恐慌崩溃（panic crash）是更可取的方案。（注：Guard page不会浪费物理内存，它只是占据了虚拟地址空间的一段靠后的地址，但并不映射到物理地址空间。） 3.3创建一个地址空间 大多数用于操作地址空间和页表的xv6代码都写在 vm.c* (kernel/vm.c:1) 中。其核心数据结构是pagetable_t，它实际上是指向RISC-V根页表页的指针；一个pagetable_t可以是内核页表，也可以是一个进程页表。最核心的函数是walk和mappages，前者为虚拟地址找到PTE，后者为新映射装载PTE。名称以kvm开头的函数操作内核页表；以uvm开头的函数操作用户页表；其他函数用于二者。copyout和copyin复制数据到用户虚拟地址或从用户虚拟地址复制数据，这些虚拟地址作为系统调用参数提供; 由于它们需要显式地翻译这些地址，以便找到相应的物理内存，故将它们写在**vm.c***中。
-在启动的初期，main会调用kvminit，kvminit首先会分配一个物理内存页用来装根页表，后续调用kvmmap去安装内核需要的内存，这些转换包括 内核的指令和数据，到PHYSTOP的物理内存，以及实际上是设备的内存范围。实际上是设备。（即上图中的CLINT PLIC UARTO VIRTIO KERNBASE PHYSTOP TRAMPOLINE）
-kvmmap(*kernel/vm.c*:127)调用mappages(*kernel/vm.c*:138)，mappages将范围虚拟地址到同等范围物理地址的映射装载到一个页表中。它以页面大小为间隔，为范围内的每个虚拟地址单独执行此操作。对于要映射的每个虚拟地址，mappages调用walk来查找该地址的PTE地址。然后，它初始化PTE以保存相关的物理页号、所需权限（PTE_W、PTE_X和/或PTE_R）以及用于标记PTE有效的PTE_V(*kernel/vm.c*:153)。先通过walk找到PTE，然后通过mappages装载PTE
-在查找PTE中的虚拟地址（参见图3.2）时，walk(*kernel/vm.c*:72)模仿RISC-V分页硬件。walk一次从3级页表中获取9个比特位。它使用上一级的9位虚拟地址来查找下一级页表或最终页面的PTE (*kernel/vm.c*:78)。如果PTE无效，则所需的页面还没有分配；如果设置了alloc参数，walk就会分配一个新的页表页面，并将其物理地址放在PTE中。它返回树中最低一级的PTE地址(*kernel/vm.c*:88)。
-上面的代码依赖于直接映射到内核虚拟地址空间中的物理内存。例如，当walk降低页表的级别时，它从PTE (*kernel/vm.c*:80)中提取下一级页表的（物理）地址，然后使用该地址作为虚拟地址来获取下一级的PTE (*kernel/vm.c*:78)。
-for(int level = 2; level &gt; 0; level--) { pte_t *pte = &amp;pagetable[PX(level, va)]; if(*pte &amp; PTE_V) { pagetable = (pagetable_t)PTE2PA(*pte); } else { if(!alloc || (pagetable = (pde_t*)kalloc()) == 0) return 0; memset(pagetable, 0, PGSIZE); *pte = PA2PTE(pagetable) | PTE_V; } } 由于虚拟地址和物理地址直接映射，在这个函数中把va先当做虚拟地址获取第一个9位来获取根页表的PTE，获取到二级页表的物理地址后（每页4096B，所以低12位为0，获取pte之后由于pte的低10位是标志位，pte&raquo;10&laquo;12便是物理地址），将这个地址转换为虚拟地址即是二级页表的虚拟地址，然后便可以在通过va&raquo;12+level*9获取到PTE进而找到最后一级页表</div><div class="post-footer">
-        <a href="/posts/6.s081_lab3/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93/">读写结构体</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-03-22">2023-03-22</time></span></div><div class="content">关于结构体的读写 user space 可以通过fread和rwrite进行结构体的读写。 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) ptr − This is the pointer to a block of memory with a minimum size of size*nmemb bytes. size − This is the size in bytes of each element to be read. nmemb − This is the number of elements, each one with a size of size bytes. stream − This is the pointer to a FILE object that specifies an input stream.</div><div class="post-footer">
-        <a href="/posts/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/6.s081_lab2/">6.s081_lab2</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-03-21">2023-03-21</time></span></div><div class="content">chapter 2 2.2用户态、核心态、系统调用 RISC-V分为三个模式machine mode,supervisor mode and user mode
-在机器模式下执行的指令具有完全权限；CPU以机器模式启动。机器模式主要用于配置计算机。Xv6在机器模式下执行几行，然后切换到管理模式。
-2.3内核组织 整个os都驻留在内核中，所有系统调用的实现都是以supervisor mode运行，这个被称为amonolithic内核（宏内核）
-为了降低内核出错的风险，操作系统设计者可以最大限度地减少在监督模式下运行的操作系统代码的数量，并在用户模式下执行大部分操作系统。这个内核组织被称为amicrokernel（微内核）
-2.5进程概述 Risc-v的指针是64位的，硬件仅使用低39位；而xv6仅使用这39个比特中的38个。因此，最大地址为238−1=0x3fffffffff
-xv6内核为每个进程维护许多状态片段，并将它们聚集到一个proc(*kernel/proc.h*:86)结构体中。一个进程最重要的内核状态片段是它的页表、内核栈区和运行状态。我们将使用符号p-&gt;xxx来引用proc结构体的元素；例如，p-&gt;pagetable是一个指向该进程页表的指针。
-线程的大部分状态（局部变量、函数调用返回地址）都存储在线程的堆栈中。每个进程有两个堆栈：一个用户堆栈和一个内核堆栈（p-&gt;kstack）。当进程执行用户指令时，只有它的用户堆栈在使用，而它的内核堆栈是空的。当进程进入内核（用于系统调用或中断）时，内核代码在进程的内核堆栈上执行；当进程在内核中时，它的用户堆栈仍然包含保存的数据，但没有被实际使用。进程的线程在主动使用其用户堆栈和内核堆栈之间交替。内核堆栈是独立的（并受用户代码保护），因此即使进程破坏了其用户堆栈，内核也可以执行。
-2.6xv6启动和运行第一个线程的概述 为了使xv6更加具体，我们将概述内核如何启动和运行第一个进程。接下来的章节将更详细地描述本概述中显示的机制。
-当RISC-V计算机上电时，它会初始化自己并运行一个存储在只读内存中的引导加载程序。引导加载程序将xv6内核加载到内存中。然后，在机器模式下，中央处理器从_entry (*kernel/entry.S*:6)开始运行xv6。Xv6启动时页式硬件（paging hardware）处于禁用模式：也就是说虚拟地址将直接映射到物理地址。
-加载程序将xv6内核加载到物理地址为0x80000000的内存中。它将内核放在0x80000000而不是0x0的原因是地址范围0x0:0x80000000包含I/O设备。
-_entry的指令设置了一个栈区，这样xv6就可以运行C代码。Xv6在**start. c (kernel/start.c:11)*文件中为初始栈stack0***声明了空间。由于RISC-V上的栈是向下扩展的，所以_entry的代码将栈顶地址stack0+4096加载到栈顶指针寄存器sp中。现在内核有了栈区，_entry便调用C代码start(*kernel/start.c*:21)。
-函数start执行一些仅在机器模式下允许的配置，然后切换到管理模式。RISC-V提供指令mret以进入管理模式，该指令最常用于将管理模式切换到机器模式的调用中返回。而start并非从这样的调用返回，而是执行以下操作：它在寄存器mstatus中将先前的运行模式改为管理模式，它通过将main函数的地址写入寄存器mepc将返回地址设为main，它通过向页表寄存器satp写入0来在管理模式下禁用虚拟地址转换，并将所有的中断和异常委托给管理模式。
-在进入管理模式之前，start还要执行另一项任务：对时钟芯片进行编程以产生计时器中断。清理完这些“家务”后，start通过调用mret“返回”到管理模式。这将导致程序计数器（PC）的值更改为main(*kernel/main.c*:11)函数地址。
-TIPS
-注：mret执行返回，返回到先前状态，由于start函数将前模式改为了管理模式且返回地址改为了main,因此mret将返回到main函数，并以管理模式运行
-在main(*kernel/main.c*:11)初始化几个设备和子系统后，便通过调用userinit (*kernel/proc.c*:212)创建第一个进程，第一个进程执行一个用RISC-V程序集写的小型程序：*initcode. S* (***user/initcode.S:***1)，它通过调用exec系统调用重新进入内核。正如我们在第1章中看到的，exec用一个新程序（本例中为 /init）替换当前进程的内存和寄存器。一旦内核完成exec，它就返回/init进程中的用户空间。如果需要，init(*user/init.c*:15)将创建一个新的控制台设备文件，然后以文件描述符0、1和2打开它。然后它在控制台上启动一个shell。系统就这样启动了。
-lab2 system call tracing trace系统调用有一个参数，这个参数是一个整数“掩码”（mask），它的比特位指定要跟踪的系统调用。例如，要跟踪fork系统调用，程序调用trace(1 &lt;&lt; SYS_fork)，其中SYS_fork是kernel/syscall.h中的系统调用编号，这个掩码是10也即2。32是read的系统调用，因为1&laquo;5为32，100000。1111……1共31个1，即2147483647，这个掩码代表追踪所有的系统调用。
-我们提供了一个用户级程序版本的trace，它运行另一个启用了跟踪的程序（参见user/trace.c）。完成后，您应该看到如下输出：
-$ trace 32 grep hello README 3: syscall read -&gt; 1023 3: syscall read -&gt; 966 3: syscall read -&gt; 70 3: syscall read -&gt; 0 $ $ trace 2147483647 grep hello README 4: syscall trace -&gt; 0 4: syscall exec -&gt; 3 4: syscall open -&gt; 3 4: syscall read -&gt; 1023 4: syscall read -&gt; 966 4: syscall read -&gt; 70 4: syscall read -&gt; 0 4: syscall close -&gt; 0 $ $ grep hello README $ $ trace 2 usertests forkforkfork usertests starting test forkforkfork: 407: syscall fork -&gt; 408 408: syscall fork -&gt; 409 409: syscall fork -&gt; 410 410: syscall fork -&gt; 411 409: syscall fork -&gt; 412 410: syscall fork -&gt; 413 409: syscall fork -&gt; 414 411: syscall fork -&gt; 415 .</div><div class="post-footer">
-        <a href="/posts/6.s081_lab2/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/">分布式软总线</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-03-18">2023-03-18</time></span></div><div class="content">分布式软总线 1	介绍 1.1	什么是总线？ 总线(Bus)是嵌入式系统和计算机系统的重要基础技术，通过它，多个不同的设备可以互相连接和通讯。总之，总线可以把一些不同的设备，通过约定的协议连接在一起。总线协议会给每个设备分配相应的地址，并且协调调度各设备对总线资源的访问。在总线协议基础上，应用开发不需要关心设备之间的连接，只需要按照协议所分配的地址进行应用数据的发送和接收。
-1.2	什么是分布式软总线？ 华为所提出的1+8+N概念：1指的是手机，8指的是车机、音箱、耳机、手表/手环、平板、大屏、PC、AR/VR，N指的是其他IOT设备。软总线就是在这个大的框架下所提出的，就是为了解决所有1+8+N设备之间的互联问题。
-软总线计数最大的特点是不同协议的异构网络进行组网。==传统场景下==，需要蓝牙传输的两台设备必须具有蓝牙，需要wifi传输的设备必须都具有wifi，而 蓝牙和wifi之间是无法进行数据通信的。软总线提出蓝牙/wifi融合网络组网技术，解决了==不同协议设备进行·通信的问题==，使得多个鸿蒙设备能够自动构建一个逻辑全连接的网络，用户或者业务开发者无需关心组网方式和物理协议，只需聚焦业务逻辑的实现，无需关注组网方式与底层协议。软总线模块实现的能力有：服务发布、数据传输、安全通信。
-分布式软总线是基于开源COAP(Constrained Application Protocal)协议，C语言实现的，属于一种底层基于UDP的应用层协议。鸿蒙使用COAP协议因为考虑到harmonyOS的设备除了硬件性能较好的手机电脑设备外，还有资源受限的物联网设备，这些设备的ram、rom相对较小。coap协议支持轻量的可靠传输，采用coap协议，可以扩大组网的范围。
-软总线屏蔽了各种设备底层协议的差异，如不同设备支持wifi、蓝牙、BT、NFC等协议无法互通，但是通过软总线可以使得支持不同设备协议的互通，使得应用层不用在关心设备的底层协议。注：真机实测需要不用设备登录同一个华为账号，设置-超级终端-允许附近设备发现我，同时在同一局域网或蓝牙。远程模拟不需要登录同一个华为账号，默认在同一个局域网下。
-框架图可以看到，分布式软总线最主要的几大功能是：发现、连接、组网/拓扑管理、任务总线、数据总线；
-发现：指的是搜索周围是否有相关设备 连接：指的是与所发现的设备建立连接 组网/拓扑管理：指的是对所有发现的设备进行网络拓扑管理，比如组成星状网络拓扑，或者是组成Mesh网络拓扑 任务总线：指的是在所建立的网络拓扑基础上，用于传输小数据量信息的通路 数据总线：指的是用于传输较大数据量信息的通路 根据示意图可以得出以下几个结论：
-协议栈和软硬协同层屏蔽各种硬件设备协议的差异
-总线中枢负责解析命令，完成设备间的发现与连接，基于COAP协议的设备发现功能
-安全模块负责通信的加密；设备认证模块通过交换主控设备与配件设备的身份标识来建立点对点信任关系，设备认证模块的关键技术点HiChain机制数据接收管理、PAKE协议、STS协议流程
-提供统一的基于Session的认证，传输功能，上层业务系统可以通过Sessionid收发数据或获取相关基本属性，实现业务消息、流、控制指令等交互操作
-软总线功能代码路径Openharmony3.1.4/foundation/communication/dsoftbus/core。
-discovery模块：提供基于COAP协议的设备发现机制 connection模块：提供基于COAP协议的设备链接机制 authentication模块：提供设备认证机制和知识库管理功能 transmission模块：基于系统内核提供的socket通信，向authmanager模块提供设备认证通道管理和设备认证数据传输；向业务模块提供session管理和基于session的数据收发功能，并且通过GCM模块的加密功能提供收发报文的加解密保护； adapter模块：操作系统适配层，根据不同的硬件进行适配。在应用层为何不能去做分布式软总线，难点便在于此，无法知道各个设备的硬件，而鸿蒙是很容易知道硬件的。 bus_center：组网代码 common：通用代码 frame：框架代码 需要注意的是，软总线启动后，设备在发现阶段基于coap协议使用udp数据报进行通讯。当设备认证通过后，确认连接后，将会使用TCP协议进行更加安全可靠的通讯
-基于分布式软总线设备交互过程示意图
-具体过程：发现端（如手机端）在广播发送discover请求后，使用coap协议在局域网内发送广播 ；被发现端设备使用PublishService接口发布服务，接收端收到广播后，发送coap协议单播给发现端；发现端设备收到报文后会更新设备信息进而建立连接
-1.3	为什么需要分布式软总线？ 以往手机外围设备比较少的时候，用户通过手动操作的方式进行设备之间的连接。比如，手机连接蓝牙耳机。随着外围设备越来越多，手动操作的方式不方便，甚至会影响用户的体验。而且，有的外围设备之间还不支持直接连接。HarmonyOS的分布式总线技术是为了能够让所有的设备之间能够方便、高效的互联。
-2 分布式软总线特性 鸿蒙分布式软总线的设计目标在于推进==极简通信协议==技术，在设备安全场景下，即连即用。关键技术特性覆盖设备的自动发现&amp;连接、组网(多跳自组网、多协议混合组网）、传输(多元化协议与算法、智能感知与决策）。
-2.1	分布式软总线关键技术”发现与组网“ 分布式软总线技术可以自动发现周围的其它设备，并且将他们连接形成网络，分布式软总线提出了异构网络组网，自动构建一个逻辑全连接网络，以解决设备间不同协议交互的问题。下图显示的是自动发现设备之后形成的Mesh网络的示意图。
-2.2	分布式软总线关键技术“软时钟” 把众多外围设备连接形成网络后，有一个问题需要解决。就是各个设备存在硬件、软件性能各方面的差异，导致时间上的不同步。比如，iot设备由于成本方面的原因，晶振的质量比较差，会存在相对较大的频飘。不同设备之间多方面的差异，如果没有时钟同步，他们之间的通信将无法展开。下面是分布式软总线关键技术之一的软时钟介绍，它通过时钟同步算法，将不同设备原本不同步的时钟做到统一的同步时钟。 2.3	分布式软总线关键技术“调度” 所有被组成MESH网络的设备在软时钟算法的同步下，就可以进行资源的调度。软总线技术中提出了LaneHub的概念，可以理解为调度管理各通信通路的模块。比如，不同的设备有不同的连接方式，手机有BLE、wifi、NFC三种连接方式，PAD有wifi、UWB两种连接方式，PC有USB、wifi两种连接方式。通过软总线的LaneHub可以对这三个连接的设备进行统一的资源调度。比如，手机与PAD通过BLE连接、手机与PC通过wifi连接，软总线协议调度他们的通信时间、频谱，达到减少干扰、提升速率的目的。
-2.4	分布式软总线关键技术“传输” 2.4.1	多径传输技术 近年来，高清音视频、动画等多媒体资源日益增长，实现通用高效率文件传输成为一项极其重要的需求。然而传统的文件传输，往往依赖一条链路直接进行传输。文件的传输效率完全依赖链路本身的传输能力，鲁棒性和传输效率均不足。
-为了适应新互联时代的需求，实现高效率文件传输，分布式软总线多径传输技术应运而生。多径传输技术基本思路是最大化利用不同路径的传输能力，原本一条链路上的文件传输，通过文件分割，将分割后的文件不同部分从多条路径进行传输，最终在目标侧聚合成原有文件。通过智能均衡不同链路的传输负载，实现了对文件的分割和传输，能力强的链路多分些文件占比，能力弱的少分些文件占比，甚至可以不分。这样就实现了文件的高效快速传输，给用户带来不一样的快速传输体验。
-2.4.2	智能时延控制技术 在网络传输过程中，很大一块开销是序列化和协议编码占据的。进一步优化这部分开销，对传输时延和空间资源有着重要意义。智能时延控制技术正是通过==智能序列化技术==和==极简传输协议==两项重要子技术，实现了序列化和协议编码的极大压缩。
-智能序列化技术 在RPC（remote procedure call，远程过程调用）通信流程中，百KB级别的RPC消息序列化需要计算侧耗时4~5ms，网络侧耗时约10~15ms，系统加速比低，严重影响了系统的运行性能。
-智能序列化技术通过对计算侧、网络侧和能耗侧进行综合建模，通过最优化方法和智能决策策略实现了智能的序列化方案，使计算侧和网络侧总时延降至8ms，缩减60%+。
-极简传输协议 随着文件及流媒体文件对传输效率和速度提出更高的要求，用户对全场景传输效率的需求进一步提升，正是为了适应这样的新要求，极简传输协议应运而生。</div><div class="post-footer">
-        <a href="/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/6.s081_lab1/">6.s081_lab1</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-03-18">2023-03-18</time></span></div><div class="content">lab1 sleep 思路 直接将argv[1]赋值给sleep系统调用即可
-#include &#34;kernel/types.h&#34; #include &#34;kernel/stat.h&#34; #include &#34;user/user.h&#34; int main(int argc, char *argv[]) { char *sleeptime_char; int sleeptime; if (argc &lt;= 1) { printf(&#34;sleep need one parm&#34;); exit(1); } if (argc &gt; 2) { printf(&#34;too many parm&#34;); exit(1); /* code */ } sleeptime_char = argv[1]; sleeptime = atoi(sleeptime_char); sleep(sleeptime); exit(0); } pingpong 在pingpong.c中，有两种思路
-思路一 只创建一个管道，父子都通过这个管道进行读写，父进程在写入之后必须wait等待子进程读取并在写入之后，在进行读取操作。
-#include &#34;kernel/types.h&#34; #include &#34;user.h&#34; int main(int argc,char* argv[]){ //创建两个管道，分别实现ping、pong的读写 int p[2]; pipe(p); char readtext[10];//作为父进程和子进程的读出容器 //子程序读出 int pid = fork(); if(pid==0){ read(p[0],readtext,10); printf(&#34;%d: received %s\n&#34;,getpid(),readtext); write(p[1],&#34;pong&#34;,10); exit(0);//子进程一定要退出 } //父程序写入 else{ write(p[1],&#34;ping&#34;,10); wait(0);//父进程阻塞，等待子进程读取 read(p[0],readtext,10); printf(&#34;%d: received %s\n&#34;,getpid(),readtext); exit(0);//父进程一定要退出 } return 0; } 思路二 需要建立两个管道分别用到作为读写管道。管道一头只作为读，另一头只作为写。当父子进程都需要读写时，创建两个管道，一个父读子写，一个父写子读。</div><div class="post-footer">
-        <a href="/posts/6.s081_lab1/">Read More</a></div>
-</article></div></div>
+</article><ul class="pagination"><li class="page-item active">
+                    <span class="page-link">
+                        <a href="/">1</a>
+                    </span>
+                </li><li class="page-item ">
+                    <span class="page-link">
+                        <a href="/page/2/">2</a>
+                    </span>
+                </li></ul></div></div>
             </main><footer class="footer">
         <div class="footer-container"><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">zxj</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0 国际许可协议</a></span></div>
         </div>
