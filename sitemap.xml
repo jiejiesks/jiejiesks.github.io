@@ -2,9 +2,10 @@
     xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
     xmlns:xhtml="http://www.w3.org/1999/xhtml"
     ><url>
+            <loc>http://example.org/posts/openharmony/</loc><lastmod>2023-04-18T12:44:27&#43;08:00</lastmod></url><url>
+            <loc>http://example.org/</loc><lastmod>2023-04-18T12:44:27&#43;08:00</lastmod></url><url>
+            <loc>http://example.org/posts/</loc><lastmod>2023-04-18T12:44:27&#43;08:00</lastmod></url><url>
             <loc>http://example.org/posts/6.s081_lab9/</loc><lastmod>2023-04-17T20:43:06&#43;08:00</lastmod></url><url>
-            <loc>http://example.org/</loc><lastmod>2023-04-17T20:43:06&#43;08:00</lastmod></url><url>
-            <loc>http://example.org/posts/</loc><lastmod>2023-04-17T20:43:06&#43;08:00</lastmod></url><url>
             <loc>http://example.org/posts/6.s081_lab8/</loc><lastmod>2023-04-17T20:43:04&#43;08:00</lastmod></url><url>
             <loc>http://example.org/posts/6.s081_lab7/</loc><lastmod>2023-04-17T20:43:02&#43;08:00</lastmod></url><url>
             <loc>http://example.org/posts/6.s081_lab6/</loc><lastmod>2023-04-17T20:43:00&#43;08:00</lastmod></url><url>

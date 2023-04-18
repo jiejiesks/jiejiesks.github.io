@@ -4,9 +4,17 @@
         <link>http://example.org/</link>
         <description>Some notes</description>
         <generator>Hugo -- gohugo.io</generator><language>en</language><managingEditor>xjzhou2022@163.com (zxj)</managingEditor>
-            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Mon, 17 Apr 2023 20:43:06 &#43;0800</lastBuildDate>
+            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Tue, 18 Apr 2023 12:44:27 &#43;0800</lastBuildDate>
             <atom:link href="http://example.org/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>Openharmony</title>
+    <link>http://example.org/posts/openharmony/</link>
+    <pubDate>Tue, 18 Apr 2023 12:44:27 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/openharmony/</guid>
+    <description><![CDATA[一些关于openharmony开发中的问题 分布式访问文件遇到devsl permission denied 在服务器端创建了文件之后，客户端通过hmdfs分布式文件系统去访问该文件提示devsl permission denied。 客户端报错： [ 109.699430] hmdfs: hmdfs_do_open_remote() hmdfs_send_open return failed with -13 服务器端报错： [ 174.455917] hmdfs: ctrl_cmd_update_devsl_handler() Found peer: device_id = 1 [ 176.481693] hmdfs: hmdfs_node_call_evt_cb() node 0x1:0x1 call online async cb seq 2 [ 176.481744] hmdfs: hmdfs_stash_online_do_restore() peer 0x1:0x1 restore stashed-file ok 0 fail 0 keep 0 [ 189.562784] hmdfs: hmdfs_open_file() devsl:1 [ 189.563653] hmdfs: check_sec_level() value: [ 189.563699] hmdfs: check_sec_level() error: -61,devsl: 1 [ 189.]]></description>
+</item>
+<item>
     <title>6.s081_lab9</title>
     <link>http://example.org/posts/6.s081_lab9/</link>
     <pubDate>Mon, 17 Apr 2023 20:43:06 &#43;0800</pubDate>
@@ -189,38 +197,6 @@ TIPS
 lab2 system call tracing trace系统调用有一个参数，这个参数是一个整数“掩码”（mask），它的比特位指定要跟踪的系统调用。例如，要跟踪fork系统调用，程序调用trace(1 &lt;&lt; SYS_fork)，其中SYS_fork是kernel/syscall.h中的系统调用编号，这个掩码是10也即2。32是read的系统调用，因为1&laquo;5为32，100000。1111……1共31个1，即2147483647，这个掩码代表追踪所有的系统调用。
 我们提供了一个用户级程序版本的trace，它运行另一个启用了跟踪的程序（参见user/trace.c）。完成后，您应该看到如下输出：
 $ trace 32 grep hello README 3: syscall read -&gt; 1023 3: syscall read -&gt; 966 3: syscall read -&gt; 70 3: syscall read -&gt; 0 $ $ trace 2147483647 grep hello README 4: syscall trace -&gt; 0 4: syscall exec -&gt; 3 4: syscall open -&gt; 3 4: syscall read -&gt; 1023 4: syscall read -&gt; 966 4: syscall read -&gt; 70 4: syscall read -&gt; 0 4: syscall close -&gt; 0 $ $ grep hello README $ $ trace 2 usertests forkforkfork usertests starting test forkforkfork: 407: syscall fork -&gt; 408 408: syscall fork -&gt; 409 409: syscall fork -&gt; 410 410: syscall fork -&gt; 411 409: syscall fork -&gt; 412 410: syscall fork -&gt; 413 409: syscall fork -&gt; 414 411: syscall fork -&gt; 415 .]]></description>
-</item>
-<item>
-    <title>分布式软总线</title>
-    <link>http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/</link>
-    <pubDate>Sat, 18 Mar 2023 14:37:58 &#43;0800</pubDate>
-    <author>zxj</author>
-    <guid>http://example.org/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E8%BD%AF%E6%80%BB%E7%BA%BF/</guid>
-    <description><![CDATA[分布式软总线 1	介绍 1.1	什么是总线？ 总线(Bus)是嵌入式系统和计算机系统的重要基础技术，通过它，多个不同的设备可以互相连接和通讯。总之，总线可以把一些不同的设备，通过约定的协议连接在一起。总线协议会给每个设备分配相应的地址，并且协调调度各设备对总线资源的访问。在总线协议基础上，应用开发不需要关心设备之间的连接，只需要按照协议所分配的地址进行应用数据的发送和接收。
-1.2	什么是分布式软总线？ 华为所提出的1+8+N概念：1指的是手机，8指的是车机、音箱、耳机、手表/手环、平板、大屏、PC、AR/VR，N指的是其他IOT设备。软总线就是在这个大的框架下所提出的，就是为了解决所有1+8+N设备之间的互联问题。
-软总线计数最大的特点是不同协议的异构网络进行组网。==传统场景下==，需要蓝牙传输的两台设备必须具有蓝牙，需要wifi传输的设备必须都具有wifi，而 蓝牙和wifi之间是无法进行数据通信的。软总线提出蓝牙/wifi融合网络组网技术，解决了==不同协议设备进行·通信的问题==，使得多个鸿蒙设备能够自动构建一个逻辑全连接的网络，用户或者业务开发者无需关心组网方式和物理协议，只需聚焦业务逻辑的实现，无需关注组网方式与底层协议。软总线模块实现的能力有：服务发布、数据传输、安全通信。
-分布式软总线是基于开源COAP(Constrained Application Protocal)协议，C语言实现的，属于一种底层基于UDP的应用层协议。鸿蒙使用COAP协议因为考虑到harmonyOS的设备除了硬件性能较好的手机电脑设备外，还有资源受限的物联网设备，这些设备的ram、rom相对较小。coap协议支持轻量的可靠传输，采用coap协议，可以扩大组网的范围。
-软总线屏蔽了各种设备底层协议的差异，如不同设备支持wifi、蓝牙、BT、NFC等协议无法互通，但是通过软总线可以使得支持不同设备协议的互通，使得应用层不用在关心设备的底层协议。注：真机实测需要不用设备登录同一个华为账号，设置-超级终端-允许附近设备发现我，同时在同一局域网或蓝牙。远程模拟不需要登录同一个华为账号，默认在同一个局域网下。
-框架图可以看到，分布式软总线最主要的几大功能是：发现、连接、组网/拓扑管理、任务总线、数据总线；
-发现：指的是搜索周围是否有相关设备 连接：指的是与所发现的设备建立连接 组网/拓扑管理：指的是对所有发现的设备进行网络拓扑管理，比如组成星状网络拓扑，或者是组成Mesh网络拓扑 任务总线：指的是在所建立的网络拓扑基础上，用于传输小数据量信息的通路 数据总线：指的是用于传输较大数据量信息的通路 根据示意图可以得出以下几个结论：
-协议栈和软硬协同层屏蔽各种硬件设备协议的差异
-总线中枢负责解析命令，完成设备间的发现与连接，基于COAP协议的设备发现功能
-安全模块负责通信的加密；设备认证模块通过交换主控设备与配件设备的身份标识来建立点对点信任关系，设备认证模块的关键技术点HiChain机制数据接收管理、PAKE协议、STS协议流程
-提供统一的基于Session的认证，传输功能，上层业务系统可以通过Sessionid收发数据或获取相关基本属性，实现业务消息、流、控制指令等交互操作
-软总线功能代码路径Openharmony3.1.4/foundation/communication/dsoftbus/core。
-discovery模块：提供基于COAP协议的设备发现机制 connection模块：提供基于COAP协议的设备链接机制 authentication模块：提供设备认证机制和知识库管理功能 transmission模块：基于系统内核提供的socket通信，向authmanager模块提供设备认证通道管理和设备认证数据传输；向业务模块提供session管理和基于session的数据收发功能，并且通过GCM模块的加密功能提供收发报文的加解密保护； adapter模块：操作系统适配层，根据不同的硬件进行适配。在应用层为何不能去做分布式软总线，难点便在于此，无法知道各个设备的硬件，而鸿蒙是很容易知道硬件的。 bus_center：组网代码 common：通用代码 frame：框架代码 需要注意的是，软总线启动后，设备在发现阶段基于coap协议使用udp数据报进行通讯。当设备认证通过后，确认连接后，将会使用TCP协议进行更加安全可靠的通讯
-基于分布式软总线设备交互过程示意图
-具体过程：发现端（如手机端）在广播发送discover请求后，使用coap协议在局域网内发送广播 ；被发现端设备使用PublishService接口发布服务，接收端收到广播后，发送coap协议单播给发现端；发现端设备收到报文后会更新设备信息进而建立连接
-1.3	为什么需要分布式软总线？ 以往手机外围设备比较少的时候，用户通过手动操作的方式进行设备之间的连接。比如，手机连接蓝牙耳机。随着外围设备越来越多，手动操作的方式不方便，甚至会影响用户的体验。而且，有的外围设备之间还不支持直接连接。HarmonyOS的分布式总线技术是为了能够让所有的设备之间能够方便、高效的互联。
-2 分布式软总线特性 鸿蒙分布式软总线的设计目标在于推进==极简通信协议==技术，在设备安全场景下，即连即用。关键技术特性覆盖设备的自动发现&amp;连接、组网(多跳自组网、多协议混合组网）、传输(多元化协议与算法、智能感知与决策）。
-2.1	分布式软总线关键技术”发现与组网“ 分布式软总线技术可以自动发现周围的其它设备，并且将他们连接形成网络，分布式软总线提出了异构网络组网，自动构建一个逻辑全连接网络，以解决设备间不同协议交互的问题。下图显示的是自动发现设备之后形成的Mesh网络的示意图。
-2.2	分布式软总线关键技术“软时钟” 把众多外围设备连接形成网络后，有一个问题需要解决。就是各个设备存在硬件、软件性能各方面的差异，导致时间上的不同步。比如，iot设备由于成本方面的原因，晶振的质量比较差，会存在相对较大的频飘。不同设备之间多方面的差异，如果没有时钟同步，他们之间的通信将无法展开。下面是分布式软总线关键技术之一的软时钟介绍，它通过时钟同步算法，将不同设备原本不同步的时钟做到统一的同步时钟。 2.3	分布式软总线关键技术“调度” 所有被组成MESH网络的设备在软时钟算法的同步下，就可以进行资源的调度。软总线技术中提出了LaneHub的概念，可以理解为调度管理各通信通路的模块。比如，不同的设备有不同的连接方式，手机有BLE、wifi、NFC三种连接方式，PAD有wifi、UWB两种连接方式，PC有USB、wifi两种连接方式。通过软总线的LaneHub可以对这三个连接的设备进行统一的资源调度。比如，手机与PAD通过BLE连接、手机与PC通过wifi连接，软总线协议调度他们的通信时间、频谱，达到减少干扰、提升速率的目的。
-2.4	分布式软总线关键技术“传输” 2.4.1	多径传输技术 近年来，高清音视频、动画等多媒体资源日益增长，实现通用高效率文件传输成为一项极其重要的需求。然而传统的文件传输，往往依赖一条链路直接进行传输。文件的传输效率完全依赖链路本身的传输能力，鲁棒性和传输效率均不足。
-为了适应新互联时代的需求，实现高效率文件传输，分布式软总线多径传输技术应运而生。多径传输技术基本思路是最大化利用不同路径的传输能力，原本一条链路上的文件传输，通过文件分割，将分割后的文件不同部分从多条路径进行传输，最终在目标侧聚合成原有文件。通过智能均衡不同链路的传输负载，实现了对文件的分割和传输，能力强的链路多分些文件占比，能力弱的少分些文件占比，甚至可以不分。这样就实现了文件的高效快速传输，给用户带来不一样的快速传输体验。
-2.4.2	智能时延控制技术 在网络传输过程中，很大一块开销是序列化和协议编码占据的。进一步优化这部分开销，对传输时延和空间资源有着重要意义。智能时延控制技术正是通过==智能序列化技术==和==极简传输协议==两项重要子技术，实现了序列化和协议编码的极大压缩。
-智能序列化技术 在RPC（remote procedure call，远程过程调用）通信流程中，百KB级别的RPC消息序列化需要计算侧耗时4~5ms，网络侧耗时约10~15ms，系统加速比低，严重影响了系统的运行性能。
-智能序列化技术通过对计算侧、网络侧和能耗侧进行综合建模，通过最优化方法和智能决策策略实现了智能的序列化方案，使计算侧和网络侧总时延降至8ms，缩减60%+。
-极简传输协议 随着文件及流媒体文件对传输效率和速度提出更高的要求，用户对全场景传输效率的需求进一步提升，正是为了适应这样的新要求，极简传输协议应运而生。]]></description>
 </item>
 </channel>
 </rss>
