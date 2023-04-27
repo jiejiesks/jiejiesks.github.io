@@ -16,7 +16,7 @@
 <meta name="application-name" content="jiejiesks site">
 <meta name="apple-mobile-web-app-title" content="jiejiesks site"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://example.org/posts/openharmony/" /><link rel="prev" href="http://example.org/posts/6.s081_lab9/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://example.org/posts/openharmony/" /><link rel="prev" href="http://example.org/posts/6.s081_lab9/" /><link rel="next" href="http://example.org/posts/6.s081_lab10/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
         <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css"></noscript><link rel="preload" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
         <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"></noscript><script type="application/ld+json">
     {
@@ -68,7 +68,7 @@
             <h2 class="toc-title">Contents</h2>
             <div class="toc-content" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">Openharmony</h1><div class="post-meta">
-            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span></div>
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-category">included in <a href="/categories/openharmony/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Openharmony</a></span></div>
             <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-04-18">2023-04-18</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;156 words&nbsp;
                 <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;One minute&nbsp;</div>
         </div><div class="details toc" id="toc-static"  data-kept="">
@@ -112,9 +112,9 @@ goto out;
 <ul>
 <li>
 <p>一种方法是</p>
-<pre tabindex="0"><code> 1、kernel_talker.cpp: .devsl = DATA_SEC_LEVEL3,
- 2、devsl_dispatcher.cpp levelInfo = DATA_SEC_LEVEL3
-</code></pre><p>但是该方法只能使得A端访问B端文件，B端访问A端文件仍会出现devsl permission denied的问题</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"> <span class="mi">1</span><span class="err">、</span><span class="n">kernel_talker</span><span class="p">.</span><span class="nl">cpp</span><span class="p">:</span> <span class="p">.</span><span class="n">devsl</span> <span class="o">=</span> <span class="n">DATA_SEC_LEVEL3</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"> <span class="mi">2</span><span class="err">、</span><span class="n">devsl_dispatcher</span><span class="p">.</span><span class="n">cpp</span> <span class="n">levelInfo</span> <span class="o">=</span> <span class="n">DATA_SEC_LEVEL3</span>
+</span></span></code></pre></div><p>但是该方法只能使得A端访问B端文件，B端访问A端文件仍会出现devsl permission denied的问题</p>
 </li>
 <li>
 <p>提高设备的设备等级，参考https://gitee.com/zkx48/dfs_service_instruction</p>
@@ -123,13 +123,13 @@ goto out;
 <h2 id="单独编译openharmony内核或者是增加内核模块">单独编译openharmony内核或者是增加内核模块</h2>
 <p>由于openharmony会在标准linux内核上打patch，不能直接在工作目录的linux_5.10下增加内核模块，必须在out目录下操作才可</p>
 <p>单独编译的命令如下</p>
-<pre tabindex="0"><code>export OHOS_ROOT=~/Documents/DevEco/Projects/RK3568
-export PATH=$OHOS_ROOT/prebuilts/clang/ohos/linux-x86_64/llvm/bin:$PATH
-export PATH=$OHOS_ROOT/prebuilts/gcc/linux-x86/arm/gcc-linaro-7.5.0-arm-linux-gnueabi/bin:$PATH
-export MAKE_OPTIONS=&#34;ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- CC=clang HOSTCC=clang&#34;
-export PRODUCT_PATH=vendor/hihope/RK3568
-./make-ohos.sh TB-RK3568X0
-</code></pre></div><div class="post-footer" id="post-footer">
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">OHOS_ROOT</span><span class="o">=</span>~/Documents/DevEco/Projects/RK3568
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$OHOS_ROOT</span>/prebuilts/clang/ohos/linux-x86_64/llvm/bin:<span class="nv">$PATH</span>
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$OHOS_ROOT</span>/prebuilts/gcc/linux-x86/arm/gcc-linaro-7.5.0-arm-linux-gnueabi/bin:<span class="nv">$PATH</span>
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">MAKE_OPTIONS</span><span class="o">=</span><span class="s2">&#34;ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- CC=clang HOSTCC=clang&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">PRODUCT_PATH</span><span class="o">=</span>vendor/hihope/RK3568
+</span></span><span class="line"><span class="cl">./make-ohos.sh TB-RK3568X0
+</span></span></code></pre></div></div><div class="post-footer" id="post-footer">
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
@@ -150,7 +150,8 @@ export PRODUCT_PATH=vendor/hihope/RK3568
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/6.s081_lab9/" class="prev" rel="prev" title="6.s081_lab9"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>6.s081_lab9</a></div>
+    <div class="post-nav"><a href="/posts/6.s081_lab9/" class="prev" rel="prev" title="6.s081_lab9"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>6.s081_lab9</a>
+            <a href="/posts/6.s081_lab10/" class="next" rel="next" title="6.s081_lab10">6.s081_lab10<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
 </div>
 </article></div>
             </main><footer class="footer">

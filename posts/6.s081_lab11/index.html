@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>6.s081_lab11 - OS IS TOO HARD</title><meta name="Description" content="Some notes"><meta property="og:title" content="6.s081_lab11" />
+<meta property="og:description" content="lab11 YOUR JOB
+您的工作是在***kernel/e1000.c***中完成e1000_transmit()和e1000_recv()，以便驱动程序可以发送和接收数据包。当make grade表示您的解决方案通过了所有测试时，您就完成了。
+[!TIP] 在编写代码时，您会发现自己参考了《E1000软件开发人员手册》。以下部分可能特别有用：
+Section 2是必不可少的，它概述了整个设备。 Section 3.2概述了数据包接收。 Section 3.3与Section 3.4一起概述了数据包传输。 Section 13概述了E1000使用的寄存器。 Section 14可能会帮助您理解我们提供的init代码。 浏览《E1000软件开发人员手册》。本手册涵盖了几个密切相关的以太网控制器。QEMU模拟82540EM。现在浏览第2章，了解该设备。要编写驱动程序，您需要熟悉第3章和第14章以及第4.1节（虽然不包括4.1的子节）。你还需要参考第13章。其他章节主要介绍你的驱动程序不必与之交互的E1000组件。一开始不要担心细节；只需了解文档的结构，就可以在以后找到内容。E1000具有许多高级功能，其中大部分您可以忽略。完成这个实验只需要一小部分基本功能。
+我们在***e1000.c***中提供的e1000_init()函数将E1000配置为读取要从RAM传输的数据包，并将接收到的数据包写入RAM。这种技术称为DMA，用于直接内存访问，指的是E1000硬件直接向RAM写入和读取数据包。
+由于数据包突发到达的速度可能快于驱动程序处理数据包的速度，因此e1000_init()为E1000提供了多个缓冲区，E1000可以将数据包写入其中。E1000要求这些缓冲区由RAM中的“描述符”数组描述；每个描述符在RAM中都包含一个地址，E1000可以在其中写入接收到的数据包。struct rx_desc描述描述符格式。描述符数组称为接收环或接收队列。它是一个圆环，在这个意义上，当网卡或驱动程序到达队列的末尾时，它会绕回到数组的开头。e1000_init()使用mbufalloc()为要进行DMA的E1000分配mbuf数据包缓冲区。此外还有一个传输环，驱动程序将需要E1000发送的数据包放入其中。e1000_init()将两个环的大小配置为RX_RING_SIZE和TX_RING_SIZE。
+当***net.c***中的网络栈需要发送数据包时，它会调用e1000_transmit()，并使用一个保存要发送的数据包的mbuf作为参数。传输代码必须在TX（传输）环的描述符中放置指向数据包数据的指针。struct tx_desc描述了描述符的格式。您需要确保每个mbuf最终被释放，但只能在E1000完成数据包传输之后（E1000在描述符中设置E1000_TXD_STAT_DD位以指示此情况）。
+当当E1000从以太网接收到每个包时，它首先将包DMA到下一个RX(接收)环描述符指向的mbuf，然后产生一个中断。e1000_recv()代码必须扫描RX环，并通过调用net_rx()将每个新数据包的mbuf发送到网络栈（在***net.c***中）。然后，您需要分配一个新的mbuf并将其放入描述符中，以便当E1000再次到达RX环中的该点时，它会找到一个新的缓冲区，以便DMA新数据包。
+除了在RAM中读取和写入描述符环外，您的驱动程序还需要通过其内存映射控制寄存器与E1000交互，以检测接收到数据包何时可用，并通知E1000驱动程序已经用要发送的数据包填充了一些TX描述符。全局变量regs包含指向E1000第一个控制寄存器的指针；您的驱动程序可以通过将regs索引为数组来获取其他寄存器。您需要特别使用索引E1000_RDT和E1000_TDT。
+要测试驱动程序，请在一个窗口中运行make server，在另一个窗口中运行make qemu，然后在xv6中运行nettests。nettests中的第一个测试尝试将UDP数据包发送到主机操作系统，地址是make server运行的程序。如果您还没有完成实验，E1000驱动程序实际上不会发送数据包，也不会发生什么事情。
+完成实验后，E1000驱动程序将发送数据包，qemu将其发送到主机，make server将看到它并发送响应数据包，然后E1000驱动程序和nettests将看到响应数据包。但是，在主机发送应答之前，它会向xv6发送一个“ARP”请求包，以找出其48位以太网地址，并期望xv6以ARP应答进行响应。一旦您完成了对E1000驱动程序的工作，***kernel/net.c***就会处理这个问题。如果一切顺利，nettests将打印testing ping: OK，make server将打印a message from xv6!。
+tcpdump -XXnr packets.pcap应该生成这样的输出:
+reading from file packets.pcap, link-type EN10MB (Ethernet) 15:27:40.861988 IP 10.0.2.15.2000 &gt; 10.0.2.2.25603: UDP, length 19 0x0000: ffff ffff ffff 5254 0012 3456 0800 4500 ......RT..4V..E. 0x0010: 002f 0000 0000 6411 3eae 0a00 020f 0a00 ." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/6.s081_lab11/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-04-27T20:13:31+08:00" />
+<meta property="article:modified_time" content="2023-04-27T20:13:31+08:00" /><meta property="og:site_name" content="jiejiesks site" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="6.s081_lab11"/>
+<meta name="twitter:description" content="lab11 YOUR JOB
+您的工作是在***kernel/e1000.c***中完成e1000_transmit()和e1000_recv()，以便驱动程序可以发送和接收数据包。当make grade表示您的解决方案通过了所有测试时，您就完成了。
+[!TIP] 在编写代码时，您会发现自己参考了《E1000软件开发人员手册》。以下部分可能特别有用：
+Section 2是必不可少的，它概述了整个设备。 Section 3.2概述了数据包接收。 Section 3.3与Section 3.4一起概述了数据包传输。 Section 13概述了E1000使用的寄存器。 Section 14可能会帮助您理解我们提供的init代码。 浏览《E1000软件开发人员手册》。本手册涵盖了几个密切相关的以太网控制器。QEMU模拟82540EM。现在浏览第2章，了解该设备。要编写驱动程序，您需要熟悉第3章和第14章以及第4.1节（虽然不包括4.1的子节）。你还需要参考第13章。其他章节主要介绍你的驱动程序不必与之交互的E1000组件。一开始不要担心细节；只需了解文档的结构，就可以在以后找到内容。E1000具有许多高级功能，其中大部分您可以忽略。完成这个实验只需要一小部分基本功能。
+我们在***e1000.c***中提供的e1000_init()函数将E1000配置为读取要从RAM传输的数据包，并将接收到的数据包写入RAM。这种技术称为DMA，用于直接内存访问，指的是E1000硬件直接向RAM写入和读取数据包。
+由于数据包突发到达的速度可能快于驱动程序处理数据包的速度，因此e1000_init()为E1000提供了多个缓冲区，E1000可以将数据包写入其中。E1000要求这些缓冲区由RAM中的“描述符”数组描述；每个描述符在RAM中都包含一个地址，E1000可以在其中写入接收到的数据包。struct rx_desc描述描述符格式。描述符数组称为接收环或接收队列。它是一个圆环，在这个意义上，当网卡或驱动程序到达队列的末尾时，它会绕回到数组的开头。e1000_init()使用mbufalloc()为要进行DMA的E1000分配mbuf数据包缓冲区。此外还有一个传输环，驱动程序将需要E1000发送的数据包放入其中。e1000_init()将两个环的大小配置为RX_RING_SIZE和TX_RING_SIZE。
+当***net.c***中的网络栈需要发送数据包时，它会调用e1000_transmit()，并使用一个保存要发送的数据包的mbuf作为参数。传输代码必须在TX（传输）环的描述符中放置指向数据包数据的指针。struct tx_desc描述了描述符的格式。您需要确保每个mbuf最终被释放，但只能在E1000完成数据包传输之后（E1000在描述符中设置E1000_TXD_STAT_DD位以指示此情况）。
+当当E1000从以太网接收到每个包时，它首先将包DMA到下一个RX(接收)环描述符指向的mbuf，然后产生一个中断。e1000_recv()代码必须扫描RX环，并通过调用net_rx()将每个新数据包的mbuf发送到网络栈（在***net.c***中）。然后，您需要分配一个新的mbuf并将其放入描述符中，以便当E1000再次到达RX环中的该点时，它会找到一个新的缓冲区，以便DMA新数据包。
+除了在RAM中读取和写入描述符环外，您的驱动程序还需要通过其内存映射控制寄存器与E1000交互，以检测接收到数据包何时可用，并通知E1000驱动程序已经用要发送的数据包填充了一些TX描述符。全局变量regs包含指向E1000第一个控制寄存器的指针；您的驱动程序可以通过将regs索引为数组来获取其他寄存器。您需要特别使用索引E1000_RDT和E1000_TDT。
+要测试驱动程序，请在一个窗口中运行make server，在另一个窗口中运行make qemu，然后在xv6中运行nettests。nettests中的第一个测试尝试将UDP数据包发送到主机操作系统，地址是make server运行的程序。如果您还没有完成实验，E1000驱动程序实际上不会发送数据包，也不会发生什么事情。
+完成实验后，E1000驱动程序将发送数据包，qemu将其发送到主机，make server将看到它并发送响应数据包，然后E1000驱动程序和nettests将看到响应数据包。但是，在主机发送应答之前，它会向xv6发送一个“ARP”请求包，以找出其48位以太网地址，并期望xv6以ARP应答进行响应。一旦您完成了对E1000驱动程序的工作，***kernel/net.c***就会处理这个问题。如果一切顺利，nettests将打印testing ping: OK，make server将打印a message from xv6!。
+tcpdump -XXnr packets.pcap应该生成这样的输出:
+reading from file packets.pcap, link-type EN10MB (Ethernet) 15:27:40.861988 IP 10.0.2.15.2000 &gt; 10.0.2.2.25603: UDP, length 19 0x0000: ffff ffff ffff 5254 0012 3456 0800 4500 ......RT..4V..E. 0x0010: 002f 0000 0000 6411 3eae 0a00 020f 0a00 ."/>
+<meta name="application-name" content="jiejiesks site">
+<meta name="apple-mobile-web-app-title" content="jiejiesks site"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://example.org/posts/6.s081_lab11/" /><link rel="prev" href="http://example.org/posts/6.s081_lab10/" /><link rel="next" href="http://example.org/posts/6.828_lab1/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css"></noscript><link rel="preload" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "6.s081_lab11",
+        "inLanguage": "en",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/example.org\/posts\/6.s081_lab11\/"
+        },"genre": "posts","wordcount":  488 ,
+        "url": "http:\/\/example.org\/posts\/6.s081_lab11\/","datePublished": "2023-04-27T20:13:31+08:00","dateModified": "2023-04-27T20:13:31+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "zxj"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="OS IS TOO HARD">Xingjie Zhou&#39;s Blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> Posts </a><a class="menu-item" href="/tags/"> Tags </a><a class="menu-item" href="/categories/"> Categories </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="OS IS TOO HARD">Xingjie Zhou&#39;s Blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">Posts</a><a class="menu-item" href="/tags/" title="">Tags</a><a class="menu-item" href="/categories/" title="">Categories</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">6.s081_lab11</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-category">included in <a href="/categories/6.s081/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.s081</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-04-27">2023-04-27</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;488 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;3 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#提示">提示</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="lab11">lab11</h1>
+<p>YOUR JOB</p>
+<p>您的工作是在***kernel/e1000.c***中完成<code>e1000_transmit()</code>和<code>e1000_recv()</code>，以便驱动程序可以发送和接收数据包。当<code>make grade</code>表示您的解决方案通过了所有测试时，您就完成了。</p>
+<p>[!TIP] 在编写代码时，您会发现自己参考了<a href="https://pdos.csail.mit.edu/6.828/2020/readings/8254x_GBe_SDM.pdf" target="_blank" rel="noopener noreffer ">《E1000软件开发人员手册》</a>。以下部分可能特别有用：</p>
+<ul>
+<li>Section 2是必不可少的，它概述了整个设备。</li>
+<li>Section 3.2概述了数据包接收。</li>
+<li>Section 3.3与Section 3.4一起概述了数据包传输。</li>
+<li>Section 13概述了E1000使用的寄存器。</li>
+<li>Section 14可能会帮助您理解我们提供的init代码。</li>
+</ul>
+<p>浏览<a href="https://pdos.csail.mit.edu/6.828/2020/readings/8254x_GBe_SDM.pdf" target="_blank" rel="noopener noreffer ">《E1000软件开发人员手册》</a>。本手册涵盖了几个密切相关的以太网控制器。QEMU模拟82540EM。现在浏览第2章，了解该设备。要编写驱动程序，您需要熟悉第3章和第14章以及第4.1节（虽然不包括4.1的子节）。你还需要参考第13章。其他章节主要介绍你的驱动程序不必与之交互的E1000组件。一开始不要担心细节；只需了解文档的结构，就可以在以后找到内容。E1000具有许多高级功能，其中大部分您可以忽略。完成这个实验只需要一小部分基本功能。</p>
+<p>我们在***e1000.c***中提供的<code>e1000_init()</code>函数将E1000配置为读取要从RAM传输的数据包，并将接收到的数据包写入RAM。这种技术称为DMA，用于直接内存访问，指的是E1000硬件直接向RAM写入和读取数据包。</p>
+<p>由于数据包突发到达的速度可能快于驱动程序处理数据包的速度，因此<code>e1000_init()</code>为E1000提供了多个缓冲区，E1000可以将数据包写入其中。E1000要求这些缓冲区由RAM中的“描述符”数组描述；每个描述符在RAM中都包含一个地址，E1000可以在其中写入接收到的数据包。<code>struct rx_desc</code>描述描述符格式。描述符数组称为接收环或接收队列。它是一个圆环，在这个意义上，当网卡或驱动程序到达队列的末尾时，它会绕回到数组的开头。<code>e1000_init()</code>使用<code>mbufalloc()</code>为要进行DMA的E1000分配<code>mbuf</code>数据包缓冲区。此外还有一个传输环，驱动程序将需要E1000发送的数据包放入其中。<code>e1000_init()</code>将两个环的大小配置为<code>RX_RING_SIZE</code>和<code>TX_RING_SIZE</code>。</p>
+<p>当***net.c***中的网络栈需要发送数据包时，它会调用<code>e1000_transmit()</code>，并使用一个保存要发送的数据包的<code>mbuf</code>作为参数。传输代码必须在TX（传输）环的描述符中放置指向数据包数据的指针。<code>struct tx_desc</code>描述了描述符的格式。您需要确保每个<code>mbuf</code>最终被释放，但只能在E1000完成数据包传输之后（E1000在描述符中设置<code>E1000_TXD_STAT_DD</code>位以指示此情况）。</p>
+<p>当当E1000从以太网接收到每个包时，它首先将包DMA到下一个RX(接收)环描述符指向的<code>mbuf</code>，然后产生一个中断。<code>e1000_recv()</code>代码必须扫描RX环，并通过调用<code>net_rx()</code>将每个新数据包的<code>mbuf</code>发送到网络栈（在***net.c***中）。然后，您需要分配一个新的<code>mbuf</code>并将其放入描述符中，以便当E1000再次到达RX环中的该点时，它会找到一个新的缓冲区，以便DMA新数据包。</p>
+<p>除了在RAM中读取和写入描述符环外，您的驱动程序还需要通过其内存映射控制寄存器与E1000交互，以检测接收到数据包何时可用，并通知E1000驱动程序已经用要发送的数据包填充了一些TX描述符。全局变量<code>regs</code>包含指向E1000第一个控制寄存器的指针；您的驱动程序可以通过将<code>regs</code>索引为数组来获取其他寄存器。您需要特别使用索引<code>E1000_RDT</code>和<code>E1000_TDT</code>。</p>
+<p>要测试驱动程序，请在一个窗口中运行<code>make server</code>，在另一个窗口中运行<code>make qemu</code>，然后在xv6中运行<code>nettests</code>。<code>nettests</code>中的第一个测试尝试将UDP数据包发送到主机操作系统，地址是<code>make server</code>运行的程序。如果您还没有完成实验，E1000驱动程序实际上不会发送数据包，也不会发生什么事情。</p>
+<p>完成实验后，E1000驱动程序将发送数据包，qemu将其发送到主机，<code>make server</code>将看到它并发送响应数据包，然后E1000驱动程序和<code>nettests</code>将看到响应数据包。但是，在主机发送应答之前，它会向xv6发送一个“ARP”请求包，以找出其48位以太网地址，并期望xv6以ARP应答进行响应。一旦您完成了对E1000驱动程序的工作，***kernel/net.c***就会处理这个问题。如果一切顺利，<code>nettests</code>将打印<code>testing ping: OK</code>，<code>make server</code>将打印<code>a message from xv6!</code>。</p>
+<p><code>tcpdump -XXnr packets.pcap</code>应该生成这样的输出:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">reading from file packets.pcap, link-type EN10MB <span class="o">(</span>Ethernet<span class="o">)</span>
+</span></span><span class="line"><span class="cl">15:27:40.861988 IP 10.0.2.15.2000 &gt; 10.0.2.2.25603: UDP, length <span class="m">19</span>
+</span></span><span class="line"><span class="cl">        0x0000:  ffff ffff ffff <span class="m">5254</span> <span class="m">0012</span> <span class="m">3456</span> <span class="m">0800</span> <span class="m">4500</span>  ......RT..4V..E.
+</span></span><span class="line"><span class="cl">        0x0010:  002f <span class="m">0000</span> <span class="m">0000</span> <span class="m">6411</span> 3eae 0a00 020f 0a00  ./....d.&gt;.......
+</span></span><span class="line"><span class="cl">        0x0020:  <span class="m">0202</span> 07d0 <span class="m">6403</span> 001b <span class="m">0000</span> <span class="m">6120</span> 6d65 <span class="m">7373</span>  ....d.....a.mess
+</span></span><span class="line"><span class="cl">        0x0030:  <span class="m">6167</span> <span class="m">6520</span> <span class="m">6672</span> 6f6d <span class="m">2078</span> <span class="m">7636</span> <span class="m">21</span>         age.from.xv6!
+</span></span><span class="line"><span class="cl">15:27:40.862370 ARP, Request who-has 10.0.2.15 tell 10.0.2.2, length <span class="m">28</span>
+</span></span><span class="line"><span class="cl">        0x0000:  ffff ffff ffff <span class="m">5255</span> 0a00 <span class="m">0202</span> <span class="m">0806</span> <span class="m">0001</span>  ......RU........
+</span></span><span class="line"><span class="cl">        0x0010:  <span class="m">0800</span> <span class="m">0604</span> <span class="m">0001</span> <span class="m">5255</span> 0a00 <span class="m">0202</span> 0a00 <span class="m">0202</span>  ......RU........
+</span></span><span class="line"><span class="cl">        0x0020:  <span class="m">0000</span> <span class="m">0000</span> <span class="m">0000</span> 0a00 020f                 ..........
+</span></span><span class="line"><span class="cl">15:27:40.862844 ARP, Reply 10.0.2.15 is-at 52:54:00:12:34:56, length <span class="m">28</span>
+</span></span><span class="line"><span class="cl">        0x0000:  ffff ffff ffff <span class="m">5254</span> <span class="m">0012</span> <span class="m">3456</span> <span class="m">0806</span> <span class="m">0001</span>  ......RT..4V....
+</span></span><span class="line"><span class="cl">        0x0010:  <span class="m">0800</span> <span class="m">0604</span> <span class="m">0002</span> <span class="m">5254</span> <span class="m">0012</span> <span class="m">3456</span> 0a00 020f  ......RT..4V....
+</span></span><span class="line"><span class="cl">        0x0020:  <span class="m">5255</span> 0a00 <span class="m">0202</span> 0a00 <span class="m">0202</span>                 RU........
+</span></span><span class="line"><span class="cl">15:27:40.863036 IP 10.0.2.2.25603 &gt; 10.0.2.15.2000: UDP, length <span class="m">17</span>
+</span></span><span class="line"><span class="cl">        0x0000:  <span class="m">5254</span> <span class="m">0012</span> <span class="m">3456</span> <span class="m">5255</span> 0a00 <span class="m">0202</span> <span class="m">0800</span> <span class="m">4500</span>  RT..4VRU......E.
+</span></span><span class="line"><span class="cl">        0x0010:  002d <span class="m">0000</span> <span class="m">0000</span> <span class="m">4011</span> 62b0 0a00 <span class="m">0202</span> 0a00  .-....@.b.......
+</span></span><span class="line"><span class="cl">        0x0020:  020f <span class="m">6403</span> 07d0 <span class="m">0019</span> <span class="m">3406</span> <span class="m">7468</span> <span class="m">6973</span> <span class="m">2069</span>  ..d.....4.this.i
+</span></span><span class="line"><span class="cl">        0x0030:  <span class="m">7320</span> <span class="m">7468</span> <span class="m">6520</span> 686f <span class="m">7374</span> <span class="m">21</span>              s.the.host!
+</span></span></code></pre></div><p>您的输出看起来会有些不同，但它应该包含字符串“ARP, Request”，“ARP, Reply”，“UDP”，“a.message.from.xv6”和“this.is.the.host”。</p>
+<p><code>nettests</code>执行一些其他测试，最终通过（真实的）互联网将DNS请求发送到谷歌的一个名称服务器。您应该确保您的代码通过所有这些测试，然后您应该看到以下输出：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ nettests
+</span></span><span class="line"><span class="cl">nettests running on port <span class="m">25603</span>
+</span></span><span class="line"><span class="cl">testing ping: OK
+</span></span><span class="line"><span class="cl">testing single-process pings: OK
+</span></span><span class="line"><span class="cl">testing multi-process pings: OK
+</span></span><span class="line"><span class="cl">testing DNS
+</span></span><span class="line"><span class="cl">DNS arecord <span class="k">for</span> pdos.csail.mit.edu. is 128.52.129.126
+</span></span><span class="line"><span class="cl">DNS OK
+</span></span><span class="line"><span class="cl">all tests passed.
+</span></span></code></pre></div><p>您应该确保<code>make grade</code>同意您的解决方案通过。</p>
+<h2 id="提示">提示</h2>
+<p>首先，将打印语句添加到<code>e1000_transmit()</code>和<code>e1000_recv()</code>，然后运行<code>make server</code>和（在xv6中）<code>nettests</code>。您应该从打印语句中看到，<code>nettests</code>生成对<code>e1000_transmit</code>的调用。</p>
+<p><strong>实现<code>e1000_transmit</code>的一些提示：</strong></p>
+<ul>
+<li>首先，通过读取<code>E1000_TDT</code>控制寄存器，向E1000询问等待下一个数据包的TX环索引。</li>
+<li>然后检查环是否溢出。如果<code>E1000_TXD_STAT_DD</code>未在<code>E1000_TDT</code>索引的描述符中设置，则E1000尚未完成先前相应的传输请求，因此返回错误。</li>
+<li>否则，使用<code>mbuffree()</code>释放从该描述符传输的最后一个<code>mbuf</code>（如果有）。</li>
+<li>然后填写描述符。<code>m-&gt;head</code>指向内存中数据包的内容，<code>m-&gt;len</code>是数据包的长度。设置必要的cmd标志（请参阅E1000手册的第3.3节），并保存指向<code>mbuf</code>的指针，以便稍后释放。</li>
+<li>最后，通过将一加到<code>E1000_TDT再对TX_RING_SIZE</code>取模来更新环位置。</li>
+<li>如果<code>e1000_transmit()</code>成功地将<code>mbuf</code>添加到环中，则返回0。如果失败（例如，没有可用的描述符来传输<code>mbuf</code>），则返回-1，以便调用方知道应该释放<code>mbuf</code>。</li>
+</ul>
+<p><strong>实现<code>e1000_recv</code>的一些提示：</strong></p>
+<ul>
+<li>首先通过提取<code>E1000_RDT</code>控制寄存器并加一对<code>RX_RING_SIZE</code>取模，向E1000询问下一个等待接收数据包（如果有）所在的环索引。</li>
+<li>然后通过检查描述符<code>status</code>部分中的<code>E1000_RXD_STAT_DD</code>位来检查新数据包是否可用。如果不可用，请停止。</li>
+<li>否则，将<code>mbuf</code>的<code>m-&gt;len</code>更新为描述符中报告的长度。使用<code>net_rx()</code>将<code>mbuf</code>传送到网络栈。</li>
+<li>然后使用<code>mbufalloc()</code>分配一个新的<code>mbuf</code>，以替换刚刚给<code>net_rx()</code>的<code>mbuf</code>。将其数据指针（<code>m-&gt;head</code>）编程到描述符中。将描述符的状态位清除为零。</li>
+<li>最后，将<code>E1000_RDT</code>寄存器更新为最后处理的环描述符的索引。</li>
+<li><code>e1000_init()</code>使用mbufs初始化RX环，您需要通过浏览代码来了解它是如何做到这一点的。</li>
+<li>在某刻，曾经到达的数据包总数将超过环大小（16）；确保你的代码可以处理这个问题。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span>
+</span></span><span class="line"><span class="cl"><span class="nf">e1000_transmit</span><span class="p">(</span><span class="k">struct</span> <span class="n">mbuf</span> <span class="o">*</span><span class="n">m</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// 把m的信息赋值给desc,并把数据放入tx_mbufs中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// the mbuf contains an ethernet frame; program it into
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// the TX descriptor ring so that the e1000 sends it. Stash
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// a pointer so that it can be freed after sending.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="nf">acquire</span><span class="p">(</span><span class="o">&amp;</span><span class="n">e1000_lock</span><span class="p">);</span> <span class="c1">// 获取 E1000 的锁，防止多进程同时发送数据出现 race
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">  <span class="n">uint32</span> <span class="n">ind</span> <span class="o">=</span> <span class="n">regs</span><span class="p">[</span><span class="n">E1000_TDT</span><span class="p">];</span> <span class="c1">// 下一个可用的 buffer 的下标
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">struct</span> <span class="n">tx_desc</span> <span class="o">*</span><span class="n">desc</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">tx_ring</span><span class="p">[</span><span class="n">ind</span><span class="p">];</span> <span class="c1">// 获取 buffer 的描述符，其中存储了关于该 buffer 的各种信息
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// 如果该 buffer 中的数据还未传输完，则代表我们已经将环形 buffer 列表全部用完，缓冲区不足，返回错误
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">desc</span><span class="o">-&gt;</span><span class="n">status</span> <span class="o">&amp;</span> <span class="n">E1000_TXD_STAT_DD</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">e1000_lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  
+</span></span><span class="line"><span class="cl">  <span class="c1">// 如果该下标仍有之前发送完毕但未释放的 mbuf，则释放
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">if</span><span class="p">(</span><span class="n">tx_mbufs</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">mbuffree</span><span class="p">(</span><span class="n">tx_mbufs</span><span class="p">[</span><span class="n">ind</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">tx_mbufs</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="c1">// 将要发送的 mbuf 的内存地址与长度填写到发送描述符中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">desc</span><span class="o">-&gt;</span><span class="n">addr</span> <span class="o">=</span> <span class="p">(</span><span class="n">uint64</span><span class="p">)</span><span class="n">m</span><span class="o">-&gt;</span><span class="n">head</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">desc</span><span class="o">-&gt;</span><span class="n">length</span> <span class="o">=</span> <span class="n">m</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// 设置参数，EOP 表示该 buffer 含有一个完整的 packet
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// RS 告诉网卡在发送完成后，设置 status 中的 E1000_TXD_STAT_DD 位，表示发送完成。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">desc</span><span class="o">-&gt;</span><span class="n">cmd</span> <span class="o">=</span> <span class="n">E1000_TXD_CMD_EOP</span> <span class="o">|</span> <span class="n">E1000_TXD_CMD_RS</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// 保留新 mbuf 的指针，方便后续再次用到同一下标时释放。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">tx_mbufs</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="c1">// 环形缓冲区内下标增加一。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">regs</span><span class="p">[</span><span class="n">E1000_TDT</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">regs</span><span class="p">[</span><span class="n">E1000_TDT</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">TX_RING_SIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  
+</span></span><span class="line"><span class="cl">  <span class="nf">release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">e1000_lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">e1000_recv</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// 获取缓冲区的desc并设置rx_mbufs的length,然后将rx_mbufs传递给net_rx
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// Check for packets that have arrived from the e1000
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// Create and deliver an mbuf for each packet (using net_rx()).
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// 每次 recv 可能接收多个包
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="n">uint32</span> <span class="n">ind</span> <span class="o">=</span> <span class="p">(</span><span class="n">regs</span><span class="p">[</span><span class="n">E1000_RDT</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">RX_RING_SIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">rx_desc</span> <span class="o">*</span><span class="n">desc</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">rx_ring</span><span class="p">[</span><span class="n">ind</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果需要接收的包都已经接收完毕，则退出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">desc</span><span class="o">-&gt;</span><span class="n">status</span> <span class="o">&amp;</span> <span class="n">E1000_RXD_STAT_DD</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">rx_mbufs</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">desc</span><span class="o">-&gt;</span><span class="n">length</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="nf">net_rx</span><span class="p">(</span><span class="n">rx_mbufs</span><span class="p">[</span><span class="n">ind</span><span class="p">]);</span> <span class="c1">// 传递给上层网络栈。上层负责释放 mbuf
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 分配并设置新的 mbuf，供给下一次轮到该下标时使用
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">rx_mbufs</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="nf">mbufalloc</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> 
+</span></span><span class="line"><span class="cl">    <span class="n">desc</span><span class="o">-&gt;</span><span class="n">addr</span> <span class="o">=</span> <span class="p">(</span><span class="n">uint64</span><span class="p">)</span><span class="n">rx_mbufs</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">head</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">desc</span><span class="o">-&gt;</span><span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">regs</span><span class="p">[</span><span class="n">E1000_RDT</span><span class="p">]</span> <span class="o">=</span> <span class="n">ind</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2023-04-27</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://example.org/posts/6.s081_lab11/" data-title="6.s081_lab11"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://example.org/posts/6.s081_lab11/"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://example.org/posts/6.s081_lab11/" data-title="6.s081_lab11"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://example.org/posts/6.s081_lab11/" data-title="6.s081_lab11"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@7.3.0/icons/line.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://example.org/posts/6.s081_lab11/" data-title="6.s081_lab11"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/6.s081_lab10/" class="prev" rel="prev" title="6.s081_lab10"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>6.s081_lab10</a>
+            <a href="/posts/6.828_lab1/" class="next" rel="next" title="6.828_lab1">6.828_lab1<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">zxj</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0 国际许可协议</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

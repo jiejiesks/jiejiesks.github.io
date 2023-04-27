@@ -1,0 +1,16 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>C - Category - OS IS TOO HARD</title>
+        <link>http://example.org/categories/c/</link>
+        <description>C - Category - OS IS TOO HARD</description>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><managingEditor>xjzhou2022@163.com (zxj)</managingEditor>
+            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Wed, 22 Mar 2023 21:39:36 &#43;0800</lastBuildDate><atom:link href="http://example.org/categories/c/" rel="self" type="application/rss+xml" /><item>
+    <title>读写结构体</title>
+    <link>http://example.org/posts/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93/</link>
+    <pubDate>Wed, 22 Mar 2023 21:39:36 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/%E8%AF%BB%E5%86%99%E7%BB%93%E6%9E%84%E4%BD%93/</guid>
+    <description><![CDATA[关于结构体的读写 user space 可以通过fread和rwrite进行结构体的读写。 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) ptr − This is the pointer to a block of memory with a minimum size of size*nmemb bytes. size − This is the size in bytes of each element to be read. nmemb − This is the number of elements, each one with a size of size bytes. stream − This is the pointer to a FILE object that specifies an input stream.]]></description>
+</item>
+</channel>
+</rss>

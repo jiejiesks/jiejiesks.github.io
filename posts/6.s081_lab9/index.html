@@ -92,7 +92,7 @@ struct { struct spinlock lock; struct buf buf[NBUF];//NBUF #define NBUF (MAXOPBL
             <h2 class="toc-title">Contents</h2>
             <div class="toc-content" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">6.s081_lab9</h1><div class="post-meta">
-            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span></div>
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-category">included in <a href="/categories/6.s081/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.s081</a></span></div>
             <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-04-17">2023-04-17</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;1154 words&nbsp;
                 <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;6 minutes&nbsp;</div>
         </div><div class="details toc" id="toc-static"  data-kept="">
@@ -329,8 +329,8 @@ struct { struct spinlock lock; struct buf buf[NBUF];//NBUF #define NBUF (MAXOPBL
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><blockquote>
 <p>注：固定在block cache是指在缓存不足需要考虑替换时，不会将这个block换出，因为事务具有原子性：假设块45被写入，将其换出的话需要写入磁盘中文件系统对应的位置，而日志系统要求所有内存必须都存入日志，最后才能写入文件系统。</p>
-<pre tabindex="0"><code>bpin`是通过增加引用计数防止块被换出的，之后需要再调用`bunpin
-</code></pre></blockquote>
+<p>bpin是通过增加引用计数防止块被换出的，之后需要再调用bunpin</p>
+</blockquote>
 <p>在提交之前，块必须留在缓存中(buffer cache)：在提交之前，缓存的副本是修改的唯一记录；只有在提交后才能将其写入磁盘上的位置；同一事务中的其他读取必须看到修改。<code>log_write</code>会注意到在单个事务中多次写入一个块的情况，并在日志中为该块分配相同的槽位。这种优化通常称为合并（absorption）。例如，包含多个文件inode的磁盘块在一个事务中被多次写入是很常见的。通过将多个磁盘写入合并到一个磁盘中，文件系统可以节省日志空间并实现更好的性能，因为只有一个磁盘块副本必须写入磁盘。</p>
 <blockquote>
 <p>注：日志需要写入磁盘，以便重启后读取，但日志头块和日志数据块也会在block cache中有一个副本</p>
@@ -449,7 +449,8 @@ struct { struct spinlock lock; struct buf buf[NBUF];//NBUF #define NBUF (MAXOPBL
 </span></span></span><span class="line"><span class="cl"><span class="cp">#define MAXFILE (NDIRECT + NINDIRECT + SECNINDIRECT
 </span></span></span></code></pre></div></li>
 <li>
-<p>修改bmap的二级索引，仿照一级索引来写<img
+<p>修改bmap的二级索引，仿照一级索引来写</p>
+<p><img
         class="lazyload"
         src="/svg/loading.min.svg"
         data-src="/6.s081_lab9.assets/p2.png"

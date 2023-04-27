@@ -1,0 +1,18 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>6.828 - Category - OS IS TOO HARD</title>
+        <link>http://example.org/categories/6.828/</link>
+        <description>6.828 - Category - OS IS TOO HARD</description>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><managingEditor>xjzhou2022@163.com (zxj)</managingEditor>
+            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Thu, 27 Apr 2023 20:13:38 &#43;0800</lastBuildDate><atom:link href="http://example.org/categories/6.828/" rel="self" type="application/rss+xml" /><item>
+    <title>6.828_lab1</title>
+    <link>http://example.org/posts/6.828_lab1/</link>
+    <pubDate>Thu, 27 Apr 2023 20:13:38 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.828_lab1/</guid>
+    <description><![CDATA[lab1 part1 PC Bootstrap 实验分为三个部分：
+熟悉汇编语言、QEMU x86模拟器、PC上电启动过程 检查我们的6.828内核的boot loader程序，它位于lab的boot目录下。 深入研究6.828内核本身的初始模板，位于kernel目录下。 使用qemu编译
+$ make qemu-nox-gdb *** *** Now run &#39;make gdb&#39;. *** qemu-system-i386 -nographic -drive file=obj/kern/kernel.img,index=0,media=disk,format=raw -serial mon:stdio -gdb tcp::26002 -D qemu.log -S 6828 decimal is XXX octal! entering test_backtrace 5 entering test_backtrace 4 entering test_backtrace 3 entering test_backtrace 2 entering test_backtrace 1 entering test_backtrace 0 leaving test_backtrace 0 leaving test_backtrace 1 leaving test_backtrace 2 leaving test_backtrace 3 leaving test_backtrace 4 leaving test_backtrace 5 Welcome to the JOS kernel monitor!]]></description>
+</item>
+</channel>
+</rss>

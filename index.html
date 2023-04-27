@@ -65,12 +65,41 @@
         alt="/avator/logo.JPG"
         title="/avator/logo.JPG" /></a></div><h1 class="home-title">Xingjie Zhou's Blog</h1><div class="home-subtitle"><div id="id-1" class="typeit"></div></div><div class="links"><a href="https://github.com/jiejiesks" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github fa-fw" aria-hidden="true"></i></a><a href="https://t.me/jiejiesks" title="Telegram" target="_blank" rel="noopener noreffer me"><i class="fab fa-telegram-plane fa-fw" aria-hidden="true"></i></a><a href="https://steamcommunity.com/id/jiejiesks" title="Steam" target="_blank" rel="noopener noreffer me"><i class="fab fa-steam fa-fw" aria-hidden="true"></i></a><a href="mailto:xjzhou2022@163.com" title="Email" rel="me"><i class="far fa-envelope fa-fw" aria-hidden="true"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.828_lab1/">6.828_lab1</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-27">2023-04-27</time></span>&nbsp;<span class="post-category">included in <a href="/categories/6.828/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.828</a></span></div><div class="content">lab1 part1 PC Bootstrap 实验分为三个部分：
+熟悉汇编语言、QEMU x86模拟器、PC上电启动过程 检查我们的6.828内核的boot loader程序，它位于lab的boot目录下。 深入研究6.828内核本身的初始模板，位于kernel目录下。 使用qemu编译
+$ make qemu-nox-gdb *** *** Now run &#39;make gdb&#39;. *** qemu-system-i386 -nographic -drive file=obj/kern/kernel.img,index=0,media=disk,format=raw -serial mon:stdio -gdb tcp::26002 -D qemu.log -S 6828 decimal is XXX octal! entering test_backtrace 5 entering test_backtrace 4 entering test_backtrace 3 entering test_backtrace 2 entering test_backtrace 1 entering test_backtrace 0 leaving test_backtrace 0 leaving test_backtrace 1 leaving test_backtrace 2 leaving test_backtrace 3 leaving test_backtrace 4 leaving test_backtrace 5 Welcome to the JOS kernel monitor!</div><div class="post-footer">
+        <a href="/posts/6.828_lab1/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.s081_lab11/">6.s081_lab11</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-27">2023-04-27</time></span>&nbsp;<span class="post-category">included in <a href="/categories/6.s081/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.s081</a></span></div><div class="content">lab11 YOUR JOB
+您的工作是在***kernel/e1000.c***中完成e1000_transmit()和e1000_recv()，以便驱动程序可以发送和接收数据包。当make grade表示您的解决方案通过了所有测试时，您就完成了。
+[!TIP] 在编写代码时，您会发现自己参考了《E1000软件开发人员手册》。以下部分可能特别有用：
+Section 2是必不可少的，它概述了整个设备。 Section 3.2概述了数据包接收。 Section 3.3与Section 3.4一起概述了数据包传输。 Section 13概述了E1000使用的寄存器。 Section 14可能会帮助您理解我们提供的init代码。 浏览《E1000软件开发人员手册》。本手册涵盖了几个密切相关的以太网控制器。QEMU模拟82540EM。现在浏览第2章，了解该设备。要编写驱动程序，您需要熟悉第3章和第14章以及第4.1节（虽然不包括4.1的子节）。你还需要参考第13章。其他章节主要介绍你的驱动程序不必与之交互的E1000组件。一开始不要担心细节；只需了解文档的结构，就可以在以后找到内容。E1000具有许多高级功能，其中大部分您可以忽略。完成这个实验只需要一小部分基本功能。
+我们在***e1000.c***中提供的e1000_init()函数将E1000配置为读取要从RAM传输的数据包，并将接收到的数据包写入RAM。这种技术称为DMA，用于直接内存访问，指的是E1000硬件直接向RAM写入和读取数据包。
+由于数据包突发到达的速度可能快于驱动程序处理数据包的速度，因此e1000_init()为E1000提供了多个缓冲区，E1000可以将数据包写入其中。E1000要求这些缓冲区由RAM中的“描述符”数组描述；每个描述符在RAM中都包含一个地址，E1000可以在其中写入接收到的数据包。struct rx_desc描述描述符格式。描述符数组称为接收环或接收队列。它是一个圆环，在这个意义上，当网卡或驱动程序到达队列的末尾时，它会绕回到数组的开头。e1000_init()使用mbufalloc()为要进行DMA的E1000分配mbuf数据包缓冲区。此外还有一个传输环，驱动程序将需要E1000发送的数据包放入其中。e1000_init()将两个环的大小配置为RX_RING_SIZE和TX_RING_SIZE。
+当***net.c***中的网络栈需要发送数据包时，它会调用e1000_transmit()，并使用一个保存要发送的数据包的mbuf作为参数。传输代码必须在TX（传输）环的描述符中放置指向数据包数据的指针。struct tx_desc描述了描述符的格式。您需要确保每个mbuf最终被释放，但只能在E1000完成数据包传输之后（E1000在描述符中设置E1000_TXD_STAT_DD位以指示此情况）。
+当当E1000从以太网接收到每个包时，它首先将包DMA到下一个RX(接收)环描述符指向的mbuf，然后产生一个中断。e1000_recv()代码必须扫描RX环，并通过调用net_rx()将每个新数据包的mbuf发送到网络栈（在***net.c***中）。然后，您需要分配一个新的mbuf并将其放入描述符中，以便当E1000再次到达RX环中的该点时，它会找到一个新的缓冲区，以便DMA新数据包。
+除了在RAM中读取和写入描述符环外，您的驱动程序还需要通过其内存映射控制寄存器与E1000交互，以检测接收到数据包何时可用，并通知E1000驱动程序已经用要发送的数据包填充了一些TX描述符。全局变量regs包含指向E1000第一个控制寄存器的指针；您的驱动程序可以通过将regs索引为数组来获取其他寄存器。您需要特别使用索引E1000_RDT和E1000_TDT。
+要测试驱动程序，请在一个窗口中运行make server，在另一个窗口中运行make qemu，然后在xv6中运行nettests。nettests中的第一个测试尝试将UDP数据包发送到主机操作系统，地址是make server运行的程序。如果您还没有完成实验，E1000驱动程序实际上不会发送数据包，也不会发生什么事情。
+完成实验后，E1000驱动程序将发送数据包，qemu将其发送到主机，make server将看到它并发送响应数据包，然后E1000驱动程序和nettests将看到响应数据包。但是，在主机发送应答之前，它会向xv6发送一个“ARP”请求包，以找出其48位以太网地址，并期望xv6以ARP应答进行响应。一旦您完成了对E1000驱动程序的工作，***kernel/net.c***就会处理这个问题。如果一切顺利，nettests将打印testing ping: OK，make server将打印a message from xv6!。
+tcpdump -XXnr packets.pcap应该生成这样的输出:
+reading from file packets.pcap, link-type EN10MB (Ethernet) 15:27:40.861988 IP 10.0.2.15.2000 &gt; 10.0.2.2.25603: UDP, length 19 0x0000: ffff ffff ffff 5254 0012 3456 0800 4500 ......RT..4V..E. 0x0010: 002f 0000 0000 6411 3eae 0a00 020f 0a00 .</div><div class="post-footer">
+        <a href="/posts/6.s081_lab11/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.s081_lab10/">6.s081_lab10</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-27">2023-04-27</time></span>&nbsp;<span class="post-category">included in <a href="/categories/6.s081/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.s081</a></span></div><div class="content">lab10 YOUR JOB
+您应该实现足够的mmap和munmap功能，以使mmaptest测试程序正常工作。如果mmaptest不会用到某个mmap的特性，则不需要实现该特性。
+完成后，您应该会看到以下输出：
+$ mmaptest mmap_test starting test mmap f test mmap f: OK test mmap private test mmap private: OK test mmap read-only test mmap read-only: OK test mmap read/write test mmap read/write: OK test mmap dirty test mmap dirty: OK test not-mapped unmap test not-mapped unmap: OK test mmap two files test mmap two files: OK mmap_test: ALL OK fork_test starting fork_test OK mmaptest: all tests succeeded $ usertests usertests starting .</div><div class="post-footer">
+        <a href="/posts/6.s081_lab10/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/openharmony/">Openharmony</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-18">2023-04-18</time></span></div><div class="content">一些关于openharmony开发中的问题 分布式访问文件遇到devsl permission denied 在服务器端创建了文件之后，客户端通过hmdfs分布式文件系统去访问该文件提示devsl permission denied。 客户端报错： [ 109.699430] hmdfs: hmdfs_do_open_remote() hmdfs_send_open return failed with -13 服务器端报错： [ 174.455917] hmdfs: ctrl_cmd_update_devsl_handler() Found peer: device_id = 1 [ 176.481693] hmdfs: hmdfs_node_call_evt_cb() node 0x1:0x1 call online async cb seq 2 [ 176.481744] hmdfs: hmdfs_stash_online_do_restore() peer 0x1:0x1 restore stashed-file ok 0 fail 0 keep 0 [ 189.562784] hmdfs: hmdfs_open_file() devsl:1 [ 189.563653] hmdfs: check_sec_level() value: [ 189.563699] hmdfs: check_sec_level() error: -61,devsl: 1 [ 189.</div><div class="post-footer">
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-18">2023-04-18</time></span>&nbsp;<span class="post-category">included in <a href="/categories/openharmony/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>Openharmony</a></span></div><div class="content">一些关于openharmony开发中的问题 分布式访问文件遇到devsl permission denied 在服务器端创建了文件之后，客户端通过hmdfs分布式文件系统去访问该文件提示devsl permission denied。 客户端报错： [ 109.699430] hmdfs: hmdfs_do_open_remote() hmdfs_send_open return failed with -13 服务器端报错： [ 174.455917] hmdfs: ctrl_cmd_update_devsl_handler() Found peer: device_id = 1 [ 176.481693] hmdfs: hmdfs_node_call_evt_cb() node 0x1:0x1 call online async cb seq 2 [ 176.481744] hmdfs: hmdfs_stash_online_do_restore() peer 0x1:0x1 restore stashed-file ok 0 fail 0 keep 0 [ 189.562784] hmdfs: hmdfs_open_file() devsl:1 [ 189.563653] hmdfs: check_sec_level() value: [ 189.563699] hmdfs: check_sec_level() error: -61,devsl: 1 [ 189.</div><div class="post-footer">
         <a href="/posts/openharmony/">Read More</a></div>
 </article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/6.s081_lab9/">6.s081_lab9</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">Chapter 8 文件系统的目的是组织和存储数据。文件系统通常支持用户和应用程序之间的数据共享，以及持久性，以便在重新启动后数据仍然可用。
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span>&nbsp;<span class="post-category">included in <a href="/categories/6.s081/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.s081</a></span></div><div class="content">Chapter 8 文件系统的目的是组织和存储数据。文件系统通常支持用户和应用程序之间的数据共享，以及持久性，以便在重新启动后数据仍然可用。
 xv6文件系统提供类似于Unix的文件、目录和路径名（参见第1章），并将其数据存储在virtio磁盘上以便持久化（参见第4章）。文件系统解决了几个难题：
 注：完整计算机中的CPU被支撑硬件包围，其中大部分是以I/O接口的形式。Xv6是以qemu的“-machine virt”选项模拟的支撑硬件编写的。这包括RAM、包含引导代码的ROM、一个到用户键盘/屏幕的串行连接，以及一个用于存储的磁盘。
 文件系统需要磁盘上的数据结构来表示目录和文件名称树，记录保存每个文件内容的块的标识，以及记录磁盘的哪些区域是空闲的。 文件系统必须支持崩溃恢复（crash recovery）。也就是说，如果发生崩溃（例如，电源故障），文件系统必须在重新启动后仍能正常工作。风险在于崩溃可能会中断一系列更新，并使磁盘上的数据结构不一致（例如，一个块在某个文件中使用但同时仍被标记为空闲）。 不同的进程可能同时在文件系统上运行，因此文件系统代码必须协调以保持不变量。 访问磁盘的速度比访问内存慢几个数量级，因此文件系统必须保持常用块的内存缓存。 本章的其余部分将解释xv6如何应对这些挑战。
@@ -86,58 +115,12 @@ struct { struct spinlock lock; struct buf buf[NBUF];//NBUF #define NBUF (MAXOPBL
         <a href="/posts/6.s081_lab9/">Read More</a></div>
 </article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/6.s081_lab8/">6.s081_lab8</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">lab8 Memory allocator 本实验主要是解决多CPU竞争内存的问题，我们通过为每个CPU分配一个kmem锁来解决该问题，为每个CPU都维护一个空闲列表，初始时将所有的空闲内存分配到某个CPU，此后各个CPU需要内存时，如果当前CPU的空闲列表上没有，则窃取其他CPU的。例如，所有的空闲内存初始分配到CPU0，当CPU1需要内存时就会窃取CPU0的，而使用完成后就挂在CPU1的空闲列表，此后CPU1再次需要内存时就可以从自己的空闲列表中取。
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span>&nbsp;<span class="post-category">included in <a href="/categories/6.s081/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.s081</a></span></div><div class="content">lab8 Memory allocator 本实验主要是解决多CPU竞争内存的问题，我们通过为每个CPU分配一个kmem锁来解决该问题，为每个CPU都维护一个空闲列表，初始时将所有的空闲内存分配到某个CPU，此后各个CPU需要内存时，如果当前CPU的空闲列表上没有，则窃取其他CPU的。例如，所有的空闲内存初始分配到CPU0，当CPU1需要内存时就会窃取CPU0的，而使用完成后就挂在CPU1的空闲列表，此后CPU1再次需要内存时就可以从自己的空闲列表中取。
 (1). 将kmem定义为一个数组，包含NCPU个元素，即每个CPU对应一个
 struct { struct spinlock lock; struct run *freelist; } kmem[NCPU]; (2). 修改kinit，为所有锁初始化以“kmem”开头的名称，该函数只会被一个CPU调用，freerange调用kfree将所有空闲内存挂在该CPU的空闲列表上
 void kinit() { char lockname[8]; for(int i = 0;i &lt; NCPU; i++) { snprintf(lockname, sizeof(lockname), &#34;kmem_%d&#34;, i); initlock(&amp;kmem[i].lock, lockname); } freerange(end, (void*)PHYSTOP); } (3). 修改kfree，使用cpuid()和它返回的结果时必须关中断，请参考《XV6使用手册》第7.4节
 void kfree(void *pa) { struct run *r; if(((uint64)pa % PGSIZE) != 0 || (char*)pa &lt; end || (uint64)pa &gt;= PHYSTOP) panic(&#34;kfree&#34;); // Fill with junk to catch dangling refs.</div><div class="post-footer">
         <a href="/posts/6.s081_lab8/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/6.s081_lab7/">6.s081_lab7</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">Chapter 7 7.1 多路复用 Xv6通过在两种情况下将每个CPU从一个进程切换到另一个进程来实现多路复用（Multiplexing）。第一：当进程等待设备或管道I/O完成，或等待子进程退出，或在sleep系统调用中等待时，xv6使用睡眠（sleep）和唤醒（wakeup）机制切换。第二：xv6周期性地强制切换以处理长时间计算而不睡眠的进程。这种多路复用产生了每个进程都有自己的CPU的错觉，就像xv6使用内存分配器和硬件页表来产生每个进程都有自己内存的错觉一样。
-实现多路复用带来了一些挑战。首先，如何从一个进程切换到另一个进程？尽管上下文切换的思想很简单，但它的实现是xv6中最不透明的代码之一。第二，如何以对用户进程透明的方式强制切换？Xv6使用标准技术，通过定时器中断驱动上下文切换。第三，许多CPU可能同时在进程之间切换，使用一个用锁方案来避免争用是很有必要的。第四，进程退出时必须释放进程的内存以及其他资源，但它不能自己完成所有这一切，因为（例如）它不能在仍然使用自己内核栈的情况下释放它。第五，多核机器的每个核心必须记住它正在执行哪个进程，以便系统调用正确影响对应进程的内核状态。最后，sleep允许一个进程放弃CPU，wakeup允许另一个进程唤醒第一个进程。需要小心避免导致唤醒通知丢失的竞争。Xv6试图尽可能简单地解决这些问题，但结果代码很复杂。
-7.2 代码：上下文切换 图7.1概述了从一个用户进程（旧进程）切换到另一个用户进程（新进程）所涉及的步骤：一个到旧进程内核线程的用户-内核转换（系统调用或中断），一个到当前CPU调度程序线程的上下文切换，一个到新进程内核线程的上下文切换，以及一个返回到用户级进程的陷阱。调度程序在旧进程的内核栈上执行是不安全的：其他一些核心可能会唤醒进程并运行它，而在两个不同的核心上使用同一个栈将是一场灾难，因此xv6调度程序在每个CPU上都有一个专用线程（保存寄存器和栈）。在本节中，我们将研究在内核线程和调度程序线程之间切换的机制。
-从一个线程切换到另一个线程需要保存旧线程的CPU寄存器，并恢复新线程先前保存的寄存器；栈指针和程序计数器被保存和恢复的事实意味着CPU将切换栈和执行中的代码。
-函数swtch为内核线程切换执行保存和恢复操作。swtch对线程没有直接的了解；它只是保存和恢复寄存器集，称为上下文（contexts）。当某个进程要放弃CPU时，该进程的内核线程调用swtch来保存自己的上下文并返回到调度程序的上下文。每个上下文都包含在一个struct context（*kernel/proc.h*:2）中，这个结构体本身包含在一个进程的struct proc或一个CPU的struct cpu中。Swtch接受两个参数：struct context *old和struct context *new。它将当前寄存器保存在old中，从new中加载寄存器，然后返回。
-让我们跟随一个进程通过swtch进入调度程序。我们在第4章中看到，中断结束时的一种可能性是usertrap调用了yield。依次地：Yield调用sched，sched调用swtch将当前上下文保存在p-&gt;context中，并切换到先前保存在cpu-&gt;scheduler（*kernel/proc.c*:517）中的调度程序上下文。
-注：当前版本的XV6中调度程序上下文是cpu-&gt;context
-Swtch（*kernel/swtch.S*:3）只保存被调用方保存的寄存器（callee-saved registers）；调用方保存的寄存器（caller-saved registers）通过调用C代码保存在栈上（如果需要）。Swtch知道struct context中每个寄存器字段的偏移量。它不保存程序计数器。但swtch保存ra寄存器，该寄存器保存调用swtch的返回地址。现在，swtch从新进程的上下文中恢复寄存器，该上下文保存前一个swtch保存的寄存器值。当swtch返回时，它返回到由ra寄存器指定的指令，即新线程以前调用swtch的指令。另外，它在新线程的栈上返回。
-注：关于callee-saved registers和caller-saved registers请回看视频课程LEC5以及文档《Calling Convention》
-Note
-这里不太容易理解，这里举个课程视频中的例子：
-以cc切换到ls为例，且ls此前运行过
-XV6将cc程序的内核线程的内核寄存器保存在一个context对象中
-因为要切换到ls程序的内核线程，那么ls 程序现在的状态必然是RUNABLE ，表明ls程序之前运行了一半。这同时也意味着：
-a. ls程序的用户空间状态已经保存在了对应的trapframe中
-b. ls程序的内核线程对应的内核寄存器已经保存在对应的context对象中
-所以接下来，XV6会恢复ls程序的内核线程的context对象，也就是恢复内核线程的寄存器。
-之后ls会继续在它的内核线程栈上，完成它的中断处理程序
-恢复ls程序的trapframe中的用户进程状态，返回到用户空间的ls程序中
-最后恢复执行ls
-在我们的示例中，sched调用swtch切换到cpu-&gt;scheduler，即每个CPU的调度程序上下文。调度程序上下文之前通过scheduler对swtch（*kernel/proc.c*:475）的调用进行了保存。当我们追踪swtch到返回时，他返回到scheduler而不是sched，并且它的栈指针指向当前CPU的调用程序栈（scheduler stack）
-lab7 Uthread: switching between threads (moderate) 在xv6 book的chapter7中讲的是用户态进程切换到另一个用户态进程，通过在内核中的调度程序去进行切换。在这个实验中我们需要去写一个用户态的调度程序（其中切换寄存器需要在内核中运行）去模拟内核中的调度程序去实现用户态线程之间的切换，所以我们需要自己定义属于thread的context去保存寄存器的值。
-定义用户态的上下文结构体tcontext
-// 用户线程的上下文结构体 struct tcontext { uint64 ra; uint64 sp; // callee-saved uint64 s0; uint64 s1; uint64 s2; uint64 s3; uint64 s4; uint64 s5; uint64 s6; uint64 s7; uint64 s8; uint64 s9; uint64 s10; uint64 s11; }; 修改thread结构体，添加context字段</div><div class="post-footer">
-        <a href="/posts/6.s081_lab7/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/6.s081_lab6/">6.s081_lab6</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">Implement copy-on write (hard) YOUR JOB
-您的任务是在xv6内核中实现copy-on-write fork。如果修改后的内核同时成功执行cowtest和usertests程序就完成了。
-为了帮助测试你的实现方案，我们提供了一个名为cowtest的xv6程序（源代码位于*user/cowtest.c*）。cowtest运行各种测试，但在未修改的xv6上，即使是第一个测试也会失败。因此，最初您将看到：
-$ cowtest simple: fork() failed $ “simple”测试分配超过一半的可用物理内存，然后执行一系列的fork()。fork失败的原因是没有足够的可用物理内存来为子进程提供父进程内存的完整副本。
-完成本实验后，内核应该通过cowtest和usertests中的所有测试。即：
-$ cowtest simple: ok simple: ok three: zombie! ok three: zombie! ok three: zombie! ok file: ok ALL COW TESTS PASSED $ usertests ... ALL TESTS PASSED $ 这是一个合理的攻克计划：
-修改uvmcopy()将父进程的物理页映射到子进程，而不是分配新页。在子进程和父进程的PTE中清除PTE_W标志。 修改usertrap()以识别页面错误。当COW页面出现页面错误时，使用kalloc()分配一个新页面，并将旧页面复制到新页面，然后将新页面添加到PTE中并设置PTE_W。 确保每个物理页在最后一个PTE对它的引用撤销时被释放——而不是在此之前。这样做的一个好方法是为每个物理页保留引用该页面的用户页表数的“引用计数”。当kalloc()分配页时，将页的引用计数设置为1。当fork导致子进程共享页面时，增加页的引用计数；每当任何进程从其页表中删除页面时，减少页的引用计数。kfree()只应在引用计数为零时将页面放回空闲列表。可以将这些计数保存在一个固定大小的整型数组中。你必须制定一个如何索引数组以及如何选择数组大小的方案。例如，您可以用页的物理地址除以4096对数组进行索引，并为数组提供等同于***kalloc.c***中kinit()在空闲列表中放置的所有页面的最高物理地址的元素数。 修改copyout()在遇到COW页面时使用与页面错误相同的方案。 提示：
-lazy page allocation实验可能已经让您熟悉了许多与copy-on-write相关的xv6内核代码。但是，您不应该将这个实验室建立在您的lazy allocation解决方案的基础上；相反，请按照上面的说明从一个新的xv6开始。 有一种可能很有用的方法来记录每个PTE是否是COW映射。您可以使用RISC-V PTE中的RSW（reserved for software，即为软件保留的）位来实现此目的。 usertests检查cowtest不测试的场景，所以别忘两个测试都需要完全通过。 ***kernel/riscv.h***的末尾有一些有用的宏和页表标志位的定义。 如果出现COW页面错误并且没有可用内存，则应终止进程。 (1). 在***kernel/riscv.h***中选取PTE中的保留位定义标记一个页面是否为COW Fork页面的标志位
-// 记录应用了COW策略后fork的页面 #define PTE_F (1L &lt;&lt; 8) (2).</div><div class="post-footer">
-        <a href="/posts/6.s081_lab6/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/6.s081_lab5/">6.s081_lab5</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span></div><div class="content">lab5 Eliminate allocation from sbrk 将sys_sbrk()中的growproc函数调用删除，因为其是给新增加的堆空间分配内存的，我们现在需要惰性分配，所以并不真正分配空间。
-uint64 sys_sbrk(void) { int addr; int n; if(argint(0, &amp;n) &lt; 0) return -1; addr = myproc()-&gt;sz; // lazy allocation myproc()-&gt;sz += n; return addr; } 未分配的页表比如512项中只分配了两项，那么其余的均为0x00000000000000000。
-Lazy allocation (1). 修改usertrap()(*kernel/trap.c*)函数，使用r_scause()判断是否为页面错误，在页面错误处理的过程中，先判断发生错误的虚拟地址（r_stval()读取）是否位于栈空间之上，进程大小（虚拟地址从0开始，进程大小表征了进程的最高虚拟地址）之下，然后分配物理内存并添加映射
-uint64 cause = r_scause(); if(cause == 8) { ... } else if((which_dev = devintr()) != 0) { // ok } else if(cause == 13 || cause == 15) { // 处理页面错误 uint64 fault_va = r_stval(); // 产生页面错误的虚拟地址 char* pa; // 分配的物理地址 if(PGROUNDUP(p-&gt;trapframe-&gt;sp) - 1 &lt; fault_va &amp;&amp; fault_va &lt; p-&gt;sz &amp;&amp; (pa = kalloc()) !</div><div class="post-footer">
-        <a href="/posts/6.s081_lab5/">Read More</a></div>
 </article><ul class="pagination"><li class="page-item active">
                     <span class="page-link">
                         <a href="/">1</a>
@@ -145,6 +128,10 @@ uint64 cause = r_scause(); if(cause == 8) { ... } else if((which_dev = devintr()
                 </li><li class="page-item ">
                     <span class="page-link">
                         <a href="/page/2/">2</a>
+                    </span>
+                </li><li class="page-item ">
+                    <span class="page-link">
+                        <a href="/page/3/">3</a>
                     </span>
                 </li></ul></div></div>
             </main><footer class="footer">

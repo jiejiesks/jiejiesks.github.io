@@ -1,0 +1,215 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>6.s081 - Category - OS IS TOO HARD</title>
+        <link>http://example.org/categories/6.s081/</link>
+        <description>6.s081 - Category - OS IS TOO HARD</description>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><managingEditor>xjzhou2022@163.com (zxj)</managingEditor>
+            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Thu, 27 Apr 2023 20:13:31 &#43;0800</lastBuildDate><atom:link href="http://example.org/categories/6.s081/" rel="self" type="application/rss+xml" /><item>
+    <title>6.s081_lab11</title>
+    <link>http://example.org/posts/6.s081_lab11/</link>
+    <pubDate>Thu, 27 Apr 2023 20:13:31 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab11/</guid>
+    <description><![CDATA[lab11 YOUR JOB
+您的工作是在***kernel/e1000.c***中完成e1000_transmit()和e1000_recv()，以便驱动程序可以发送和接收数据包。当make grade表示您的解决方案通过了所有测试时，您就完成了。
+[!TIP] 在编写代码时，您会发现自己参考了《E1000软件开发人员手册》。以下部分可能特别有用：
+Section 2是必不可少的，它概述了整个设备。 Section 3.2概述了数据包接收。 Section 3.3与Section 3.4一起概述了数据包传输。 Section 13概述了E1000使用的寄存器。 Section 14可能会帮助您理解我们提供的init代码。 浏览《E1000软件开发人员手册》。本手册涵盖了几个密切相关的以太网控制器。QEMU模拟82540EM。现在浏览第2章，了解该设备。要编写驱动程序，您需要熟悉第3章和第14章以及第4.1节（虽然不包括4.1的子节）。你还需要参考第13章。其他章节主要介绍你的驱动程序不必与之交互的E1000组件。一开始不要担心细节；只需了解文档的结构，就可以在以后找到内容。E1000具有许多高级功能，其中大部分您可以忽略。完成这个实验只需要一小部分基本功能。
+我们在***e1000.c***中提供的e1000_init()函数将E1000配置为读取要从RAM传输的数据包，并将接收到的数据包写入RAM。这种技术称为DMA，用于直接内存访问，指的是E1000硬件直接向RAM写入和读取数据包。
+由于数据包突发到达的速度可能快于驱动程序处理数据包的速度，因此e1000_init()为E1000提供了多个缓冲区，E1000可以将数据包写入其中。E1000要求这些缓冲区由RAM中的“描述符”数组描述；每个描述符在RAM中都包含一个地址，E1000可以在其中写入接收到的数据包。struct rx_desc描述描述符格式。描述符数组称为接收环或接收队列。它是一个圆环，在这个意义上，当网卡或驱动程序到达队列的末尾时，它会绕回到数组的开头。e1000_init()使用mbufalloc()为要进行DMA的E1000分配mbuf数据包缓冲区。此外还有一个传输环，驱动程序将需要E1000发送的数据包放入其中。e1000_init()将两个环的大小配置为RX_RING_SIZE和TX_RING_SIZE。
+当***net.c***中的网络栈需要发送数据包时，它会调用e1000_transmit()，并使用一个保存要发送的数据包的mbuf作为参数。传输代码必须在TX（传输）环的描述符中放置指向数据包数据的指针。struct tx_desc描述了描述符的格式。您需要确保每个mbuf最终被释放，但只能在E1000完成数据包传输之后（E1000在描述符中设置E1000_TXD_STAT_DD位以指示此情况）。
+当当E1000从以太网接收到每个包时，它首先将包DMA到下一个RX(接收)环描述符指向的mbuf，然后产生一个中断。e1000_recv()代码必须扫描RX环，并通过调用net_rx()将每个新数据包的mbuf发送到网络栈（在***net.c***中）。然后，您需要分配一个新的mbuf并将其放入描述符中，以便当E1000再次到达RX环中的该点时，它会找到一个新的缓冲区，以便DMA新数据包。
+除了在RAM中读取和写入描述符环外，您的驱动程序还需要通过其内存映射控制寄存器与E1000交互，以检测接收到数据包何时可用，并通知E1000驱动程序已经用要发送的数据包填充了一些TX描述符。全局变量regs包含指向E1000第一个控制寄存器的指针；您的驱动程序可以通过将regs索引为数组来获取其他寄存器。您需要特别使用索引E1000_RDT和E1000_TDT。
+要测试驱动程序，请在一个窗口中运行make server，在另一个窗口中运行make qemu，然后在xv6中运行nettests。nettests中的第一个测试尝试将UDP数据包发送到主机操作系统，地址是make server运行的程序。如果您还没有完成实验，E1000驱动程序实际上不会发送数据包，也不会发生什么事情。
+完成实验后，E1000驱动程序将发送数据包，qemu将其发送到主机，make server将看到它并发送响应数据包，然后E1000驱动程序和nettests将看到响应数据包。但是，在主机发送应答之前，它会向xv6发送一个“ARP”请求包，以找出其48位以太网地址，并期望xv6以ARP应答进行响应。一旦您完成了对E1000驱动程序的工作，***kernel/net.c***就会处理这个问题。如果一切顺利，nettests将打印testing ping: OK，make server将打印a message from xv6!。
+tcpdump -XXnr packets.pcap应该生成这样的输出:
+reading from file packets.pcap, link-type EN10MB (Ethernet) 15:27:40.861988 IP 10.0.2.15.2000 &gt; 10.0.2.2.25603: UDP, length 19 0x0000: ffff ffff ffff 5254 0012 3456 0800 4500 ......RT..4V..E. 0x0010: 002f 0000 0000 6411 3eae 0a00 020f 0a00 .]]></description>
+</item>
+<item>
+    <title>6.s081_lab10</title>
+    <link>http://example.org/posts/6.s081_lab10/</link>
+    <pubDate>Thu, 27 Apr 2023 20:13:28 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab10/</guid>
+    <description><![CDATA[lab10 YOUR JOB
+您应该实现足够的mmap和munmap功能，以使mmaptest测试程序正常工作。如果mmaptest不会用到某个mmap的特性，则不需要实现该特性。
+完成后，您应该会看到以下输出：
+$ mmaptest mmap_test starting test mmap f test mmap f: OK test mmap private test mmap private: OK test mmap read-only test mmap read-only: OK test mmap read/write test mmap read/write: OK test mmap dirty test mmap dirty: OK test not-mapped unmap test not-mapped unmap: OK test mmap two files test mmap two files: OK mmap_test: ALL OK fork_test starting fork_test OK mmaptest: all tests succeeded $ usertests usertests starting .]]></description>
+</item>
+<item>
+    <title>6.s081_lab9</title>
+    <link>http://example.org/posts/6.s081_lab9/</link>
+    <pubDate>Mon, 17 Apr 2023 20:43:06 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab9/</guid>
+    <description><![CDATA[Chapter 8 文件系统的目的是组织和存储数据。文件系统通常支持用户和应用程序之间的数据共享，以及持久性，以便在重新启动后数据仍然可用。
+xv6文件系统提供类似于Unix的文件、目录和路径名（参见第1章），并将其数据存储在virtio磁盘上以便持久化（参见第4章）。文件系统解决了几个难题：
+注：完整计算机中的CPU被支撑硬件包围，其中大部分是以I/O接口的形式。Xv6是以qemu的“-machine virt”选项模拟的支撑硬件编写的。这包括RAM、包含引导代码的ROM、一个到用户键盘/屏幕的串行连接，以及一个用于存储的磁盘。
+文件系统需要磁盘上的数据结构来表示目录和文件名称树，记录保存每个文件内容的块的标识，以及记录磁盘的哪些区域是空闲的。 文件系统必须支持崩溃恢复（crash recovery）。也就是说，如果发生崩溃（例如，电源故障），文件系统必须在重新启动后仍能正常工作。风险在于崩溃可能会中断一系列更新，并使磁盘上的数据结构不一致（例如，一个块在某个文件中使用但同时仍被标记为空闲）。 不同的进程可能同时在文件系统上运行，因此文件系统代码必须协调以保持不变量。 访问磁盘的速度比访问内存慢几个数量级，因此文件系统必须保持常用块的内存缓存。 本章的其余部分将解释xv6如何应对这些挑战。
+8.1 概述 xv6文件系统实现分为七层，如图8.1所示。磁盘层读取和写入virtio硬盘上的块。缓冲区高速缓存层缓存磁盘块并同步对它们的访问，确保每次只有一个内核进程可以修改存储在任何特定块中的数据。日志记录层允许更高层在一次事务（transaction）中将更新包装到多个块，并确保在遇到崩溃时自动更新这些块（即，所有块都已更新或无更新）。索引结点层提供单独的文件，每个文件表示为一个索引结点，其中包含唯一的索引号（i-number）和一些保存文件数据的块。目录层将每个目录实现为一种特殊的索引结点，其内容是一系列目录项，每个目录项包含一个文件名和索引号。路径名层提供了分层路径名，如***/usr/rtm/xv6/fs.c***，并通过递归查找来解析它们。文件描述符层使用文件系统接口抽象了许多Unix资源（例如，管道、设备、文件等），简化了应用程序员的工作。
+文件描述符（File descriptor） 路径名（Pathname） 目录（Directory） 索引结点（Inode） 日志（Logging） 缓冲区高速缓存（Buffer cache） 磁盘（Disk） 图8.1 XV6文件系统的层级
+文件系统必须有将索引节点和内容块存储在磁盘上哪些位置的方案。为此，xv6将磁盘划分为几个部分，如图8.2所示。文件系统不使用块0（它保存引导扇区）。块1称为超级块：它包含有关文件系统的元数据（文件系统大小（以块为单位）、数据块数、索引节点数和日志中的块数）。从2开始的块保存日志。日志之后是索引节点，每个块有多个索引节点。然后是位图块，跟踪正在使用的数据块。其余的块是数据块：每个都要么在位图块中标记为空闲，要么保存文件或目录的内容。超级块由一个名为mkfs的单独的程序填充，该程序构建初始文件系统。
+本章的其余部分将从缓冲区高速缓存层开始讨论每一层。注意那些在较低层次上精心选择的抽象可以简化较高层次的设计的情况。
+8.2 Buffer cache层 Buffer cache有两个任务：
+同步对磁盘块的访问，以确保磁盘块在内存中只有一个副本，并且一次只有一个内核线程使用该副本 缓存常用块，以便不需要从慢速磁盘重新读取它们。代码在***bio.c***中。 Buffer cache层导出的主接口主要是bread和bwrite；前者获取一个buf，其中包含一个可以在内存中读取或修改的块的副本，后者将修改后的缓冲区写入磁盘上的相应块。内核线程必须通过调用brelse释放缓冲区。Buffer cache每个缓冲区使用一个睡眠锁，以确保每个缓冲区（因此也是每个磁盘块）每次只被一个线程使用；bread返回一个上锁的缓冲区，brelse释放该锁。
+让我们回到Buffer cache。Buffer cache中保存磁盘块的缓冲区数量固定，这意味着如果文件系统请求还未存放在缓存中的块，Buffer cache必须回收当前保存其他块内容的缓冲区。Buffer cache为新块回收最近使用最少的缓冲区。这样做的原因是认为最近使用最少的缓冲区是最不可能近期再次使用的缓冲区
+8.3 代码：Buffer cache Buffer cache是以循环双链表表示的缓冲区。main（*kernel/main.c*:27）调用的函数binit使用静态数组buf（*kernel/bio.c*:43-52）中的NBUF个缓冲区初始化列表。对Buffer cache的所有其他访问都通过bcache.head引用链表，而不是buf数组。
+struct { struct spinlock lock; struct buf buf[NBUF];//NBUF #define NBUF (MAXOPBLOCKS*3) // size of disk block cache // Linked list of all buffers, through prev/next.]]></description>
+</item>
+<item>
+    <title>6.s081_lab8</title>
+    <link>http://example.org/posts/6.s081_lab8/</link>
+    <pubDate>Mon, 17 Apr 2023 20:43:04 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab8/</guid>
+    <description><![CDATA[lab8 Memory allocator 本实验主要是解决多CPU竞争内存的问题，我们通过为每个CPU分配一个kmem锁来解决该问题，为每个CPU都维护一个空闲列表，初始时将所有的空闲内存分配到某个CPU，此后各个CPU需要内存时，如果当前CPU的空闲列表上没有，则窃取其他CPU的。例如，所有的空闲内存初始分配到CPU0，当CPU1需要内存时就会窃取CPU0的，而使用完成后就挂在CPU1的空闲列表，此后CPU1再次需要内存时就可以从自己的空闲列表中取。
+(1). 将kmem定义为一个数组，包含NCPU个元素，即每个CPU对应一个
+struct { struct spinlock lock; struct run *freelist; } kmem[NCPU]; (2). 修改kinit，为所有锁初始化以“kmem”开头的名称，该函数只会被一个CPU调用，freerange调用kfree将所有空闲内存挂在该CPU的空闲列表上
+void kinit() { char lockname[8]; for(int i = 0;i &lt; NCPU; i++) { snprintf(lockname, sizeof(lockname), &#34;kmem_%d&#34;, i); initlock(&amp;kmem[i].lock, lockname); } freerange(end, (void*)PHYSTOP); } (3). 修改kfree，使用cpuid()和它返回的结果时必须关中断，请参考《XV6使用手册》第7.4节
+void kfree(void *pa) { struct run *r; if(((uint64)pa % PGSIZE) != 0 || (char*)pa &lt; end || (uint64)pa &gt;= PHYSTOP) panic(&#34;kfree&#34;); // Fill with junk to catch dangling refs.]]></description>
+</item>
+<item>
+    <title>6.s081_lab7</title>
+    <link>http://example.org/posts/6.s081_lab7/</link>
+    <pubDate>Mon, 17 Apr 2023 20:43:02 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab7/</guid>
+    <description><![CDATA[Chapter 7 7.1 多路复用 Xv6通过在两种情况下将每个CPU从一个进程切换到另一个进程来实现多路复用（Multiplexing）。第一：当进程等待设备或管道I/O完成，或等待子进程退出，或在sleep系统调用中等待时，xv6使用睡眠（sleep）和唤醒（wakeup）机制切换。第二：xv6周期性地强制切换以处理长时间计算而不睡眠的进程。这种多路复用产生了每个进程都有自己的CPU的错觉，就像xv6使用内存分配器和硬件页表来产生每个进程都有自己内存的错觉一样。
+实现多路复用带来了一些挑战。首先，如何从一个进程切换到另一个进程？尽管上下文切换的思想很简单，但它的实现是xv6中最不透明的代码之一。第二，如何以对用户进程透明的方式强制切换？Xv6使用标准技术，通过定时器中断驱动上下文切换。第三，许多CPU可能同时在进程之间切换，使用一个用锁方案来避免争用是很有必要的。第四，进程退出时必须释放进程的内存以及其他资源，但它不能自己完成所有这一切，因为（例如）它不能在仍然使用自己内核栈的情况下释放它。第五，多核机器的每个核心必须记住它正在执行哪个进程，以便系统调用正确影响对应进程的内核状态。最后，sleep允许一个进程放弃CPU，wakeup允许另一个进程唤醒第一个进程。需要小心避免导致唤醒通知丢失的竞争。Xv6试图尽可能简单地解决这些问题，但结果代码很复杂。
+7.2 代码：上下文切换 图7.1概述了从一个用户进程（旧进程）切换到另一个用户进程（新进程）所涉及的步骤：一个到旧进程内核线程的用户-内核转换（系统调用或中断），一个到当前CPU调度程序线程的上下文切换，一个到新进程内核线程的上下文切换，以及一个返回到用户级进程的陷阱。调度程序在旧进程的内核栈上执行是不安全的：其他一些核心可能会唤醒进程并运行它，而在两个不同的核心上使用同一个栈将是一场灾难，因此xv6调度程序在每个CPU上都有一个专用线程（保存寄存器和栈）。在本节中，我们将研究在内核线程和调度程序线程之间切换的机制。
+从一个线程切换到另一个线程需要保存旧线程的CPU寄存器，并恢复新线程先前保存的寄存器；栈指针和程序计数器被保存和恢复的事实意味着CPU将切换栈和执行中的代码。
+函数swtch为内核线程切换执行保存和恢复操作。swtch对线程没有直接的了解；它只是保存和恢复寄存器集，称为上下文（contexts）。当某个进程要放弃CPU时，该进程的内核线程调用swtch来保存自己的上下文并返回到调度程序的上下文。每个上下文都包含在一个struct context（*kernel/proc.h*:2）中，这个结构体本身包含在一个进程的struct proc或一个CPU的struct cpu中。Swtch接受两个参数：struct context *old和struct context *new。它将当前寄存器保存在old中，从new中加载寄存器，然后返回。
+让我们跟随一个进程通过swtch进入调度程序。我们在第4章中看到，中断结束时的一种可能性是usertrap调用了yield。依次地：Yield调用sched，sched调用swtch将当前上下文保存在p-&gt;context中，并切换到先前保存在cpu-&gt;scheduler（*kernel/proc.c*:517）中的调度程序上下文。
+注：当前版本的XV6中调度程序上下文是cpu-&gt;context
+Swtch（*kernel/swtch.S*:3）只保存被调用方保存的寄存器（callee-saved registers）；调用方保存的寄存器（caller-saved registers）通过调用C代码保存在栈上（如果需要）。Swtch知道struct context中每个寄存器字段的偏移量。它不保存程序计数器。但swtch保存ra寄存器，该寄存器保存调用swtch的返回地址。现在，swtch从新进程的上下文中恢复寄存器，该上下文保存前一个swtch保存的寄存器值。当swtch返回时，它返回到由ra寄存器指定的指令，即新线程以前调用swtch的指令。另外，它在新线程的栈上返回。
+注：关于callee-saved registers和caller-saved registers请回看视频课程LEC5以及文档《Calling Convention》
+Note
+这里不太容易理解，这里举个课程视频中的例子：
+以cc切换到ls为例，且ls此前运行过
+XV6将cc程序的内核线程的内核寄存器保存在一个context对象中
+因为要切换到ls程序的内核线程，那么ls 程序现在的状态必然是RUNABLE ，表明ls程序之前运行了一半。这同时也意味着：
+a. ls程序的用户空间状态已经保存在了对应的trapframe中
+b. ls程序的内核线程对应的内核寄存器已经保存在对应的context对象中
+所以接下来，XV6会恢复ls程序的内核线程的context对象，也就是恢复内核线程的寄存器。
+之后ls会继续在它的内核线程栈上，完成它的中断处理程序
+恢复ls程序的trapframe中的用户进程状态，返回到用户空间的ls程序中
+最后恢复执行ls
+在我们的示例中，sched调用swtch切换到cpu-&gt;scheduler，即每个CPU的调度程序上下文。调度程序上下文之前通过scheduler对swtch（*kernel/proc.c*:475）的调用进行了保存。当我们追踪swtch到返回时，他返回到scheduler而不是sched，并且它的栈指针指向当前CPU的调用程序栈（scheduler stack）
+lab7 Uthread: switching between threads (moderate) 在xv6 book的chapter7中讲的是用户态进程切换到另一个用户态进程，通过在内核中的调度程序去进行切换。在这个实验中我们需要去写一个用户态的调度程序（其中切换寄存器需要在内核中运行）去模拟内核中的调度程序去实现用户态线程之间的切换，所以我们需要自己定义属于thread的context去保存寄存器的值。
+定义用户态的上下文结构体tcontext
+// 用户线程的上下文结构体 struct tcontext { uint64 ra; uint64 sp; // callee-saved uint64 s0; uint64 s1; uint64 s2; uint64 s3; uint64 s4; uint64 s5; uint64 s6; uint64 s7; uint64 s8; uint64 s9; uint64 s10; uint64 s11; }; 修改thread结构体，添加context字段]]></description>
+</item>
+<item>
+    <title>6.s081_lab6</title>
+    <link>http://example.org/posts/6.s081_lab6/</link>
+    <pubDate>Mon, 17 Apr 2023 20:43:00 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab6/</guid>
+    <description><![CDATA[Implement copy-on write (hard) YOUR JOB
+您的任务是在xv6内核中实现copy-on-write fork。如果修改后的内核同时成功执行cowtest和usertests程序就完成了。
+为了帮助测试你的实现方案，我们提供了一个名为cowtest的xv6程序（源代码位于*user/cowtest.c*）。cowtest运行各种测试，但在未修改的xv6上，即使是第一个测试也会失败。因此，最初您将看到：
+$ cowtest simple: fork() failed $ “simple”测试分配超过一半的可用物理内存，然后执行一系列的fork()。fork失败的原因是没有足够的可用物理内存来为子进程提供父进程内存的完整副本。
+完成本实验后，内核应该通过cowtest和usertests中的所有测试。即：
+$ cowtest simple: ok simple: ok three: zombie! ok three: zombie! ok three: zombie! ok file: ok ALL COW TESTS PASSED $ usertests ... ALL TESTS PASSED $ 这是一个合理的攻克计划：
+修改uvmcopy()将父进程的物理页映射到子进程，而不是分配新页。在子进程和父进程的PTE中清除PTE_W标志。 修改usertrap()以识别页面错误。当COW页面出现页面错误时，使用kalloc()分配一个新页面，并将旧页面复制到新页面，然后将新页面添加到PTE中并设置PTE_W。 确保每个物理页在最后一个PTE对它的引用撤销时被释放——而不是在此之前。这样做的一个好方法是为每个物理页保留引用该页面的用户页表数的“引用计数”。当kalloc()分配页时，将页的引用计数设置为1。当fork导致子进程共享页面时，增加页的引用计数；每当任何进程从其页表中删除页面时，减少页的引用计数。kfree()只应在引用计数为零时将页面放回空闲列表。可以将这些计数保存在一个固定大小的整型数组中。你必须制定一个如何索引数组以及如何选择数组大小的方案。例如，您可以用页的物理地址除以4096对数组进行索引，并为数组提供等同于***kalloc.c***中kinit()在空闲列表中放置的所有页面的最高物理地址的元素数。 修改copyout()在遇到COW页面时使用与页面错误相同的方案。 提示：
+lazy page allocation实验可能已经让您熟悉了许多与copy-on-write相关的xv6内核代码。但是，您不应该将这个实验室建立在您的lazy allocation解决方案的基础上；相反，请按照上面的说明从一个新的xv6开始。 有一种可能很有用的方法来记录每个PTE是否是COW映射。您可以使用RISC-V PTE中的RSW（reserved for software，即为软件保留的）位来实现此目的。 usertests检查cowtest不测试的场景，所以别忘两个测试都需要完全通过。 ***kernel/riscv.h***的末尾有一些有用的宏和页表标志位的定义。 如果出现COW页面错误并且没有可用内存，则应终止进程。 (1). 在***kernel/riscv.h***中选取PTE中的保留位定义标记一个页面是否为COW Fork页面的标志位
+// 记录应用了COW策略后fork的页面 #define PTE_F (1L &lt;&lt; 8) (2).]]></description>
+</item>
+<item>
+    <title>6.s081_lab5</title>
+    <link>http://example.org/posts/6.s081_lab5/</link>
+    <pubDate>Mon, 17 Apr 2023 20:42:58 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab5/</guid>
+    <description><![CDATA[lab5 Eliminate allocation from sbrk 将sys_sbrk()中的growproc函数调用删除，因为其是给新增加的堆空间分配内存的，我们现在需要惰性分配，所以并不真正分配空间。
+uint64 sys_sbrk(void) { int addr; int n; if(argint(0, &amp;n) &lt; 0) return -1; addr = myproc()-&gt;sz; // lazy allocation myproc()-&gt;sz += n; return addr; } 未分配的页表比如512项中只分配了两项，那么其余的均为0x00000000000000000。
+Lazy allocation (1). 修改usertrap()(*kernel/trap.c*)函数，使用r_scause()判断是否为页面错误，在页面错误处理的过程中，先判断发生错误的虚拟地址（r_stval()读取）是否位于栈空间之上，进程大小（虚拟地址从0开始，进程大小表征了进程的最高虚拟地址）之下，然后分配物理内存并添加映射
+uint64 cause = r_scause(); if(cause == 8) { ... } else if((which_dev = devintr()) != 0) { // ok } else if(cause == 13 || cause == 15) { // 处理页面错误 uint64 fault_va = r_stval(); // 产生页面错误的虚拟地址 char* pa; // 分配的物理地址 if(PGROUNDUP(p-&gt;trapframe-&gt;sp) - 1 &lt; fault_va &amp;&amp; fault_va &lt; p-&gt;sz &amp;&amp; (pa = kalloc()) !]]></description>
+</item>
+<item>
+    <title>6.s081_lab4</title>
+    <link>http://example.org/posts/6.s081_lab4/</link>
+    <pubDate>Mon, 03 Apr 2023 21:38:24 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab4/</guid>
+    <description><![CDATA[Chapter 4 4.1RISC-V陷入机制 每个RISC-V CPU都有一组控制寄存器，内核通过向这些寄存器写入内容来告诉CPU如何处理陷阱，内核可以读取这些寄存器来明确已经发生的陷阱。RISC-V文档包含了完整的内容。*riscv.h*(*kernel/riscv.h*:1)包含在xv6中使用到的内容的定义。以下是最重要的一些寄存器概述：
+stvec：内核在这里写入其陷阱处理程序的地址；RISC-V跳转到这里处理陷阱。 sepc：当发生陷阱时，RISC-V会在这里保存程序计数器pc（因为pc会被stvec覆盖）。sret（从陷阱返回）指令会将sepc复制到pc。内核可以写入sepc来控制sret的去向。 scause： RISC-V在这里放置一个描述陷阱原因的数字。 sscratch：内核在这里放置了一个值，这个值在陷阱处理程序一开始就会派上用场。 sstatus：其中的SIE位控制设备中断是否启用。如果内核清空SIE，RISC-V将推迟设备中断，直到内核重新设置SIE。SPP位指示陷阱是来自用户模式还是管理模式，并控制sret返回的模式。 上述寄存器都用于在管理模式下处理陷阱，在用户模式下不能读取或写入。在机器模式下处理陷阱有一组等效的控制寄存器，xv6仅在计时器中断的特殊情况下使用它们。
+多核芯片上的每个CPU都有自己的这些寄存器集，并且在任何给定时间都可能有多个CPU在处理陷阱。
+当需要强制执行陷阱时，RISC-V硬件对所有陷阱类型（计时器中断除外）执行以下操作：
+如果陷阱是设备中断，并且状态SIE位被清空，则不执行以下任何操作。 清除SIE以禁用中断。 将pc复制到sepc。 将当前模式（用户或管理）保存在状态的SPP位中。 设置scause以反映产生陷阱的原因。 将模式设置为管理模式。 将stvec复制到pc。 在新的pc上开始执行。 请注意，CPU不会切换到内核页表，不会切换到内核栈，也不会保存除pc之外的任何寄存器。内核软件必须执行这些任务。CPU在陷阱期间执行尽可能少量工作的一个原因是为软件提供灵活性；例如，一些操作系统在某些情况下不需要页表切换，这可以提高性能。
+你可能想知道CPU硬件的陷阱处理顺序是否可以进一步简化。例如，假设CPU不切换程序计数器。那么陷阱可以在仍然运行用户指令的情况下切换到管理模式。但因此这些用户指令可以打破用户/内核的隔离机制，例如通过修改satp寄存器(保存页表根地址的寄存器)来指向允许访问所有物理内存的页表。因此，CPU使用专门的寄存器切换到内核指定的指令地址，即stvec，是很重要的。
+4.2从用户空间陷入 如果用户程序发出系统调用（ecall指令），或者做了一些非法的事情，或者设备中断，那么在用户空间中执行时就可能会产生陷阱。来自用户空间的陷阱的高级路径是uservec (*kernel/trampoline.S*:16)，然后是usertrap (*kernel/trap.c*:37)；返回时，先是usertrapret (*kernel/trap.c*:90)，然后是userret (*kernel/trampoline.S*:16)。
+来自用户代码的陷阱比来自内核的陷阱更具挑战性，因为satp指向不映射内核的用户页表，栈指针可能包含无效甚至恶意的值。
+由于RISC-V硬件在陷阱期间不会切换页表，所以用户页表必须包括uservec（stvec指向的陷阱向量指令）的映射。uservec必须切换satp以指向内核页表；为了在切换后继续执行指令，uservec必须在内核页表中与用户页表中映射相同的地址。
+xv6使用包含uservec的蹦床页面（trampoline page）来满足这些约束。xv6将蹦床页面映射到内核页表和每个用户页表中相同的虚拟地址。这个虚拟地址是TRAMPOLINE（如图2.3和图3.3所示）。蹦床内容在***trampoline.S***中设置，并且（当执行用户代码时）stvec设置为uservec (*kernel/trampoline.S*:16)。
+当uservec启动时，所有32个寄存器都包含被中断代码所拥有的值。但是uservec需要能够修改一些寄存器，以便设置satp并生成保存寄存器的地址。RISC-V以sscratch寄存器的形式提供了帮助。uservec开始时的csrrw指令交换了a0和sscratch的内容。现在用户代码的a0被保存了；uservec有一个寄存器（a0）可以使用；a0包含内核以前放在sscratch中的值。
+uservec的下一个任务是保存用户寄存器。在进入用户空间之前，内核先前将sscratch设置为指向一个每个进程的trapframe，该帧（除此之外）具有保存所有用户寄存器的空间(*kernel/proc.h*:44)。因为satp仍然指向用户页表，所以uservec需要将trapframe映射到用户地址空间中。每当创建一个进程时，xv6就为该进程的trapframe分配一个页面，并安排它始终映射在用户虚拟地址TRAPFRAME，该地址就在TRAMPOLINE下面。尽管使用物理地址，该进程的p-&gt;trapframe仍指向trapframe，这样内核就可以通过内核页表使用它。
+因此在交换a0和sscratch之后，a0持有指向当前进程trapframe的指针。uservec现在保存那里的所有用户寄存器，包括从sscratch读取的用户的a0。
+陷阱帧包含指向当前进程内核栈的指针、当前CPU的hartid、usertrap的地址和内核页表的地址。uservec取得这些值，将satp切换到内核页表，并调用usertrap。
+usertrap的任务是确定陷阱的原因，处理并返回(*kernel/trap.c*:37)。如上所述，它首先改变stvec，这样内核中的陷阱将由kernelvec处理。它保存了sepc（保存的用户程序计数器），再次保存是因为usertrap中可能有一个进程切换，可能导致sepc被覆盖。如果陷阱来自系统调用，syscall会处理它；如果是设备中断，devintr会处理；否则它是一个异常，内核会杀死错误进程。系统调用路径在保存的用户程序计数器pc上加4，因为在系统调用的情况下，RISC-V会留下指向ecall指令的程序指针（返回后需要执行ecall之后的下一条指令）。在退出的过程中，usertrap检查进程是已经被杀死还是应该让出CPU（如果这个陷阱是计时器中断）。
+返回用户空间的第一步是调用usertrapret (*kernel/trap.c*:90)。该函数设置RISC-V控制寄存器，为将来来自用户空间的陷阱做准备。这涉及到将stvec更改为指向uservec，准备uservec所依赖的陷阱帧字段，并将sepc设置为之前保存的用户程序计数器。最后，usertrapret在用户和内核页表中都映射的蹦床页面上调用userret；原因是userret中的汇编代码会切换页表。
+usertrapret对userret的调用将指针传递到a0中的进程用户页表和a1中的TRAPFRAME (*kernel/trampoline.S*:88)。userret将satp切换到进程的用户页表。回想一下，用户页表同时映射蹦床页面和TRAPFRAME，但没有从内核映射其他内容。同样，蹦床页面映射在用户和内核页表中的同一个虚拟地址上的事实允许用户在更改satp后继续执行。userret复制陷阱帧保存的用户a0到sscratch，为以后与TRAPFRAME的交换做准备。从此刻开始，userret可以使用的唯一数据是寄存器内容和陷阱帧的内容。下一个userret从陷阱帧中恢复保存的用户寄存器，做a0与sscratch的最后一次交换来恢复用户a0并为下一个陷阱保存TRAPFRAME，并使用sret返回用户空间。
+4.3 代码：调用系统调用 第2章以***initcode.S***调用exec系统调用（*user/initcode.S*:11）结束。让我们看看用户调用是如何在内核中实现exec系统调用的。
+用户代码将exec需要的参数放在寄存器a0和a1中，并将系统调用号放在a7中。系统调用号与syscalls数组中的条目相匹配，syscalls数组是一个函数指针表（*kernel/syscall.c*:108）。ecall指令陷入(trap)到内核中，执行uservec、usertrap和syscall，和我们之前看到的一样。
+syscall（*kernel/syscall.c*:133）从陷阱帧（trapframe）中保存的a7中检索系统调用号（p-&gt;trapframe-&gt;a7），并用它索引到syscalls中，对于第一次系统调用，a7中的内容是SYS_exec（*kernel/syscall. h*:8），导致了对系统调用接口函数sys_exec的调用。
+当系统调用接口函数返回时，syscall将其返回值记录在p-&gt;trapframe-&gt;a0中。这将导致原始用户空间对exec()的调用返回该值，因为RISC-V上的C调用约定将返回值放在a0中。系统调用通常返回负数表示错误，返回零或正数表示成功。如果系统调用号无效，syscall打印错误并返回-1。
+4.4 系统调用参数 内核中的系统调用接口需要找到用户代码传递的参数。因为用户代码调用了系统调用封装函数，所以参数最初被放置在RISC-V C调用所约定的地方：寄存器。内核陷阱代码将用户寄存器保存到当前进程的陷阱框架中，内核代码可以在那里找到它们。函数artint、artaddr和artfd从陷阱框架中检索第n个系统调用参数并以整数、指针或文件描述符的形式保存。他们都调用argraw来检索相应的保存的用户寄存器（*kernel/syscall.c*:35）。
+有些系统调用传递指针作为参数，内核必须使用这些指针来读取或写入用户内存。例如：exec系统调用传递给内核一个指向用户空间中字符串参数的指针数组。这些指针带来了两个挑战。首先，用户程序可能有缺陷或恶意，可能会传递给内核一个无效的指针，或者一个旨在欺骗内核访问内核内存而不是用户内存的指针。其次，xv6内核页表映射与用户页表映射不同，因此内核不能使用普通指令从用户提供的地址加载或存储。
+内核实现了安全地将数据传输到用户提供的地址和从用户提供的地址传输数据的功能。fetchstr是一个例子（*kernel/syscall.c*:25）。文件系统调用，如exec，使用fetchstr从用户空间检索字符串文件名参数。fetchstr调用copyinstr来完成这项困难的工作。
+copyinstr（*kernel/vm.c*:406）从用户页表页表中的虚拟地址srcva复制max字节到dst。它使用walkaddr（它又调用walk）在软件中遍历页表，以确定srcva的物理地址pa0。由于内核将所有物理RAM地址映射到同一个内核虚拟地址，copyinstr可以直接将字符串字节从pa0复制到dst。walkaddr（*kernel/vm.c*:95）检查用户提供的虚拟地址是否为进程用户地址空间的一部分，因此程序不能欺骗内核读取其他内存。一个类似的函数copyout，将数据从内核复制到用户提供的地址。
+4.5 从内核空间陷入 xv6根据执行的是用户代码还是内核代码，对CPU陷阱寄存器的配置有所不同。当在CPU上执行内核时，内核将stvec指向kernelvec(*kernel/kernelvec.S*:10)的汇编代码。由于xv6已经在内核中，kernelvec可以依赖于设置为内核页表的satp，以及指向有效内核栈的栈指针。kernelvec保存所有寄存器，以便被中断的代码最终可以不受干扰地恢复。
+kernelvec将寄存器保存在被中断的内核线程的栈上，这是有意义的，因为寄存器值属于该线程。如果陷阱导致切换到不同的线程，那这一点就显得尤为重要——在这种情况下，陷阱将实际返回到新线程的栈上，将被中断线程保存的寄存器安全地保存在其栈上。
+Kernelvec在保存寄存器后跳转到kerneltrap(*kernel/trap.c*:134)。kerneltrap为两种类型的陷阱做好了准备：设备中断和异常。它调用devintr(*kernel/trap.c*:177)来检查和处理前者。如果陷阱不是设备中断，则必定是一个异常，内核中的异常将是一个致命的错误；内核调用panic并停止执行。
+如果由于计时器中断而调用了kerneltrap，并且一个进程的内核线程正在运行（而不是调度程序线程），kerneltrap会调用yield，给其他线程一个运行的机会。在某个时刻，其中一个线程会让步，让我们的线程和它的kerneltrap再次恢复。第7章解释了yield中发生的事情。
+当kerneltrap的工作完成后，它需要返回到任何被陷阱中断的代码。因为一个yield可能已经破坏了保存的sepc和在sstatus中保存的前一个状态模式，因此kerneltrap在启动时保存它们。它现在恢复这些控制寄存器并返回到kernelvec(*kernel/kernelvec.S*:48)。kernelvec从栈中弹出保存的寄存器并执行sret，将sepc复制到pc并恢复中断的内核代码。
+值得思考的是，如果内核陷阱由于计时器中断而调用yield，陷阱返回是如何发生的。
+当CPU从用户空间进入内核时，xv6将CPU的stvec设置为kernelvec；您可以在usertrap(*kernel/trap.c*:29)中看到这一点。内核执行时有一个时间窗口，但stvec设置为uservec，在该窗口中禁用设备中断至关重要。幸运的是，RISC-V总是在开始设置陷阱时禁用中断，xv6在设置stvec之前不会再次启用中断
+4.6 页面错误异常 Xv6对异常的响应相当无趣: 如果用户空间中发生异常，内核将终止故障进程。如果内核中发生异常，则内核会崩溃。真正的操作系统通常以更有趣的方式做出反应。]]></description>
+</item>
+<item>
+    <title>6.s081_lab3</title>
+    <link>http://example.org/posts/6.s081_lab3/</link>
+    <pubDate>Tue, 28 Mar 2023 21:06:56 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab3/</guid>
+    <description><![CDATA[Chapter 3 3.1页式硬件 该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中的每一个PTE都包含该树最后一级的512个PTE。分别使用virtual address 的L2,L1,L0各9位（2^9=512）去确定页表页的哪一个PTE。最终的Physical address是由最后一级的PPN和Virtual address的最开始的12位offset组成。
+每个PTE包含10位的标志位。这些标志位告诉分页硬件允许如何使用关联的虚拟地址。PTE_V指示PTE是否存在：如果它没有被设置，对页面的引用会导致异常（即不允许）。PTE_R控制是否允许指令读取到页面。PTE_W控制是否允许指令写入到页面。PTE_X控制CPU是否可以将页面内容解释为指令并执行它们。PTE_U控制用户模式下的指令是否被允许访问页面；如果没有设置PTE_U，PTE只能在管理模式下使用。图3.2显示了它是如何工作的。标志和所有其他与页面硬件相关的结构在（*kernel/riscv.h*）中定义。
+为了告诉硬件使用页表，内核必须将根页表页的物理地址写入到satp寄存器中（satp的作用是存放根页表页在物理内存中的地址）。每个CPU都有自己的satp，一个CPU将使用自己的satp指向的页表转换后续指令生成的所有地址。每个CPU都有自己的satp，因此不同的CPU就可以运行不同的进程，每个进程都有自己的页表描述的私有地址空间。
+3.2内核地址空间 Xv6为每个进程维护一个页表，用以描述每个进程的用户地址空间，外加一个单独描述内核地址空间的页表。内核配置其地址空间的布局，以允许自己以可预测的虚拟地址访问物理内存和各种硬件资源。图3.3显示了这种布局如何将内核虚拟地址映射到物理地址。文件(*kernel/memlayout.h*) 声明了xv6内核内存布局的常量。
+QEMU模拟了一台计算机，它包括从物理地址0x80000000开始并至少到0x86400000结束的RAM（物理内存），xv6称结束地址为PHYSTOP。QEMU模拟还包括I/O设备，如磁盘接口。QEMU将设备接口作为内存映射控制寄存器暴露给软件，这些寄存器位于物理地址空间0x80000000以下。内核可以通过读取/写入这些特殊的物理地址与设备交互；这种读取和写入与设备硬件而不是RAM通信。第4章解释了xv6如何与设备进行交互。
+内核使用“直接映射”获取内存和内存映射设备寄存器；也就是说，将资源映射到等于物理地址的虚拟地址。例如，内核本身在虚拟地址空间和物理内存中都位于KERNBASE=0x80000000。直接映射简化了读取或写入物理内存的内核代码。例如，当fork为子进程分配用户内存时，分配器返回该内存的物理地址；fork在将父进程的用户内存复制到子进程时直接将该地址用作虚拟地址。
+有几个内核虚拟地址不是直接映射：
+蹦床页面(trampoline page)。它映射在虚拟地址空间的顶部；用户页表具有相同的映射。第4章讨论了蹦床页面的作用，但我们在这里看到了一个有趣的页表用例；一个物理页面（持有蹦床代码）在内核的虚拟地址空间中映射了两次：一次在虚拟地址空间的顶部，一次直接映射。 内核栈页面。每个进程都有自己的内核栈，它将映射到偏高一些的地址，这样xv6在它之下就可以留下一个未映射的保护页(guard page)。保护页的PTE是无效的（也就是说PTE_V没有设置），所以如果内核溢出内核栈就会引发一个异常，内核触发panic。如果没有保护页，栈溢出将会覆盖其他内核内存，引发错误操作。恐慌崩溃（panic crash）是更可取的方案。（注：Guard page不会浪费物理内存，它只是占据了虚拟地址空间的一段靠后的地址，但并不映射到物理地址空间。） 3.3创建一个地址空间 大多数用于操作地址空间和页表的xv6代码都写在 vm.c* (kernel/vm.c:1) 中。其核心数据结构是pagetable_t，它实际上是指向RISC-V根页表页的指针；一个pagetable_t可以是内核页表，也可以是一个进程页表。最核心的函数是walk和mappages，前者为虚拟地址找到PTE，后者为新映射装载PTE。名称以kvm开头的函数操作内核页表；以uvm开头的函数操作用户页表；其他函数用于二者。copyout和copyin复制数据到用户虚拟地址或从用户虚拟地址复制数据，这些虚拟地址作为系统调用参数提供; 由于它们需要显式地翻译这些地址，以便找到相应的物理内存，故将它们写在**vm.c***中。
+在启动的初期，main会调用kvminit，kvminit首先会分配一个物理内存页用来装根页表，后续调用kvmmap去安装内核需要的内存，这些转换包括 内核的指令和数据，到PHYSTOP的物理内存，以及实际上是设备的内存范围。实际上是设备。（即上图中的CLINT PLIC UARTO VIRTIO KERNBASE PHYSTOP TRAMPOLINE）
+kvmmap(*kernel/vm.c*:127)调用mappages(*kernel/vm.c*:138)，mappages将范围虚拟地址到同等范围物理地址的映射装载到一个页表中。它以页面大小为间隔，为范围内的每个虚拟地址单独执行此操作。对于要映射的每个虚拟地址，mappages调用walk来查找该地址的PTE地址。然后，它初始化PTE以保存相关的物理页号、所需权限（PTE_W、PTE_X和/或PTE_R）以及用于标记PTE有效的PTE_V(*kernel/vm.c*:153)。先通过walk找到PTE，然后通过mappages装载PTE
+在查找PTE中的虚拟地址（参见图3.2）时，walk(*kernel/vm.c*:72)模仿RISC-V分页硬件。walk一次从3级页表中获取9个比特位。它使用上一级的9位虚拟地址来查找下一级页表或最终页面的PTE (*kernel/vm.c*:78)。如果PTE无效，则所需的页面还没有分配；如果设置了alloc参数，walk就会分配一个新的页表页面，并将其物理地址放在PTE中。它返回树中最低一级的PTE地址(*kernel/vm.c*:88)。
+上面的代码依赖于直接映射到内核虚拟地址空间中的物理内存。例如，当walk降低页表的级别时，它从PTE (*kernel/vm.c*:80)中提取下一级页表的（物理）地址，然后使用该地址作为虚拟地址来获取下一级的PTE (*kernel/vm.c*:78)。
+for(int level = 2; level &gt; 0; level--) { pte_t *pte = &amp;pagetable[PX(level, va)]; if(*pte &amp; PTE_V) { pagetable = (pagetable_t)PTE2PA(*pte); } else { if(!alloc || (pagetable = (pde_t*)kalloc()) == 0) return 0; memset(pagetable, 0, PGSIZE); *pte = PA2PTE(pagetable) | PTE_V; } } 由于虚拟地址和物理地址直接映射，在这个函数中把va先当做虚拟地址获取第一个9位来获取根页表的PTE，获取到二级页表的物理地址后（每页4096B，所以低12位为0，获取pte之后由于pte的低10位是标志位，pte&raquo;10&laquo;12便是物理地址），将这个地址转换为虚拟地址即是二级页表的虚拟地址，然后便可以在通过va&raquo;12+level*9获取到PTE进而找到最后一级页表]]></description>
+</item>
+<item>
+    <title>6.s081_lab2</title>
+    <link>http://example.org/posts/6.s081_lab2/</link>
+    <pubDate>Tue, 21 Mar 2023 20:59:22 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.s081_lab2/</guid>
+    <description><![CDATA[chapter 2 2.2用户态、核心态、系统调用 RISC-V分为三个模式machine mode,supervisor mode and user mode
+在机器模式下执行的指令具有完全权限；CPU以机器模式启动。机器模式主要用于配置计算机。Xv6在机器模式下执行几行，然后切换到管理模式。
+2.3内核组织 整个os都驻留在内核中，所有系统调用的实现都是以supervisor mode运行，这个被称为amonolithic内核（宏内核）
+为了降低内核出错的风险，操作系统设计者可以最大限度地减少在监督模式下运行的操作系统代码的数量，并在用户模式下执行大部分操作系统。这个内核组织被称为amicrokernel（微内核）
+2.5进程概述 Risc-v的指针是64位的，硬件仅使用低39位；而xv6仅使用这39个比特中的38个。因此，最大地址为238−1=0x3fffffffff
+xv6内核为每个进程维护许多状态片段，并将它们聚集到一个proc(*kernel/proc.h*:86)结构体中。一个进程最重要的内核状态片段是它的页表、内核栈区和运行状态。我们将使用符号p-&gt;xxx来引用proc结构体的元素；例如，p-&gt;pagetable是一个指向该进程页表的指针。
+线程的大部分状态（局部变量、函数调用返回地址）都存储在线程的堆栈中。每个进程有两个堆栈：一个用户堆栈和一个内核堆栈（p-&gt;kstack）。当进程执行用户指令时，只有它的用户堆栈在使用，而它的内核堆栈是空的。当进程进入内核（用于系统调用或中断）时，内核代码在进程的内核堆栈上执行；当进程在内核中时，它的用户堆栈仍然包含保存的数据，但没有被实际使用。进程的线程在主动使用其用户堆栈和内核堆栈之间交替。内核堆栈是独立的（并受用户代码保护），因此即使进程破坏了其用户堆栈，内核也可以执行。
+2.6xv6启动和运行第一个线程的概述 为了使xv6更加具体，我们将概述内核如何启动和运行第一个进程。接下来的章节将更详细地描述本概述中显示的机制。
+当RISC-V计算机上电时，它会初始化自己并运行一个存储在只读内存中的引导加载程序。引导加载程序将xv6内核加载到内存中。然后，在机器模式下，中央处理器从_entry (*kernel/entry.S*:6)开始运行xv6。Xv6启动时页式硬件（paging hardware）处于禁用模式：也就是说虚拟地址将直接映射到物理地址。
+加载程序将xv6内核加载到物理地址为0x80000000的内存中。它将内核放在0x80000000而不是0x0的原因是地址范围0x0:0x80000000包含I/O设备。
+_entry的指令设置了一个栈区，这样xv6就可以运行C代码。Xv6在**start. c (kernel/start.c:11)*文件中为初始栈stack0***声明了空间。由于RISC-V上的栈是向下扩展的，所以_entry的代码将栈顶地址stack0+4096加载到栈顶指针寄存器sp中。现在内核有了栈区，_entry便调用C代码start(*kernel/start.c*:21)。
+函数start执行一些仅在机器模式下允许的配置，然后切换到管理模式。RISC-V提供指令mret以进入管理模式，该指令最常用于将管理模式切换到机器模式的调用中返回。而start并非从这样的调用返回，而是执行以下操作：它在寄存器mstatus中将先前的运行模式改为管理模式，它通过将main函数的地址写入寄存器mepc将返回地址设为main，它通过向页表寄存器satp写入0来在管理模式下禁用虚拟地址转换，并将所有的中断和异常委托给管理模式。
+在进入管理模式之前，start还要执行另一项任务：对时钟芯片进行编程以产生计时器中断。清理完这些“家务”后，start通过调用mret“返回”到管理模式。这将导致程序计数器（PC）的值更改为main(*kernel/main.c*:11)函数地址。
+TIPS
+注：mret执行返回，返回到先前状态，由于start函数将前模式改为了管理模式且返回地址改为了main,因此mret将返回到main函数，并以管理模式运行
+在main(*kernel/main.c*:11)初始化几个设备和子系统后，便通过调用userinit (*kernel/proc.c*:212)创建第一个进程，第一个进程执行一个用RISC-V程序集写的小型程序：*initcode. S* (***user/initcode.S:***1)，它通过调用exec系统调用重新进入内核。正如我们在第1章中看到的，exec用一个新程序（本例中为 /init）替换当前进程的内存和寄存器。一旦内核完成exec，它就返回/init进程中的用户空间。如果需要，init(*user/init.c*:15)将创建一个新的控制台设备文件，然后以文件描述符0、1和2打开它。然后它在控制台上启动一个shell。系统就这样启动了。
+lab2 system call tracing trace系统调用有一个参数，这个参数是一个整数“掩码”（mask），它的比特位指定要跟踪的系统调用。例如，要跟踪fork系统调用，程序调用trace(1 &lt;&lt; SYS_fork)，其中SYS_fork是kernel/syscall.h中的系统调用编号，这个掩码是10也即2。32是read的系统调用，因为1&laquo;5为32，100000。1111……1共31个1，即2147483647，这个掩码代表追踪所有的系统调用。
+我们提供了一个用户级程序版本的trace，它运行另一个启用了跟踪的程序（参见user/trace.c）。完成后，您应该看到如下输出：
+$ trace 32 grep hello README 3: syscall read -&gt; 1023 3: syscall read -&gt; 966 3: syscall read -&gt; 70 3: syscall read -&gt; 0 $ $ trace 2147483647 grep hello README 4: syscall trace -&gt; 0 4: syscall exec -&gt; 3 4: syscall open -&gt; 3 4: syscall read -&gt; 1023 4: syscall read -&gt; 966 4: syscall read -&gt; 70 4: syscall read -&gt; 0 4: syscall close -&gt; 0 $ $ grep hello README $ $ trace 2 usertests forkforkfork usertests starting test forkforkfork: 407: syscall fork -&gt; 408 408: syscall fork -&gt; 409 409: syscall fork -&gt; 410 410: syscall fork -&gt; 411 409: syscall fork -&gt; 412 410: syscall fork -&gt; 413 409: syscall fork -&gt; 414 411: syscall fork -&gt; 415 .]]></description>
+</item>
+</channel>
+</rss>
