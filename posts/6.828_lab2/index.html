@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>6.828_lab2 - OS IS TOO HARD</title><meta name="Description" content="Some notes"><meta property="og:title" content="6.828_lab2" />
+<meta property="og:description" content="lab2 Virtual memory map
+/* * Virtual memory map: Permissions * kernel/user * * 4 Gig --------&gt; &#43;------------------------------&#43; * | | RW/-- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ * : . : * : . : * : . : * |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~| RW/-- * | | RW/-- * | Remapped Physical Memory | RW/-- * | | RW/-- * KERNBASE, ----&gt; &#43;------------------------------&#43; 0xf0000000 --&#43; * KSTACKTOP | CPU0&#39;s Kernel Stack | RW/-- KSTKSIZE | * | - - - - - - - - - - - - - - -| | * | Invalid Memory (*) | --/-- KSTKGAP | * &#43;------------------------------&#43; | * | CPU1&#39;s Kernel Stack | RW/-- KSTKSIZE | * | - - - - - - - - - - - - - - -| PTSIZE * | Invalid Memory (*) | --/-- KSTKGAP | * &#43;------------------------------&#43; | * : ." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/6.828_lab2/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-05-08T22:25:47+08:00" />
+<meta property="article:modified_time" content="2023-05-08T22:25:47+08:00" /><meta property="og:site_name" content="jiejiesks site" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="6.828_lab2"/>
+<meta name="twitter:description" content="lab2 Virtual memory map
+/* * Virtual memory map: Permissions * kernel/user * * 4 Gig --------&gt; &#43;------------------------------&#43; * | | RW/-- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ * : . : * : . : * : . : * |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~| RW/-- * | | RW/-- * | Remapped Physical Memory | RW/-- * | | RW/-- * KERNBASE, ----&gt; &#43;------------------------------&#43; 0xf0000000 --&#43; * KSTACKTOP | CPU0&#39;s Kernel Stack | RW/-- KSTKSIZE | * | - - - - - - - - - - - - - - -| | * | Invalid Memory (*) | --/-- KSTKGAP | * &#43;------------------------------&#43; | * | CPU1&#39;s Kernel Stack | RW/-- KSTKSIZE | * | - - - - - - - - - - - - - - -| PTSIZE * | Invalid Memory (*) | --/-- KSTKGAP | * &#43;------------------------------&#43; | * : ."/>
+<meta name="application-name" content="jiejiesks site">
+<meta name="apple-mobile-web-app-title" content="jiejiesks site"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="http://example.org/posts/6.828_lab2/" /><link rel="prev" href="http://example.org/posts/6.828_lab1/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css"></noscript><link rel="preload" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "6.828_lab2",
+        "inLanguage": "en",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "http:\/\/example.org\/posts\/6.828_lab2\/"
+        },"genre": "posts","wordcount":  1269 ,
+        "url": "http:\/\/example.org\/posts\/6.828_lab2\/","datePublished": "2023-05-08T22:25:47+08:00","dateModified": "2023-05-08T22:25:47+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "zxj"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="OS IS TOO HARD">Xingjie Zhou&#39;s Blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> Posts </a><a class="menu-item" href="/tags/"> Tags </a><a class="menu-item" href="/categories/"> Categories </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="OS IS TOO HARD">Xingjie Zhou&#39;s Blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="/posts/" title="">Posts</a><a class="menu-item" href="/tags/" title="">Tags</a><a class="menu-item" href="/categories/" title="">Categories</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">6.828_lab2</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-category">included in <a href="/categories/6.828/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.828</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-05-08">2023-05-08</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;1269 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;6 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#part1-physical-page-management">Part1 Physical Page Management</a>
+      <ul>
+        <li><a href="#exercise1">exercise1</a></li>
+      </ul>
+    </li>
+    <li><a href="#part2-virtual-address">Part2 Virtual Address</a>
+      <ul>
+        <li><a href="#exercise2">exercise2</a></li>
+        <li><a href="#exercise4">exercise4</a></li>
+      </ul>
+    </li>
+    <li><a href="#part-3-kernel-address-space">Part 3: Kernel Address Space</a>
+      <ul>
+        <li><a href="#exercise5">exercise5</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="lab2">lab2</h1>
+<p>Virtual memory map</p>
+<pre tabindex="0"><code>/*
+ * Virtual memory map:                                Permissions
+ *                                                    kernel/user
+ *
+ *    4 Gig --------&gt;  +------------------------------+
+ *                     |                              | RW/--
+ *                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *                     :              .               :
+ *                     :              .               :
+ *                     :              .               :
+ *                     |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~| RW/--
+ *                     |                              | RW/--
+ *                     |   Remapped Physical Memory   | RW/--
+ *                     |                              | RW/--
+ *    KERNBASE, ----&gt;  +------------------------------+ 0xf0000000      --+
+ *    KSTACKTOP        |     CPU0&#39;s Kernel Stack      | RW/--  KSTKSIZE   |
+ *                     | - - - - - - - - - - - - - - -|                   |
+ *                     |      Invalid Memory (*)      | --/--  KSTKGAP    |
+ *                     +------------------------------+                   |
+ *                     |     CPU1&#39;s Kernel Stack      | RW/--  KSTKSIZE   |
+ *                     | - - - - - - - - - - - - - - -|                 PTSIZE
+ *                     |      Invalid Memory (*)      | --/--  KSTKGAP    |
+ *                     +------------------------------+                   |
+ *                     :              .               :                   |
+ *                     :              .               :                   |
+ *    MMIOLIM ------&gt;  +------------------------------+ 0xefc00000      --+
+ *                     |       Memory-mapped I/O      | RW/--  PTSIZE
+ * ULIM, MMIOBASE --&gt;  +------------------------------+ 0xef800000
+ *                     |  Cur. Page Table (User R-)   | R-/R-  PTSIZE
+ *    UVPT      ----&gt;  +------------------------------+ 0xef400000
+ *                     |          RO PAGES            | R-/R-  PTSIZE
+ *    UPAGES    ----&gt;  +------------------------------+ 0xef000000
+ *                     |           RO ENVS            | R-/R-  PTSIZE
+ * UTOP,UENVS ------&gt;  +------------------------------+ 0xeec00000
+ * UXSTACKTOP -/       |     User Exception Stack     | RW/RW  PGSIZE
+ *                     +------------------------------+ 0xeebff000
+ *                     |       Empty Memory (*)       | --/--  PGSIZE
+ *    USTACKTOP  ---&gt;  +------------------------------+ 0xeebfe000
+ *                     |      Normal User Stack       | RW/RW  PGSIZE
+ *                     +------------------------------+ 0xeebfd000
+ *                     |                              |
+ *                     |                              |
+ *                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *                     .                              .
+ *                     .                              .
+ *                     .                              .
+ *                     |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+ *                     |     Program Data &amp; Heap      |
+ *    UTEXT --------&gt;  +------------------------------+ 0x00800000
+ *    PFTEMP -------&gt;  |       Empty Memory (*)       |        PTSIZE
+ *                     |                              |
+ *    UTEMP --------&gt;  +------------------------------+ 0x00400000      --+
+ *                     |       Empty Memory (*)       |                   |
+ *                     | - - - - - - - - - - - - - - -|                   |
+ *                     |  User STAB Data (optional)   |                 PTSIZE
+ *    USTABDATA ----&gt;  +------------------------------+ 0x00200000        |
+ *                     |       Empty Memory (*)       |                   |
+ *    0 ------------&gt;  +------------------------------+                 --+
+ *
+ * (*) Note: The kernel ensures that &#34;Invalid Memory&#34; is *never* mapped.
+ *     &#34;Empty Memory&#34; is normally unmapped, but user programs may map pages
+ *     there if desired.  JOS user programs map pages temporarily at UTEMP.
+ */
+</code></pre><p>Physical Memory</p>
+<pre tabindex="0"><code>We will now dive into a bit more detail about how a PC starts up. A PC&#39;s physical address space is hard-wired to have the following general layout:
++------------------+  &lt;- 0xFFFFFFFF (4GB)
+|      32-bit      |
+|  memory mapped   |
+|     devices      |
+|                  |
+/\/\/\/\/\/\/\/\/\/\
+
+/\/\/\/\/\/\/\/\/\/\
+|                  |
+|      Unused      |
+|                  |
++------------------+  &lt;- depends on amount of RAM
+|                  |
+|                  |
+| Extended Memory  |
+|                  |
+|                  |
++------------------+  &lt;- 0x00100000 (1MB)
+|     BIOS ROM     |   64KB
++------------------+  &lt;- 0x000F0000 (960KB)
+|  16-bit devices, |
+|  expansion ROMs  |
++------------------+  &lt;- 0x000C0000 (768KB)
+|   VGA Display    |    128KB
++------------------+  &lt;- 0x000A0000 (640KB)
+|                  |
+|    Low Memory    |
+|                  |
++------------------+  &lt;- 0x00000000
+</code></pre><h2 id="part1-physical-page-management">Part1 Physical Page Management</h2>
+<h3 id="exercise1">exercise1</h3>
+<p>补全在kern/pmap.c下的几个函数。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">boot_alloc</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="nf">mem_init</span><span class="p">()</span> <span class="p">(</span><span class="n">only</span> <span class="n">up</span> <span class="n">to</span> <span class="n">the</span> <span class="n">call</span> <span class="n">to</span> <span class="nf">check_page_free_list</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl"><span class="nf">page_init</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="nf">page_alloc</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="nf">page_free</span><span class="p">()</span>
+</span></span></code></pre></div><p>首先我们要知道一点，在代码中，所有的变量的地址都是虚拟地址，JOS中虚拟地址到物理地址的转换很简单:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="err">虚拟地址</span> <span class="o">=</span> <span class="err">物理地址</span> <span class="o">+</span> <span class="nf">KERNBASE</span><span class="p">(</span><span class="mh">0xF0000000</span><span class="p">)</span>
+</span></span></code></pre></div><p>在JOS中，一开始的物理内存布局如下图所示</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226615.webp"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226615.webp, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226615.webp 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226615.webp 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226615.webp"
+        title="img" /></p>
+<p>由lab1我们可以得知，内核代码从0x100000处开始，也就是物理地址1MB的地方，第一条指令从0x10000c处开始，随后内核主要做如下几件事情</p>
+<ol>
+<li>开启分页(entry.S 62行)</li>
+<li>设置栈指针(entry.S 77行)</li>
+<li>调用i386_init(entry.S 80行)</li>
+</ol>
+<p>I386_init()会调用mem_init()。</p>
+<p>mem_init会先去调用i386_detect_memory();去找到这个机器有多少内存，也就是确定npages和npages_basemem。其中npages表示一共有多少物理内存页，而npages_basemem则表示物理内存中的Low Memory一共有多少物理内存页。我们知道，在4G的物理内存中，0x000A000(640KB)~0x00100000(1MB)存在一个IO洞，这个IO洞用于VGA和BIOS等，这在分配空闲页面时是绝对不能使用的</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Find out how much memory the machine has (npages &amp; npages_basemem).
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nf">i386_detect_memory</span><span class="p">();</span>
+</span></span></code></pre></div><p>随后mem_init()调用boot_alloc分配一个PASIZE大小的页用于存放页表，将页表的起始地址存放在kern_pgdir中，本实验中地址是0xf0117000~0xf0118000，并通过memset初始化该页面</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">kern_pgdir</span> <span class="o">=</span> <span class="p">(</span><span class="kt">pde_t</span> <span class="o">*</span><span class="p">)</span><span class="nf">boot_alloc</span><span class="p">(</span><span class="n">PGSIZE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="nf">memset</span><span class="p">(</span><span class="n">kern_pgdir</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">);</span>
+</span></span></code></pre></div><p>随后给页表添加映射，从UVPT虚拟地址映射到kern_pgdir的物理地址，在UVPT处形成一个虚拟页表</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl">	<span class="c1">//递归地将PD作为一个页表插入自身，以形成
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// 在虚拟地址UVPT处形成一个虚拟页表。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">kern_pgdir</span><span class="p">[</span><span class="nf">PDX</span><span class="p">(</span><span class="n">UVPT</span><span class="p">)]</span> <span class="o">=</span> <span class="nf">PADDR</span><span class="p">(</span><span class="n">kern_pgdir</span><span class="p">)</span> <span class="o">|</span> <span class="n">PTE_U</span> <span class="o">|</span> <span class="n">PTE_P</span><span class="p">;</span>
+</span></span></code></pre></div><p>之后为PageInfo分配空间，用于管理物理页面。从0xf0118000开始即是通过boot_alloc()函数来分配npages个PageInfo结构体来管理物理页面。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">pages</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">PageInfo</span> <span class="o">*</span><span class="p">)</span><span class="nf">boot_alloc</span><span class="p">(</span><span class="n">npages</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">PageInfo</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="nf">memset</span><span class="p">(</span><span class="n">pages</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">PageInfo</span><span class="p">)</span> <span class="o">*</span> <span class="n">npages</span><span class="p">);</span>
+</span></span></code></pre></div><p>之后对数据结构初始化，详细见page_init()</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">page_init</span><span class="p">();</span>
+</span></span></code></pre></div><h4 id="boot_alloc">boot_alloc()</h4>
+<p>boot_alloc()中维护了一个静态指针nextfree，初始值是在/kern/kernel.ld中定义的符号，指向bss段末尾。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">nextfree</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">extern</span> <span class="kt">char</span> <span class="n">end</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl">		<span class="n">nextfree</span> <span class="o">=</span> <span class="nf">ROUNDUP</span><span class="p">((</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">end</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">cprintf</span><span class="p">(</span><span class="s">&#34;kern code end ROUNDUP 4k: %x</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">nextfree</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span></code></pre></div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226700.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226700.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226700.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226700.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226700.png"
+        title="image-20230505132452401" /></p>
+<p>可以看到0xf0117000是end（4K对齐）的末尾，随后的4K页面用于存储页表即0xf0117000~0xf0118000。</p>
+<p>boot_alloc()函数主要做的工作就是当申请n字节大小空间的内存时，将当前nextfree保存在result当做函数返回值，然后将其向后移动ROUNDUP(n, PGSIZE)，此时[result, nextfree)的空间就分配出来了。因为是按页管理内存，所以分配的内存大小需要页对齐。特别地，如果n是0，那么直接返回nextfree。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="n">n</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="n">nextfree</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">n</span> <span class="o">=</span> <span class="nf">ROUNDUP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">((</span><span class="kt">uint32_t</span><span class="p">)</span><span class="n">nextfree</span> <span class="o">+</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">KERNBASE</span> <span class="o">+</span> <span class="n">npages</span> <span class="o">*</span> <span class="n">PGSIZE</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">panic</span><span class="p">(</span><span class="s">&#34;boot_alloc: out of memory</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">result</span> <span class="o">=</span> <span class="n">nextfree</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">nextfree</span> <span class="o">+=</span> <span class="n">n</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span></span></code></pre></div><h4 id="mem_init-只需要完成到调用check_page_free_list1之前">mem_init() 只需要完成到调用check_page_free_list(1)之前</h4>
+<p>在内核代码中每个物理页都由一个PageInfo的数据结构来标识，一共有npages个物理页。所有的PageInfo组成一个pages数组。所以在mem_init需要先对pages结构进行物理内存分配。 <strong>之后所出现的物理页其实是指PageInfo，代码中对物理页的操作其实都是操作PageInfo这个结构</strong></p>
+<p>分配npages个PageInfo结构体用于管理物理页面，pages的起始地址即上述中的0xf0118000</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">pages</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">PageInfo</span> <span class="o">*</span><span class="p">)</span><span class="nf">boot_alloc</span><span class="p">(</span><span class="n">npages</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">PageInfo</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="nf">memset</span><span class="p">(</span><span class="n">pages</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">PageInfo</span><span class="p">)</span> <span class="o">*</span> <span class="n">npages</span><span class="p">);</span>
+</span></span></code></pre></div><h4 id="page_init">page_init()</h4>
+<p>分配完内存后自然就要对数据结构进行初始化，即将物理内存中的每一页都与pageInfo关联，其中分为可用页和不可用页。物理内存页到pages数组下标的映射关系为: ==物理地址/PGSIZE(4k)==。根据提示可知，一共有两大块空闲物理内存块。[1, npages_basemem)。第二块就是从内核代码往后，这个地址可以用boot_alloc(0)取到，即分配了pages内存之后的地址。但这个地址在代码中是虚拟地址，所以需要将其转换成物理地址，可以用PADDR()宏来转换。所以第二块范围就是[PADDR(boot_alloc(0)/PGSIZE)，npages)。找出这些空闲页后需要用page_free_list链表串起来。方便后续内存分配。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">size_t</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">npages_basemem</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pages</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">pp_ref</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pages</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">pp_link</span> <span class="o">=</span> <span class="n">page_free_list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="n">page_free_list</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">pages</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// boot_alloc(0) returns the first free virtual address after the kernel
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="nf">PADDR</span><span class="p">(</span><span class="nf">boot_alloc</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="n">PGSIZE</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">npages</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pages</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">pp_ref</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pages</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">pp_link</span> <span class="o">=</span> <span class="n">page_free_list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="n">page_free_list</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">pages</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span></code></pre></div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226754.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226754.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226754.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226754.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226754.png"
+        title="image-20230505135449738" /></p>
+<p>由此图也可以看出，pages即PageInfo数组的首地址是0xf0118000，其管理的虚拟地址是0xf0000000，其对应的物理地址是0x00000000，由此也说明pages数组的下标和物理地址的映射关系。</p>
+<h4 id="page_alloc">page_alloc()</h4>
+<p>空闲物理页的分配。在空闲物理页链表中取出一个物理页即可。返回的是PageInfo*，这个怎么与物理内存中的物理页对应呢？ - 注意: 两个指针相减，结果并不是两个指针数值上的差，而是把这个差除以指针指向类型的大小的结果，即个数</p>
+<p>可以用page2pa(PageInfo*)的宏，因为pages数组是连续的物理内存，所以直接将PageInfo* pp 的地址减去pages就可以知道在数组中的下标是多少。在乘以4K就可以得到物理地址了: (pp-pages) &laquo; PGSHIFT。PGSHIFT = 1&laquo;12 = 4096 = 4k。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">PageInfo</span> <span class="o">*</span>
+</span></span><span class="line"><span class="cl"><span class="nf">page_alloc</span><span class="p">(</span><span class="kt">int</span> <span class="n">alloc_flags</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// Fill this function in
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="p">(</span><span class="n">page_free_list</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="n">PageInfo</span> <span class="o">*</span><span class="n">page</span> <span class="o">=</span> <span class="n">page_free_list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">page_free_list</span> <span class="o">=</span> <span class="n">page</span><span class="o">-&gt;</span><span class="n">pp_link</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">page</span><span class="o">-&gt;</span><span class="n">pp_link</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">alloc_flags</span> <span class="o">&amp;</span> <span class="n">ALLOC_ZERO</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="cm">/*
+</span></span></span><span class="line"><span class="cl"><span class="cm">		page还是虚拟地址，用page减去pages数组的起始地址，得到的是pages数组的下标
+</span></span></span><span class="line"><span class="cl"><span class="cm">		然后在乘上PGSIZE，得到的是其管理的物理地址.
+</span></span></span><span class="line"><span class="cl"><span class="cm">		最后通过KADDR也就是加上KERNBASE得到对应的管理物理地址的内核虚拟地址
+</span></span></span><span class="line"><span class="cl"><span class="cm">		*/</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">memset</span><span class="p">(</span><span class="nf">page2kva</span><span class="p">(</span><span class="n">page</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">cprintf</span><span class="p">(</span><span class="s">&#34;page: %x page2kva(page): %x page2pa(page): %x pages: %x page2kva(pages): %x PGSIZE: %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="nf">page2kva</span><span class="p">(</span><span class="n">page</span><span class="p">),</span> <span class="nf">page2pa</span><span class="p">(</span><span class="n">page</span><span class="p">),</span> <span class="n">pages</span><span class="p">,</span><span class="nf">page2kva</span><span class="p">(</span><span class="n">pages</span><span class="p">),</span> <span class="n">PGSIZE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="n">page</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>由上图也可只，page的虚拟地址是0xf0119fe8，其管理的虚拟地址是0xf03fd000，对应的物理地址是0x3fd000</p>
+<h4 id="page_free">page_free()</h4>
+<p>这个比较简单。页面释放，将物理页重新插入到page_free_list中。前提是要保证该页面没有被引用，并且也不在空闲链表中。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">page_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">PageInfo</span> <span class="o">*</span><span class="n">pp</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// Fill this function in
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// Hint: You may want to panic if pp-&gt;pp_ref is nonzero or
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// pp-&gt;pp_link is not NULL.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="p">(</span><span class="n">pp</span><span class="o">-&gt;</span><span class="n">pp_ref</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">pp</span><span class="o">-&gt;</span><span class="n">pp_link</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">panic</span><span class="p">(</span><span class="s">&#34;pp-&gt;pp_ref is nonzero or pp-&gt;pp_link is not NULL&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="n">pp</span><span class="o">-&gt;</span><span class="n">pp_link</span> <span class="o">=</span> <span class="n">page_free_list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">page_free_list</span> <span class="o">=</span> <span class="n">pp</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="part2-virtual-address">Part2 Virtual Address</h2>
+<h3 id="exercise2">exercise2</h3>
+<p>阅读<a href="https://link.zhihu.com/?target=https%3A//pdos.csail.mit.edu/6.828/2018/readings/i386/toc.htm" target="_blank" rel="noopener noreffer ">Intel 80386 Reference Manual</a>的第5第6章。</p>
+<p>在x86结构下，使用的是分段分页机制，虚拟地址转换为物理地址需要中间还需要经历线性地址(分段的过程)。参考lab1的实模式和保护模式</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226813.webp"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226813.webp, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226813.webp 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226813.webp 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226813.webp"
+        title="img" /></p>
+<p>下图是具体的地址结构转换过程。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226864.webp"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226864.webp, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226864.webp 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226864.webp 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226864.webp"
+        title="img" /></p>
+<p>在JOS中，虚拟地址=线性地址，为什么呢？因为在boot/boot.S中把所有的段地址都设置成了0 到0xffffffff，即段基址都等于0，相当于0+offset，所以就没有分段的效果了。这样我们就可以专注于实现分页机制了。</p>
+<p>在lab1中已经安装了一个简易的页目录和页表，将虚拟地址[0, 4MB)映射到物理地址[0, 4MB)，[0xF0000000, 0xF0000000+4MB)映射到[0, 4MB）。具体实现在kern/entry.S中，临时的页目录线性地址为entry_pgdir，定义在kern/entrypgdir.c中。</p>
+<h3 id="exercise4">exercise4</h3>
+<p>补全kern/pmap.c下的这些函数，实现页表管理。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">pgdir_walk</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">boot_map_region</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">page_lookup</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">page_remove</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">page_insert</span><span class="p">()</span>
+</span></span></code></pre></div><p>在补全这些函数之前，需要先明白一个图的含义。JOS采用的是二级页表机制，主要由五个元素组成，页目录表-页目录项(PDE, page diretory entry)，页表-页表项(PTE, page table entry)，物理页。PDE和PTE存储的都是地址。 其中一个页目录项对应一个页表，一个页表项对应一个物理页。页目录表的地址存储在CR3寄存器中。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226923.webp"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226923.webp, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226923.webp 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226923.webp 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226923.webp"
+        title="img" /></p>
+<h4 id="pgdir_walk">pgdir_walk()</h4>
+<p>根据(页目录表，虚拟地址，创建标志)找到该虚拟地址所对应的物理页的虚拟地址。 通过PDX获得va的页目录项在页目录表中的偏移取得PDE，如果该PDE所指向的PT是空的话且create == 1，那就创建一个页目录表，即申请一页的物理内存。并设置为用户可读可写。然后再根据PTX获得va在页表项在页表中的偏移获取PTE，返回此PTE的地址。 **PTE_ADDR(*pde)**的作用是去掉后面的权限位。</p>
+<blockquote>
+<p>需要注意的是通过一级页表项获取二级页表的起始地址时，页表项中存储的是物理地址，但是CPU需要接收的是虚拟地址，因此需要通过KADDR函数进行转换。而在6.s081中之所以不需要通过KADDR的转换是因为，在xv6中虚拟地址和物理地址是直接映射的关系，即虚拟地址也是物理地址，因此直接使用即可，但是要知道在取索引时CPU使用的是虚拟地址而不是物理地址。</p>
+</blockquote>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226481.jpeg"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226481.jpeg, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226481.jpeg 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226481.jpeg 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226481.jpeg"
+        title="img" /></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">pte_t</span> <span class="o">*</span>
+</span></span><span class="line"><span class="cl"><span class="nf">pgdir_walk</span><span class="p">(</span><span class="kt">pde_t</span> <span class="o">*</span><span class="n">pgdir</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">va</span><span class="p">,</span> <span class="kt">int</span> <span class="n">create</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// Fill this function in
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// PDX和PTX都是取低10位，都与3FF相与，一个是左移22位一个是左移12位
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="kt">uint32_t</span> <span class="n">pde_index</span> <span class="o">=</span> <span class="nf">PDX</span><span class="p">(</span><span class="n">va</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">uint32_t</span> <span class="n">pte_index</span> <span class="o">=</span> <span class="nf">PTX</span><span class="p">(</span><span class="n">va</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">pde_t</span> <span class="o">*</span><span class="n">pde</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">pgdir</span><span class="p">[</span><span class="n">pde_index</span><span class="p">];</span> <span class="c1">// 根据索引获得pde页目录项的地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">pde</span> <span class="o">&amp;</span> <span class="n">PTE_P</span><span class="p">)</span>				<span class="c1">// 如果pde存在
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">//*pde是物理地址，但是内核需要读写的是虚拟地址，所以需要用KADDR转换一下
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="kt">pte_t</span> <span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="p">(</span><span class="kt">pte_t</span> <span class="o">*</span><span class="p">)</span><span class="nf">KADDR</span><span class="p">(</span><span class="nf">PTE_ADDR</span><span class="p">(</span><span class="o">*</span><span class="n">pde</span><span class="p">));</span> <span class="c1">// 获得pte的地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">return</span> <span class="o">&amp;</span><span class="n">pte</span><span class="p">[</span><span class="n">pte_index</span><span class="p">];</span>						 <span class="c1">// 返回对应索引的pte的地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">create</span><span class="p">)</span> <span class="c1">// 如果pde不存在，且create为真
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">struct</span> <span class="n">PageInfo</span> <span class="o">*</span><span class="n">page</span> <span class="o">=</span> <span class="nf">page_alloc</span><span class="p">(</span><span class="n">ALLOC_ZERO</span><span class="p">);</span> <span class="c1">// 分配一个物理页
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">if</span> <span class="p">(</span><span class="n">page</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="n">page</span><span class="o">-&gt;</span><span class="n">pp_ref</span><span class="o">++</span><span class="p">;</span>								  <span class="c1">// 引用计数加1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="o">*</span><span class="n">pde</span> <span class="o">=</span> <span class="nf">page2pa</span><span class="p">(</span><span class="n">page</span><span class="p">)</span> <span class="o">|</span> <span class="n">PTE_P</span> <span class="o">|</span> <span class="n">PTE_W</span> <span class="o">|</span> <span class="n">PTE_U</span><span class="p">;</span> <span class="c1">// page2pa用于获取page管理的物理页面的地址，设置pde的值
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="kt">pte_t</span> <span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="p">(</span><span class="kt">pte_t</span> <span class="o">*</span><span class="p">)</span><span class="nf">KADDR</span><span class="p">(</span><span class="nf">PTE_ADDR</span><span class="p">(</span><span class="o">*</span><span class="n">pde</span><span class="p">));</span>  <span class="c1">// 获得pte页表首地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">return</span> <span class="o">&amp;</span><span class="n">pte</span><span class="p">[</span><span class="n">pte_index</span><span class="p">];</span>						  <span class="c1">// 返回pte索引对应页表项的地址，但是此时*pte即页表项中还未填充内容，需要后续的函数填充
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h4 id="boot_map_region">boot_map_region()</h4>
+<p>之前的pgdir_walk是取到页表项，但页表项还未真正的映射到物理页上，此函数将从va开始的大小为size的地址按页从物理地址pa开始映射。相当于对页表项赋值。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">boot_map_region</span><span class="p">(</span><span class="kt">pde_t</span> <span class="o">*</span><span class="n">pgdir</span><span class="p">,</span> <span class="kt">uintptr_t</span> <span class="n">va</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">physaddr_t</span> <span class="n">pa</span><span class="p">,</span> <span class="kt">int</span> <span class="n">perm</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// 计算有多少页，并向上取整
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="kt">size_t</span> <span class="n">pages_num</span> <span class="o">=</span> <span class="n">size</span> <span class="o">/</span> <span class="n">PGSIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">%</span> <span class="n">PGSIZE</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pages_num</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 分别对每页调整
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">pages_num</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="kt">pte_t</span> <span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="nf">pgdir_walk</span><span class="p">(</span><span class="n">pgdir</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">va</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// 获取va对应的页表地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">if</span> <span class="p">(</span><span class="n">pte</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nf">panic</span><span class="p">(</span><span class="s">&#34;boot_map_region(): out of memory</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// 修改va对应的页表PTE的值
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="n">pa</span> <span class="o">|</span> <span class="n">perm</span> <span class="o">|</span> <span class="n">PTE_P</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">		<span class="n">pa</span> <span class="o">+=</span> <span class="n">PGSIZE</span><span class="p">;</span><span class="n">c</span>
+</span></span><span class="line"><span class="cl">		<span class="n">va</span> <span class="o">+=</span> <span class="n">PGSIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h4 id="page_lookup">page_lookup()</h4>
+<p>返回页表项所对应的物理页的虚拟地址，并把页表项存储在pte_store中。**pte_store二级指针相当于传入指针的引用。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">PageInfo</span> <span class="o">*</span>
+</span></span><span class="line"><span class="cl"><span class="nf">page_lookup</span><span class="p">(</span><span class="kt">pde_t</span> <span class="o">*</span><span class="n">pgdir</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">va</span><span class="p">,</span> <span class="kt">pte_t</span> <span class="o">**</span><span class="n">pte_store</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// Fill this function in
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">pte_t</span><span class="o">*</span> <span class="n">pte</span> <span class="o">=</span> <span class="nf">pgdir_walk</span><span class="p">(</span><span class="n">pgdir</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">pte</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="o">!</span><span class="p">(</span><span class="o">*</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_P</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">pte_store</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="o">*</span><span class="n">pte_store</span> <span class="o">=</span> <span class="n">pte</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="p">(</span><span class="k">struct</span> <span class="n">PageInfo</span><span class="o">*</span><span class="p">)</span><span class="nf">pa2page</span><span class="p">(</span><span class="nf">PTE_ADDR</span><span class="p">(</span><span class="o">*</span><span class="n">pte</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h4 id="page_remove">page_remove()</h4>
+<p>清空页表项对应的物理页,并把物理页引用减减。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">page_remove</span><span class="p">(</span><span class="kt">pde_t</span> <span class="o">*</span><span class="n">pgdir</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">va</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// Fill this function in
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">pte_t</span><span class="o">*</span> <span class="n">pte_store</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">PageInfo</span><span class="o">*</span> <span class="n">pp</span> <span class="o">=</span> <span class="nf">page_lookup</span><span class="p">(</span><span class="n">pgdir</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pte_store</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">(</span><span class="n">pp</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="o">!</span><span class="p">(</span><span class="o">*</span><span class="n">pte_store</span> <span class="o">&amp;</span> <span class="n">PTE_P</span><span class="p">))</span> 
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">page_decref</span><span class="p">(</span><span class="n">pp</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="o">*</span><span class="n">pte_store</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">tlb_invalidate</span><span class="p">(</span><span class="n">pgdir</span><span class="p">,</span> <span class="n">va</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h4 id="page_insert">page_insert()</h4>
+<p>给页表项赋值一个物理页。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span>
+</span></span><span class="line"><span class="cl"><span class="nf">page_insert</span><span class="p">(</span><span class="kt">pde_t</span> <span class="o">*</span><span class="n">pgdir</span><span class="p">,</span> <span class="k">struct</span> <span class="n">PageInfo</span> <span class="o">*</span><span class="n">pp</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">va</span><span class="p">,</span> <span class="kt">int</span> <span class="n">perm</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// Fill this function in
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="kt">pte_t</span><span class="o">*</span> <span class="n">pte</span> <span class="o">=</span> <span class="nf">pgdir_walk</span><span class="p">(</span><span class="n">pgdir</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">pte</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="n">E_NO_MEM</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">pp</span><span class="o">-&gt;</span><span class="n">pp_ref</span><span class="o">++</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_P</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">page_remove</span><span class="p">(</span><span class="n">pgdir</span><span class="p">,</span> <span class="n">va</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="nf">page2pa</span><span class="p">(</span><span class="n">pp</span><span class="p">)</span> <span class="o">|</span> <span class="n">perm</span> <span class="o">|</span> <span class="n">PTE_P</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// cprintf(&#34;page_insert: %x\n&#34;, *pte);
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="part-3-kernel-address-space">Part 3: Kernel Address Space</h2>
+<h3 id="exercise5">exercise5</h3>
+<p>JOS的内核空间为[UTOP, KERNBASE)，一共为256MB。 填充完整mem_init()，将虚拟内核地址空间映射到物理地址上。 1. [UPAGES, UPAGES+PTSIZE)这段空间是pages数组的空间，将其映射到PADDR(pages)上。 2. [KSTACKTOP-KSTKSIZE, KSTACKTOP)是内核栈的空间，将其映射到PADDR(bootstack) 3. [KERNBASE, 2^32-1)，其中32位系统无法计算 2^32，但 2^32-1 == -KERNBASE。这段地址从物理地址0开始映射。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">boot_map_region</span><span class="p">(</span><span class="n">kern_pgdir</span><span class="p">,</span> <span class="n">UPAGES</span><span class="p">,</span> <span class="n">PTSIZE</span><span class="p">,</span> <span class="nf">PADDR</span><span class="p">(</span><span class="n">pages</span><span class="p">),</span> <span class="n">PTE_U</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">PTE_U</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="nf">boot_map_region</span><span class="p">(</span><span class="n">kern_pgdir</span><span class="p">,</span> <span class="n">KSTACKTOP</span><span class="o">-</span><span class="n">KSTKSIZE</span><span class="p">,</span> <span class="n">KSTKSIZE</span><span class="p">,</span> <span class="nf">PADDR</span><span class="p">(</span><span class="n">bootstack</span><span class="p">),</span> <span class="n">PTE_W</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="nf">boot_map_region</span><span class="p">(</span><span class="n">kern_pgdir</span><span class="p">,</span> <span class="n">KERNBASE</span><span class="p">,</span> <span class="o">-</span><span class="n">KERNBASE</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">PTE_W</span><span class="p">);</span>
+</span></span></code></pre></div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226804.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226804.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226804.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226804.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226804.png"
+        title="image-20230508111122975" /></p>
+<p>也就是我们需要将图中三块高亮区域进行映射，其中KSTACKTOP-KSTKSIZE是8*PGSIZE。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226050.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226050.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226050.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226050.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226050.png"
+        title="image-20230508111306308" /></p>
+<p>之后我们使用JOS的qemu提供查看虚拟地址被映射的区域可以看到：</p>
+<p>0xefff8000~0x100000000即是KSTACKTOP-KSTKSIZE~4G的虚拟地址被映射。</p>
+<p>0xef000000~0xef400000即是UPAGES开始的虚拟地址被映射，</p>
+<p>0xef400000~0xef800000是虚拟页表被映射，所以中间两块0xef7bc000~0xef80000即是虚拟页表被映射，暂时实验还未提及，后续应该会提到，应该和mem_init中这行代码有关。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">kern_pgdir</span><span class="p">[</span><span class="nf">PDX</span><span class="p">(</span><span class="n">UVPT</span><span class="p">)]</span> <span class="o">=</span> <span class="nf">PADDR</span><span class="p">(</span><span class="n">kern_pgdir</span><span class="p">)</span> <span class="o">|</span> <span class="n">PTE_U</span> <span class="o">|</span> <span class="n">PTE_P</span><span class="p">;</span>
+</span></span></code></pre></div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226937.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226937.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226937.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226937.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226937.png"
+        title="image-20230508215542680" /></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226362.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226362.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226362.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226362.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226362.png"
+        title="image-20230508215752898" /></p>
+<ol start="2">
+<li>到目前为止页目录表中已经包含多少有效页目录项？他们都映射到哪里？</li>
+</ol>
+<p>3BC号页目录项，指向的是pages数组</p>
+<p>3BD号页目录项，指向的是kern_pgdir本身，即虚拟地址UVPT~ULIM指向了kern_pgdir的物理地址，即页目录本身（一级页表指向本身，即二级页表仍然是用的一级页表）</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226988.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226988.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226988.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226988.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305082226988.png"
+        title="image-20230508220636035" /></p>
+<p>由此图可以知道kern_dir的虚拟地址是0xf011b000,物理地址是0x11b000。再看之前的页表，pde[3bd]指向的是kern_pgdir的物理地址，虽然我们不知道pde[3bd]里面的内容，但是我们可以从二级页表中看出pte[3bd]指向的物理地址是0x0011b000，也就是kern_pgdir的物理地址。</p>
+<p>也就是说在PED[3bd]下的pte[]均代表的是二级页表的物理地址，我们可以看出二级页表最终映射到0x3ff000并未超过4M。</p>
+<p>3BF号页目录项，指向的是bootstack，正好是8*PGSIZE</p>
+<p>3C0号页目录项，指向的是KERNBASE的前4M，也就是在之前内核设置的[0-4M]和[KERNBASE-KERNBASE+4M]均映射到物理地址[0-4M]。</p>
+<p>剩下的对应物理地址[4M-256M]</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2023-05-08</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="http://example.org/posts/6.828_lab2/" data-title="6.828_lab2"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="http://example.org/posts/6.828_lab2/"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="http://example.org/posts/6.828_lab2/" data-title="6.828_lab2"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="http://example.org/posts/6.828_lab2/" data-title="6.828_lab2"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@7.3.0/icons/line.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="http://example.org/posts/6.828_lab2/" data-title="6.828_lab2"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/6.828_lab1/" class="prev" rel="prev" title="6.828_lab1"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>6.828_lab1</a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">zxj</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0 国际许可协议</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

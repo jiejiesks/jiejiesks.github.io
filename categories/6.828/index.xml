@@ -4,7 +4,16 @@
         <link>http://example.org/categories/6.828/</link>
         <description>6.828 - Category - OS IS TOO HARD</description>
         <generator>Hugo -- gohugo.io</generator><language>en</language><managingEditor>xjzhou2022@163.com (zxj)</managingEditor>
-            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Thu, 27 Apr 2023 20:13:38 &#43;0800</lastBuildDate><atom:link href="http://example.org/categories/6.828/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>xjzhou2022@163.com (zxj)</webMaster><lastBuildDate>Mon, 08 May 2023 22:25:47 &#43;0800</lastBuildDate><atom:link href="http://example.org/categories/6.828/" rel="self" type="application/rss+xml" /><item>
+    <title>6.828_lab2</title>
+    <link>http://example.org/posts/6.828_lab2/</link>
+    <pubDate>Mon, 08 May 2023 22:25:47 &#43;0800</pubDate>
+    <author>zxj</author>
+    <guid>http://example.org/posts/6.828_lab2/</guid>
+    <description><![CDATA[lab2 Virtual memory map
+/* * Virtual memory map: Permissions * kernel/user * * 4 Gig --------&gt; +------------------------------+ * | | RW/-- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ * : . : * : . : * : . : * |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~| RW/-- * | | RW/-- * | Remapped Physical Memory | RW/-- * | | RW/-- * KERNBASE, ----&gt; +------------------------------+ 0xf0000000 --+ * KSTACKTOP | CPU0&#39;s Kernel Stack | RW/-- KSTKSIZE | * | - - - - - - - - - - - - - - -| | * | Invalid Memory (*) | --/-- KSTKGAP | * +------------------------------+ | * | CPU1&#39;s Kernel Stack | RW/-- KSTKSIZE | * | - - - - - - - - - - - - - - -| PTSIZE * | Invalid Memory (*) | --/-- KSTKGAP | * +------------------------------+ | * : .]]></description>
+</item>
+<item>
     <title>6.828_lab1</title>
     <link>http://example.org/posts/6.828_lab1/</link>
     <pubDate>Thu, 27 Apr 2023 20:13:38 &#43;0800</pubDate>

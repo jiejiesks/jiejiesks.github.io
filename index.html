@@ -65,6 +65,11 @@
         alt="/avator/logo.JPG"
         title="/avator/logo.JPG" /></a></div><h1 class="home-title">Xingjie Zhou's Blog</h1><div class="home-subtitle"><div id="id-1" class="typeit"></div></div><div class="links"><a href="https://github.com/jiejiesks" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github fa-fw" aria-hidden="true"></i></a><a href="https://t.me/jiejiesks" title="Telegram" target="_blank" rel="noopener noreffer me"><i class="fab fa-telegram-plane fa-fw" aria-hidden="true"></i></a><a href="https://steamcommunity.com/id/jiejiesks" title="Steam" target="_blank" rel="noopener noreffer me"><i class="fab fa-steam fa-fw" aria-hidden="true"></i></a><a href="mailto:xjzhou2022@163.com" title="Email" rel="me"><i class="far fa-envelope fa-fw" aria-hidden="true"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/6.828_lab2/">6.828_lab2</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-05-08">2023-05-08</time></span>&nbsp;<span class="post-category">included in <a href="/categories/6.828/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.828</a></span></div><div class="content">lab2 Virtual memory map
+/* * Virtual memory map: Permissions * kernel/user * * 4 Gig --------&gt; +------------------------------+ * | | RW/-- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ * : . : * : . : * : . : * |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~| RW/-- * | | RW/-- * | Remapped Physical Memory | RW/-- * | | RW/-- * KERNBASE, ----&gt; +------------------------------+ 0xf0000000 --+ * KSTACKTOP | CPU0&#39;s Kernel Stack | RW/-- KSTKSIZE | * | - - - - - - - - - - - - - - -| | * | Invalid Memory (*) | --/-- KSTKGAP | * +------------------------------+ | * | CPU1&#39;s Kernel Stack | RW/-- KSTKSIZE | * | - - - - - - - - - - - - - - -| PTSIZE * | Invalid Memory (*) | --/-- KSTKGAP | * +------------------------------+ | * : .</div><div class="post-footer">
+        <a href="/posts/6.828_lab2/">Read More</a></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/6.828_lab1/">6.828_lab1</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-27">2023-04-27</time></span>&nbsp;<span class="post-category">included in <a href="/categories/6.828/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.828</a></span></div><div class="content">lab1 part1 PC Bootstrap 实验分为三个部分：
 熟悉汇编语言、QEMU x86模拟器、PC上电启动过程 检查我们的6.828内核的boot loader程序，它位于lab的boot目录下。 深入研究6.828内核本身的初始模板，位于kernel目录下。 使用qemu编译
@@ -113,14 +118,6 @@ xv6文件系统提供类似于Unix的文件、目录和路径名（参见第1章
 8.3 代码：Buffer cache Buffer cache是以循环双链表表示的缓冲区。main（*kernel/main.c*:27）调用的函数binit使用静态数组buf（*kernel/bio.c*:43-52）中的NBUF个缓冲区初始化列表。对Buffer cache的所有其他访问都通过bcache.head引用链表，而不是buf数组。
 struct { struct spinlock lock; struct buf buf[NBUF];//NBUF #define NBUF (MAXOPBLOCKS*3) // size of disk block cache // Linked list of all buffers, through prev/next.</div><div class="post-footer">
         <a href="/posts/6.s081_lab9/">Read More</a></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/6.s081_lab8/">6.s081_lab8</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zxj</a></span>&nbsp;<span class="post-publish">published on <time datetime="2023-04-17">2023-04-17</time></span>&nbsp;<span class="post-category">included in <a href="/categories/6.s081/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.s081</a></span></div><div class="content">lab8 Memory allocator 本实验主要是解决多CPU竞争内存的问题，我们通过为每个CPU分配一个kmem锁来解决该问题，为每个CPU都维护一个空闲列表，初始时将所有的空闲内存分配到某个CPU，此后各个CPU需要内存时，如果当前CPU的空闲列表上没有，则窃取其他CPU的。例如，所有的空闲内存初始分配到CPU0，当CPU1需要内存时就会窃取CPU0的，而使用完成后就挂在CPU1的空闲列表，此后CPU1再次需要内存时就可以从自己的空闲列表中取。
-(1). 将kmem定义为一个数组，包含NCPU个元素，即每个CPU对应一个
-struct { struct spinlock lock; struct run *freelist; } kmem[NCPU]; (2). 修改kinit，为所有锁初始化以“kmem”开头的名称，该函数只会被一个CPU调用，freerange调用kfree将所有空闲内存挂在该CPU的空闲列表上
-void kinit() { char lockname[8]; for(int i = 0;i &lt; NCPU; i++) { snprintf(lockname, sizeof(lockname), &#34;kmem_%d&#34;, i); initlock(&amp;kmem[i].lock, lockname); } freerange(end, (void*)PHYSTOP); } (3). 修改kfree，使用cpuid()和它返回的结果时必须关中断，请参考《XV6使用手册》第7.4节
-void kfree(void *pa) { struct run *r; if(((uint64)pa % PGSIZE) != 0 || (char*)pa &lt; end || (uint64)pa &gt;= PHYSTOP) panic(&#34;kfree&#34;); // Fill with junk to catch dangling refs.</div><div class="post-footer">
-        <a href="/posts/6.s081_lab8/">Read More</a></div>
 </article><ul class="pagination"><li class="page-item active">
                     <span class="page-link">
                         <a href="/">1</a>
