@@ -1,0 +1,16 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>结构体读写 - Category - Zhou X&#39;s Blog</title>
+        <link>https://www.zhouxingjie.work/categories/%E7%BB%93%E6%9E%84%E4%BD%93%E8%AF%BB%E5%86%99/</link>
+        <description>结构体读写 - Category - Zhou X&#39;s Blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouxingjie0721@gamil.com (zhouxingjie)</managingEditor>
+            <webMaster>zhouxingjie0721@gamil.com (zhouxingjie)</webMaster><lastBuildDate>Tue, 31 Oct 2023 21:38:17 &#43;0800</lastBuildDate><atom:link href="https://www.zhouxingjie.work/categories/%E7%BB%93%E6%9E%84%E4%BD%93%E8%AF%BB%E5%86%99/" rel="self" type="application/rss+xml" /><item>
+    <title>Read_write_struct</title>
+    <link>https://www.zhouxingjie.work/read_write_struct/</link>
+    <pubDate>Tue, 31 Oct 2023 21:38:17 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/read_write_struct/</guid>
+    <description><![CDATA[关于结构体的读写 user space 可以通过fread和rwrite进行结构体的读写。 1 2 3 4 5 6 7 8 9 10 11 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) ptr − This is the pointer]]></description>
+</item>
+</channel>
+</rss>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>6.828_lab3 - Zhou X&#39;s Blog</title><meta name="Description" content="这是我的全新 Hugo 网站"><meta property="og:title" content="6.828_lab3" />
+<meta property="og:description" content="For GCC 7 or later, after switching to lab3 branch an error like kernel panic at kern/pmap.c:147: PADDR called with invalid kva 00000000 will occur. This is a bug caused by the linker script, modify kern/kernel.ld as follow will fix it. 1 2 3 4 5 6 7 8 9 10 --- a/kern/kernel.ld &#43;&#43;&#43; b/kern/kernel.ld @@ -50,6 &#43;50,7 @@ SECTIONS .bss : { PROVIDE(edata = .); *(.bss) &#43; *(COMMON) PROVIDE(end" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.zhouxingjie.work/6.828_lab3/" /><meta property="og:image" content="https://www.zhouxingjie.work/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-10-31T21:11:03+08:00" />
+<meta property="article:modified_time" content="2023-10-31T23:46:52+08:00" /><meta property="og:site_name" content="我的网站" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.zhouxingjie.work/logo.png"/>
+
+<meta name="twitter:title" content="6.828_lab3"/>
+<meta name="twitter:description" content="For GCC 7 or later, after switching to lab3 branch an error like kernel panic at kern/pmap.c:147: PADDR called with invalid kva 00000000 will occur. This is a bug caused by the linker script, modify kern/kernel.ld as follow will fix it. 1 2 3 4 5 6 7 8 9 10 --- a/kern/kernel.ld &#43;&#43;&#43; b/kern/kernel.ld @@ -50,6 &#43;50,7 @@ SECTIONS .bss : { PROVIDE(edata = .); *(.bss) &#43; *(COMMON) PROVIDE(end"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.zhouxingjie.work/6.828_lab3/" /><link rel="prev" href="https://www.zhouxingjie.work/6.828_lab2/" /><link rel="next" href="https://www.zhouxingjie.work/read_write_struct/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "6.828_lab3",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.zhouxingjie.work\/6.828_lab3\/"
+        },"genre": "posts","wordcount":  2238 ,
+        "url": "https:\/\/www.zhouxingjie.work\/6.828_lab3\/","datePublished": "2023-10-31T21:11:03+08:00","dateModified": "2023-10-31T23:46:52+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "zhouxingjie"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="Zhou X&#39;s Blog"></a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="Zhou X&#39;s Blog"></a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">6.828_lab3</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zhouxingjie</a></span>&nbsp;<span class="post-category">included in <a href="/categories/6.828/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.828</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-10-31">2023-10-31</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;2238 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;5 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="true">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#中断描述符">中断描述符</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>For GCC 7 or later, after switching to <code>lab3</code> branch an error like <code>kernel panic at kern/pmap.c:147: PADDR called with invalid kva 00000000</code> will occur. This is a bug caused by the linker script, modify <code>kern/kernel.ld</code> as follow will fix it.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">--- a/kern/kernel.ld
+</span></span><span class="line"><span class="cl">+++ b/kern/kernel.ld
+</span></span><span class="line"><span class="cl">@@ -50,6 +50,7 @@ SECTIONS
+</span></span><span class="line"><span class="cl">        .bss : {
+</span></span><span class="line"><span class="cl">                PROVIDE(edata = .);
+</span></span><span class="line"><span class="cl">                *(.bss)
+</span></span><span class="line"><span class="cl">+               *(COMMON)
+</span></span><span class="line"><span class="cl">                PROVIDE(end = .);
+</span></span><span class="line"><span class="cl">                BYTE(0)
+</span></span><span class="line"><span class="cl">        }
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>切换进程但是其内核页表不进行切换并非直接不切换，而是因为每个进程都对内核页表进行了赋值，并将UVPT这个虚拟地址映射到页表的物理地址上</p>
+<h2 id="中断描述符">中断描述符</h2>
+<p>一共有三种必须将控制由用户程序转移到内核的情形：系统调用、异常和中断。系统调用发生在用户程序请求一项操作系统的服务时。异常发生在用户程序想要执行某种非法的操作时，如除以零或者访问不存在的页表项。中断发生在某个外部设备需要操作系统的留意时，比如时钟芯片会定时产生一个中断提醒操作系统可以将硬件资源切换给下一个进程使用一会儿了。在大多数处理器上，这三种情形都是由同一种硬件机制来处理的。对于x86，系统调用和异常本质上也是生成一个中断，因此操作系统只需要提供一套针对中断的处理策略就可以了。</p>
+<p>异常和中断都是“受保护的控制传输”，这会导致处理器从用户模式切换到内核模式 (CPL=0)，而不会给用户模式代码任何干扰内核或其他环境运行的机会。在 Intel 的术语中，<em>中断</em>是一种受保护的控制传输，它由通常在处理器外部的异步事件引起，例如外部设备 I/O 活动的通知。<em>相反，异常</em>是由当前运行的代码同步引起的受保护的控制传输，例如由于被零除或无效的内存访问。</p>
+<p>为了确保这些受保护的控制传输真正受到<em>保护</em>，处理器的中断/异常机制被设计成当中断或异常发生时当前正在运行的代码 <em>无法随意选择进入内核的位置或方式</em>。相反，处理器确保只有在仔细控制的条件下才能进入内核。在 x86 上，有两种机制共同提供这种保护：</p>
+<ol>
+<li>
+<p><strong>中断描述符表IDT</strong>。处理器确保中断和异常只能导致内核在由内核本身确定的几个特定的、定义明确的入口点进入 ，而不是在中断或异常发生时运行的代码。</p>
+<p>x86 允许多达 256 个不同的中断或异常入口点进入内核，每个都有不同的<em>中断向量</em>。向量是介于 0 和 255 之间的数字。中断的向量由中断源决定：不同的设备、错误条件和对内核的应用程序请求会生成具有不同向量的中断。CPU 使用向量作为处理器<em>中断描述符表</em>(IDT) 的索引，内核在内核专用内存中设置该表，与 GDT 非常相似。处理器从该表中的适当==条目==（EIP和CS）加载：</p>
+<ul>
+<li><code>加载到指令指针 ( EIP</code> ) 寄存器 的值，指向指定用于处理该类型异常的内核代码。</li>
+<li><code>要加载到代码段 ( CS</code> ) 寄存器 中的值，它在位 0-1 中包含异常处理程序运行的特权级别。（在 JOS 中，所有异常都在内核模式下处理，权限级别为 0。）</li>
+</ul>
+</li>
+<li>
+<p><strong>任务状态段TSS。</strong> 处理器需要一个地方来保存中断或异常发生之前的旧处理器状态，例如处理器调用异常处理程序之前的<code>EIP</code>和<code>CS</code>的原始值，以便异常处理程序稍后可以恢复旧状态并恢复被中断的状态从它停止的地方开始的代码。但是这个旧处理器状态的保存区域必须反过来保护不受非特权用户模式代码的影响（保存的旧状态不可以被用户模式的代码所访问或者影响，因此需要切换到内核态来保存）；否则错误或恶意的用户代码可能会危及内核。</p>
+<p>因此，当 x86 处理器发生中断或陷阱导致特权级别从用户模式更改为内核模式时，它也会切换到内核内存中的堆栈。<em>称为任务状态段</em>(TSS)的结构指定了该堆栈所在的段选择器和地址。具体地，JOS只会用到TSS中的esp0和ss0字段，JOS 不使用任何其他 TSS 字段。</p>
+<p>处理器在读取IDT中的中断描述符之前，会先从TSS中读取将要切换的栈的ss0和esp0，并切换到新栈；接着往新栈压入原来进程的ss、esp、eflags、cs、eip、err code（如有的话）等信息；然后，处理器访问IDT，取出中断处理程序的cs、eip并跳转到中断处理程序。这些都是由处理器自动完成的工作，接下来便是操作系统（中断处理程序）的任务了。</p>
+<p>尽管 TSS 很大并且可能有多种用途，但 JOS 仅使用它来定义处理器在从用户模式转移到内核模式时应该切换到的内核堆栈。</p>
+</li>
+</ol>
+<p>所有中断处理程序的入口都位于trapentry.S中，我们要通过其中定义的两个宏来设置需要用到的中断处理程序。JOS为多个入口设计了同一个处理函数trap，然后在trap中将处理任务分发给具体的中断处理函数。TRAPHANDLER和TRAPHANDLER_NOEC两个宏分别用于处理器会自动压入err code与不会自动压入的情形。我们可以直接对照xv6知道哪些中断号会压入错误代码而哪些不会。xv6中是通过一段perl脚本生成256个中断号入口的，JOS中暂时用不到这么多中断号，我们通过定义好的两个宏可以逐个生成需要用到的入口程序，其余的中断号会在后面的实验过程中创建。具体如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_divide, T_DIVIDE)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_debug, T_DEBUG)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_nmi, T_NMI)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_brkpt, T_BRKPT)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_oflow, T_OFLOW)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_bound, T_BOUND)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_illop, T_ILLOP)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_device, T_DEVICE)
+</span></span><span class="line"><span class="cl">TRAPHANDLER(t_dblflt, T_DBLFLT)
+</span></span><span class="line"><span class="cl">TRAPHANDLER(t_tss, T_TSS)
+</span></span><span class="line"><span class="cl">TRAPHANDLER(t_segnp, T_SEGNP)
+</span></span><span class="line"><span class="cl">TRAPHANDLER(t_stack, T_STACK)
+</span></span><span class="line"><span class="cl">TRAPHANDLER(t_gpflt, T_GPFLT)
+</span></span><span class="line"><span class="cl">TRAPHANDLER(t_pgflt, T_PGFLT)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_fperr, T_FPERR)
+</span></span><span class="line"><span class="cl">TRAPHANDLER(t_align, T_ALIGN)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_mchk, T_MCHK)
+</span></span><span class="line"><span class="cl">TRAPHANDLER_NOEC(t_simderr, T_SIMDERR)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305221256760.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305221256760.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305221256760.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305221256760.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202305221256760.png"
+        title="image-20230522125607731" /></p>
+<p>这些入口程序都会跳转到紧随其后的_alltraps过程，该过程的任务其实就是继续保存用户进程其余的现场信息。而且JOS让它压入新栈的信息与之前处理器自动压入的信息（ss、esp、eflags、cs、eip、err code）最终成为一个Trapframe结构，并将结构体的地址传给trap函数。这份状态信息将会在之后用于恢复现场。也就是在这里，Trapframe成功地完成了原本属于TSS的任务。_allotraps的实现比较简单，和xv6不同，JOS的trap函数是不会返回的，所以在调用完trap之后没必要再执行任何操作。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">_alltraps:
+</span></span><span class="line"><span class="cl">    # push values to make the stack look like a struct Trapframe
+</span></span><span class="line"><span class="cl">    pushl %ds
+</span></span><span class="line"><span class="cl">    pushl %es
+</span></span><span class="line"><span class="cl">    pushal
+</span></span><span class="line"><span class="cl">    # load GD_KD into %ds and %es
+</span></span><span class="line"><span class="cl">    movw $GD_KD, %ax
+</span></span><span class="line"><span class="cl">    movw %ax, %ds
+</span></span><span class="line"><span class="cl">    movw %ax, %es
+</span></span><span class="line"><span class="cl">    # pushl %esp to pass a pointer to the Trapframe as an argument to trap()
+</span></span><span class="line"><span class="cl">    pushl %esp
+</span></span><span class="line"><span class="cl">    call trap
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2023-10-31</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/6.828_lab3/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="https://www.zhouxingjie.work/6.828_lab3/" data-title="6.828_lab3"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="https://www.zhouxingjie.work/6.828_lab3/"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="https://www.zhouxingjie.work/6.828_lab3/" data-title="6.828_lab3"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="https://www.zhouxingjie.work/6.828_lab3/" data-title="6.828_lab3"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="https://www.zhouxingjie.work/6.828_lab3/" data-title="6.828_lab3"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/6.828_lab2/" class="prev" rel="prev" title="6.828_lab2"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>6.828_lab2</a>
+            <a href="/read_write_struct/" class="next" rel="next" title="Read_write_struct">Read_write_struct<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.120.1">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2019 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">zhouxingjie</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/katex/katex.min.css"><link rel="stylesheet" href="/lib/cookieconsent/cookieconsent.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript" src="/lib/cookieconsent/cookieconsent.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{},"cookieconsent":{"content":{"dismiss":"Got it!","link":"Learn more","message":"This website uses Cookies to improve your experience."},"enable":true,"palette":{"button":{"background":"#f0f0f0"},"popup":{"background":"#1aa3ff"}},"theme":"edgeless"},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

@@ -1,0 +1,88 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>All Posts - Zhou X&#39;s Blog</title>
+        <link>https://www.zhouxingjie.work/posts/</link>
+        <description>All Posts | Zhou X&#39;s Blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouxingjie0721@gamil.com (zhouxingjie)</managingEditor>
+            <webMaster>zhouxingjie0721@gamil.com (zhouxingjie)</webMaster><lastBuildDate>Tue, 31 Oct 2023 21:40:43 &#43;0800</lastBuildDate><atom:link href="https://www.zhouxingjie.work/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>6.s081_lab11</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab11/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:43 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab11/</guid>
+    <description><![CDATA[Network ethernet（以太网地址，MAC地址） 让我从最底层开始，我们先来看一下一个以太网packet的结构是什么。当两个主机非常靠近时，或许是]]></description>
+</item>
+<item>
+    <title>6.s081_lab10</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab10/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:41 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab10/</guid>
+    <description><![CDATA[lab10 YOUR JOB 您应该实现足够的mmap和munmap功能，以使mmaptest测试程序正常工作。如果mmaptest不会用到某个mmap的特性，则不]]></description>
+</item>
+<item>
+    <title>6.s081_lab9</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab9/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:38 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab9/</guid>
+    <description><![CDATA[Chapter 8 文件系统的目的是组织和存储数据。文件系统通常支持用户和应用程序之间的数据共享，以及持久性，以便在重新启动后数据仍然可用。 xv6文件系统提]]></description>
+</item>
+<item>
+    <title>6.s081_lab8</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab8/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:36 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab8/</guid>
+    <description><![CDATA[lab8 Memory allocator 本实验主要是解决多CPU竞争内存的问题，我们通过为每个CPU分配一个kmem锁来解决该问题，为每个CPU都维护一个空闲列表，初始时将所]]></description>
+</item>
+<item>
+    <title>6.s081_lab7</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab7/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:33 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab7/</guid>
+    <description><![CDATA[Chapter 7 7.1 多路复用 Xv6通过在两种情况下将每个CPU从一个进程切换到另一个进程来实现多路复用（Multiplexing）。第一：当进程等待设备或]]></description>
+</item>
+<item>
+    <title>6.s081_lab6</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab6/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:31 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab6/</guid>
+    <description><![CDATA[Implement copy-on write (hard) YOUR JOB 您的任务是在xv6内核中实现copy-on-write fork。如果修改后的内核同时成功执行cowtest和usertests程]]></description>
+</item>
+<item>
+    <title>6.s081_lab5</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab5/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:29 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab5/</guid>
+    <description><![CDATA[lab5 Eliminate allocation from sbrk 将sys_sbrk()中的growproc函数调用删除，因为其是给新增加的堆空间分配内存的，我们现在需要惰性分配，所以并不真正分配]]></description>
+</item>
+<item>
+    <title>6.s081_lab4</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab4/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:27 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab4/</guid>
+    <description><![CDATA[Chapter 4 4.1RISC-V陷入机制 每个RISC-V CPU都有一组控制寄存器，内核通过向这些寄存器写入内容来告诉CPU如何处理陷阱，内核可以读取这]]></description>
+</item>
+<item>
+    <title>6.s081_lab3</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab3/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:24 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab3/</guid>
+    <description><![CDATA[Chapter 3 3.1页式硬件 该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中]]></description>
+</item>
+<item>
+    <title>6.s081_lab2</title>
+    <link>https://www.zhouxingjie.work/6.s081_lab2/</link>
+    <pubDate>Tue, 31 Oct 2023 21:40:22 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/6.s081_lab2/</guid>
+    <description><![CDATA[chapter 2 2.2用户态、核心态、系统调用 RISC-V分为三个模式machine mode,supervisor mode and user mode 在机器模式下执行的指令具有完全权限；CPU以机器模式启动。]]></description>
+</item>
+</channel>
+</rss>

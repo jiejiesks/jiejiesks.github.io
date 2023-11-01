@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>Read_write_struct - Zhou X&#39;s Blog</title><meta name="Description" content="这是我的全新 Hugo 网站"><meta property="og:title" content="Read_write_struct" />
+<meta property="og:description" content="关于结构体的读写 user space 可以通过fread和rwrite进行结构体的读写。 1 2 3 4 5 6 7 8 9 10 11 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) ptr − This is the pointer" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.zhouxingjie.work/read_write_struct/" /><meta property="og:image" content="https://www.zhouxingjie.work/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-10-31T21:38:17+08:00" />
+<meta property="article:modified_time" content="2023-10-31T23:46:52+08:00" /><meta property="og:site_name" content="我的网站" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.zhouxingjie.work/logo.png"/>
+
+<meta name="twitter:title" content="Read_write_struct"/>
+<meta name="twitter:description" content="关于结构体的读写 user space 可以通过fread和rwrite进行结构体的读写。 1 2 3 4 5 6 7 8 9 10 11 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) ptr − This is the pointer"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.zhouxingjie.work/read_write_struct/" /><link rel="prev" href="https://www.zhouxingjie.work/6.828_lab3/" /><link rel="next" href="https://www.zhouxingjie.work/6.s081_lab1/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Read_write_struct",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.zhouxingjie.work\/read_write_struct\/"
+        },"genre": "posts","wordcount":  1706 ,
+        "url": "https:\/\/www.zhouxingjie.work\/read_write_struct\/","datePublished": "2023-10-31T21:38:17+08:00","dateModified": "2023-10-31T23:46:52+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "zhouxingjie"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="Zhou X&#39;s Blog"></a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="Zhou X&#39;s Blog"></a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">Read_write_struct</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zhouxingjie</a></span>&nbsp;<span class="post-category">included in <a href="/categories/%E7%BB%93%E6%9E%84%E4%BD%93%E8%AF%BB%E5%86%99/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>结构体读写</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-10-31">2023-10-31</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;1706 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;4 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="true">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#user-space">user space</a></li>
+    <li><a href="#kernel">kernel</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="关于结构体的读写">关于结构体的读写</h1>
+<h2 id="user-space">user space</h2>
+<ul>
+<li>可以通过fread和rwrite进行结构体的读写。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">size_t</span> <span class="nf">fread</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nmemb</span><span class="p">,</span> <span class="n">FILE</span> <span class="o">*</span><span class="n">stream</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="kt">size_t</span> <span class="nf">fread</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nmemb</span><span class="p">,</span> <span class="n">FILE</span> <span class="o">*</span><span class="n">stream</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">ptr</span> <span class="err">−</span> <span class="n">This</span> <span class="n">is</span> <span class="n">the</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">a</span> <span class="n">block</span> <span class="n">of</span> <span class="n">memory</span> <span class="n">with</span> <span class="n">a</span> <span class="n">minimum</span> <span class="n">size</span> <span class="n">of</span> <span class="n">size</span><span class="o">*</span><span class="n">nmemb</span> <span class="n">bytes</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">size</span> <span class="err">−</span> <span class="n">This</span> <span class="n">is</span> <span class="n">the</span> <span class="n">size</span> <span class="n">in</span> <span class="n">bytes</span> <span class="n">of</span> <span class="n">each</span> <span class="n">element</span> <span class="n">to</span> <span class="n">be</span> <span class="n">read</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">nmemb</span> <span class="err">−</span> <span class="n">This</span> <span class="n">is</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">elements</span><span class="p">,</span> <span class="n">each</span> <span class="n">one</span> <span class="n">with</span> <span class="n">a</span> <span class="n">size</span> <span class="n">of</span> <span class="n">size</span> <span class="n">bytes</span><span class="p">.</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">stream</span> <span class="err">−</span> <span class="n">This</span> <span class="n">is</span> <span class="n">the</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">a</span> <span class="n">FILE</span> <span class="n">object</span> <span class="n">that</span> <span class="n">specifies</span> <span class="n">an</span> <span class="n">input</span> <span class="n">stream</span><span class="p">.</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>代码示例</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cm">/* 定义结构体, 存储一个字符串和年龄 */</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">student</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">age</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 要写入文件的结构体
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">student</span> <span class="n">s1</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#34;Tom&#34;</span><span class="p">,</span> <span class="mi">18</span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 打开要写入的文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">FILE</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nf">fopen</span><span class="p">(</span><span class="s">&#34;D:/File/student.dat&#34;</span><span class="p">,</span> <span class="s">&#34;w&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 打开失败直接退出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">p</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 将结构体写出到文件中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">fwrite</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s1</span><span class="p">,</span> <span class="k">sizeof</span> <span class="p">(</span><span class="k">struct</span> <span class="n">student</span><span class="p">),</span> <span class="mi">1</span> <span class="p">,</span><span class="n">p</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 关闭文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">fclose</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 读取文件中的结构体
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 存储读取到的结构体数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">student</span> <span class="n">s2</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 打开文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">FILE</span> <span class="o">*</span><span class="n">p2</span> <span class="o">=</span> <span class="nf">fopen</span><span class="p">(</span><span class="s">&#34;D:/File/student.dat&#34;</span><span class="p">,</span> <span class="s">&#34;r&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果打开失败, 退出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">p2</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 从文件中读取结构体信息
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">fread</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s2</span><span class="p">,</span> <span class="k">sizeof</span> <span class="p">(</span><span class="k">struct</span> <span class="n">student</span><span class="p">),</span> <span class="mi">1</span> <span class="p">,</span><span class="n">p2</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 关闭文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">fclose</span><span class="p">(</span><span class="n">p2</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 打印数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;student : name=%s, age=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">s2</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">s2</span><span class="p">.</span><span class="n">age</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="kernel">kernel</h2>
+<ul>
+<li>
+<p>kernel中并不像user space中那么简单。</p>
+</li>
+<li>
+<p>打开文件</p>
+<p>filp_open()在kernel中可以打开文件，其原形如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">strcut</span> <span class="n">file</span><span class="o">*</span> <span class="nf">filp_open</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">int</span> <span class="n">open_mode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">mode</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>该函数返回strcut file*结构指针，供后继函数操作使用，该返回值用IS_ERR()来检验其有效性。</p>
+<p>参数说明</p>
+<p>filename： 表明要打开或创建文件的名称(包括路径部分)。在内核中打开的文件时需要注意打开的时机，很容易出现需要打开文件的驱动很早就加载并打开文件，但需要打开的文件所在设备还不有挂载到文件系统中，而导致打开失败。</p>
+<p>open_mode： 文件的打开方式，其取值与标准库中的open相应参数类似，可以取O_CREAT,O_RDWR,O_RDONLY等。</p>
+<p>mode： 创建文件时使用，设置创建文件的读写权限，其它情况可以匆略设为0</p>
+</li>
+<li>
+<p>读写文件</p>
+<p>kernel中文件的读写操作可以使用vfs_read()和vfs_write，在使用这两个函数前需要说明一下get_fs()和 set_fs()这两个函数。</p>
+<p>vfs_read() vfs_write()两函数的原形如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">vfs_read</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="o">*</span> <span class="n">filp</span><span class="p">,</span> <span class="kt">char</span> <span class="n">__user</span><span class="o">*</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">loff_t</span><span class="o">*</span> <span class="n">pos</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">vfs_write</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="o">*</span> <span class="n">filp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">__user</span><span class="o">*</span> <span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">loff_t</span><span class="o">*</span> <span class="n">pos</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>注意这两个函数的第二个参数buffer，前面都有__user修饰符，这就要求这两个buffer指针都应该指向用空的内存，如果对该参数传递kernel空间的指针，这两个函数都会返回失败-EFAULT。但在Kernel中，我们一般不容易生成用户空间的指针，或者不方便独立使用用户空间内存。要使这两个读写函数使用kernel空间的buffer指针也能正确工作，需要使用set_fs()函数或宏(set_fs()可能是宏定义)，如果为函数，其原形如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">set_fs</span><span class="p">(</span><span class="kt">mm_segment_t</span> <span class="n">fs</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>该函数的作用是改变kernel对内存地址检查的处理方式，其实该函数的参数fs只有两个取值：USER_DS，KERNEL_DS，分别代表用户空间和内核空间，默认情况下，kernel取值为USER_DS，即对用户空间地址检查并做变换。那么要在这种对内存地址做检查变换的函数中使用内核空间地址，就需要使用set_fs(KERNEL_DS)进行设置。get_fs()一般也可能是宏定义，它的作用是取得当前的设置，这两个函数的一般用法为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl">　<span class="kt">mm_segment_t</span> <span class="n">old_fs</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">　<span class="n">old_fs</span> <span class="o">=</span> <span class="nf">get_fs</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">　<span class="nf">set_fs</span><span class="p">(</span><span class="n">KERNEL_DS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">　<span class="p">......</span> <span class="c1">//与内存有关的操作
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">　<span class="nf">set_fs</span><span class="p">(</span><span class="n">old_fs</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>还有一些其它的内核函数也有用__user修饰的参数，在kernel中需要用kernel空间的内存代替时，都可以使用类似办法。</p>
+<p>使用vfs_read()和vfs_write()最后需要注意的一点是最后的参数loff_t * pos，pos所指向的值要初始化，表明从文件的什么地方开始读写。</p>
+<p>在新版的kernel中，通过kernel_read和kernel_write封装上述烦琐的过程。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">kernel_read</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">count</span><span class="p">,</span> <span class="kt">loff_t</span> <span class="o">*</span><span class="n">pos</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">mm_segment_t</span> <span class="n">old_fs</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">ssize_t</span> <span class="n">result</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">old_fs</span> <span class="o">=</span> <span class="nf">get_fs</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">set_fs</span><span class="p">(</span><span class="n">KERNEL_DS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* The cast to a user pointer is valid due to the set_fs() */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">result</span> <span class="o">=</span> <span class="nf">vfs_read</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">buf</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">pos</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">set_fs</span><span class="p">(</span><span class="n">old_fs</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>在将结构体写入文件时，由于指针所指向的空间已经被内容填充，直接调用函数即可。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">writefile</span> <span class="o">=</span> <span class="nf">filp_open</span><span class="p">(</span><span class="s">&#34;~/Desktop/file_and_path.txt&#34;</span><span class="p">,</span> <span class="n">O_RDWR</span> <span class="o">|</span> <span class="n">O_APPEND</span> <span class="o">|</span> <span class="n">O_CREAT</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">IS_ERR</span><span class="p">(</span><span class="n">writefile</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printk</span><span class="p">(</span><span class="n">KERN_ERR</span> <span class="s">&#34;open dir %s error.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">path</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nf">kernel_write</span><span class="p">(</span><span class="n">writefile</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">wpos</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>在读入文件时，定义读入的指针时需要通过kmalloc分配空间，否则会出现空指针的BUG。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">readfile</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">testfile</span> <span class="o">=</span> <span class="nf">kmalloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="p">),</span> <span class="n">GFP_KERNEL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">loff_t</span> <span class="n">rpos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">readfile</span> <span class="o">=</span> <span class="nf">filp_open</span><span class="p">(</span><span class="s">&#34;/home/zxj/Desktop/file_and_path.txt&#34;</span><span class="p">,</span> <span class="n">O_RDWR</span> <span class="o">|</span> <span class="n">O_CREAT</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">IS_ERR</span><span class="p">(</span><span class="n">readfile</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printk</span><span class="p">(</span><span class="n">KERN_ERR</span> <span class="s">&#34;open dir %s error.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">path</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nf">kernel_read</span><span class="p">(</span><span class="n">readfile</span><span class="p">,</span> <span class="n">testfile</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">rpos</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2023-10-31</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/read_write_struct/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="https://www.zhouxingjie.work/read_write_struct/" data-title="Read_write_struct"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="https://www.zhouxingjie.work/read_write_struct/"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="https://www.zhouxingjie.work/read_write_struct/" data-title="Read_write_struct"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="https://www.zhouxingjie.work/read_write_struct/" data-title="Read_write_struct"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="https://www.zhouxingjie.work/read_write_struct/" data-title="Read_write_struct"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/6.828_lab3/" class="prev" rel="prev" title="6.828_lab3"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>6.828_lab3</a>
+            <a href="/6.s081_lab1/" class="next" rel="next" title="6.s081_lab1">6.s081_lab1<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.120.1">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2019 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">zhouxingjie</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/katex/katex.min.css"><link rel="stylesheet" href="/lib/cookieconsent/cookieconsent.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript" src="/lib/cookieconsent/cookieconsent.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{},"cookieconsent":{"content":{"dismiss":"Got it!","link":"Learn more","message":"This website uses Cookies to improve your experience."},"enable":true,"palette":{"button":{"background":"#f0f0f0"},"popup":{"background":"#1aa3ff"}},"theme":"edgeless"},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

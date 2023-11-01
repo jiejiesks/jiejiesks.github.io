@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <title>6.s081_lab3 - Zhou X&#39;s Blog</title><meta name="Description" content="这是我的全新 Hugo 网站"><meta property="og:title" content="6.s081_lab3" />
+<meta property="og:description" content="Chapter 3 3.1页式硬件 该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.zhouxingjie.work/6.s081_lab3/" /><meta property="og:image" content="https://www.zhouxingjie.work/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-10-31T21:40:24+08:00" />
+<meta property="article:modified_time" content="2023-10-31T23:46:52+08:00" /><meta property="og:site_name" content="我的网站" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.zhouxingjie.work/logo.png"/>
+
+<meta name="twitter:title" content="6.s081_lab3"/>
+<meta name="twitter:description" content="Chapter 3 3.1页式硬件 该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中"/>
+<meta name="application-name" content="我的网站">
+<meta name="apple-mobile-web-app-title" content="我的网站"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.zhouxingjie.work/6.s081_lab3/" /><link rel="prev" href="https://www.zhouxingjie.work/6.s081_lab2/" /><link rel="next" href="https://www.zhouxingjie.work/6.s081_lab4/" /><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "6.s081_lab3",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.zhouxingjie.work\/6.s081_lab3\/"
+        },"genre": "posts","wordcount":  8489 ,
+        "url": "https:\/\/www.zhouxingjie.work\/6.s081_lab3\/","datePublished": "2023-10-31T21:40:24+08:00","dateModified": "2023-10-31T23:46:52+08:00","publisher": {
+            "@type": "Organization",
+            "name": ""},"author": {
+                "@type": "Person",
+                "name": "zhouxingjie"
+            },"description": ""
+    }
+    </script></head>
+    <body data-header-desktop="fixed" data-header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="Zhou X&#39;s Blog"></a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+                </a></div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="Zhou X&#39;s Blog"></a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="Search titles or contents..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="Search">
+                            <i class="fas fa-search fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="Clear">
+                            <i class="fas fa-times-circle fa-fw" aria-hidden="true"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        Cancel
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw" aria-hidden="true"></i>
+            </a></div>
+    </div>
+</header><div class="search-dropdown desktop">
+        <div id="search-dropdown-desktop"></div>
+    </div>
+    <div class="search-dropdown mobile">
+        <div id="search-dropdown-mobile"></div>
+    </div><main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">6.s081_lab3</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel="author" class="author"><i class="fas fa-user-circle fa-fw" aria-hidden="true"></i>zhouxingjie</a></span>&nbsp;<span class="post-category">included in <a href="/categories/6.s081/"><i class="far fa-folder fa-fw" aria-hidden="true"></i>6.s081</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw" aria-hidden="true"></i>&nbsp;<time datetime="2023-10-31">2023-10-31</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden="true"></i>&nbsp;8489 words&nbsp;
+                <i class="far fa-clock fa-fw" aria-hidden="true"></i>&nbsp;17 minutes&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  data-kept="true">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right" aria-hidden="true"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#31页式硬件">3.1页式硬件</a></li>
+    <li><a href="#32内核地址空间">3.2内核地址空间</a></li>
+    <li><a href="#33创建一个地址空间">3.3创建一个地址空间</a></li>
+    <li><a href="#34物理内存分配">3.4物理内存分配</a></li>
+    <li><a href="#35代码物理内存分配">3.5代码：物理内存分配</a></li>
+    <li><a href="#36进程地址空间">3.6进程地址空间</a></li>
+    <li><a href="#37-sbrk">3.7 sbrk</a></li>
+    <li><a href="#38-exec">3.8 exec</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#print-a-page-table">Print a page table</a></li>
+    <li><a href="#a-kernel-page-table-per-process">A kernel page table per process</a></li>
+    <li><a href="#copyincopyinstr">copyin/copyinstr</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="chapter-3">Chapter 3</h1>
+<h2 id="31页式硬件">3.1页式硬件</h2>
+<p>该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中的每一个PTE都包含该树最后一级的512个PTE。分别使用virtual address 的L2,L1,L0各9位（2^9=512）去确定页表页的哪一个PTE。最终的Physical address是由最后一级的PPN和Virtual address的最开始的12位offset组成。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312128021.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312128021.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312128021.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312128021.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312128021.png"
+        title="image-20230323203632265" /></p>
+<p>每个PTE包含10位的标志位。这些标志位告诉分页硬件允许如何使用关联的虚拟地址。<code>PTE_V</code>指示PTE是否存在：如果它没有被设置，对页面的引用会导致异常（即不允许）。<code>PTE_R</code>控制是否允许指令读取到页面。<code>PTE_W</code>控制是否允许指令写入到页面。<code>PTE_X</code>控制CPU是否可以将页面内容解释为指令并执行它们。<code>PTE_U</code>控制用户模式下的指令是否被允许访问页面；如果没有设置<code>PTE_U</code>，PTE只能在管理模式下使用。图3.2显示了它是如何工作的。标志和所有其他与页面硬件相关的结构在（*<strong>kernel/riscv.h*</strong>）中定义。</p>
+<p>为了告诉硬件使用页表，内核必须将根页表页的物理地址写入到<code>satp</code>寄存器中（<code>satp</code>的作用是存放根页表页在物理内存中的地址）。每个CPU都有自己的<code>satp</code>，一个CPU将使用自己的<code>satp</code>指向的页表转换后续指令生成的所有地址。每个CPU都有自己的<code>satp</code>，因此不同的CPU就可以运行不同的进程，每个进程都有自己的页表描述的私有地址空间。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129907.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129907.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129907.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129907.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129907.png"
+        title="image-20230323204347684" /></p>
+<h2 id="32内核地址空间">3.2内核地址空间</h2>
+<p>Xv6为每个进程维护一个页表，用以描述每个进程的用户地址空间，外加一个单独描述内核地址空间的页表。内核配置其地址空间的布局，以允许自己以可预测的虚拟地址访问物理内存和各种硬件资源。图3.3显示了这种布局如何将内核虚拟地址映射到物理地址。文件(*<strong>kernel/memlayout.h*</strong>) 声明了xv6内核内存布局的常量。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129979.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129979.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129979.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129979.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129979.png"
+        title="image-20230323204941190" /></p>
+<p>QEMU模拟了一台计算机，它包括从物理地址<code>0x80000000</code>开始并至少到<code>0x86400000</code>结束的RAM（物理内存），xv6称结束地址为<code>PHYSTOP</code>。QEMU模拟还包括I/O设备，如磁盘接口。QEMU将设备接口作为内存映射控制寄存器暴露给软件，这些寄存器位于物理地址空间<code>0x80000000</code>以下。内核可以通过读取/写入这些特殊的物理地址与设备交互；这种读取和写入与设备硬件而不是RAM通信。第4章解释了xv6如何与设备进行交互。</p>
+<p>内核使用“直接映射”获取<strong>内存</strong>和<strong>内存映射设备寄存器</strong>；也就是说，将资源映射到等于物理地址的虚拟地址。例如，内核本身在虚拟地址空间和物理内存中都位于<code>KERNBASE=0x80000000</code>。直接映射简化了读取或写入物理内存的内核代码。例如，当<code>fork</code>为子进程分配用户内存时，分配器返回该内存的物理地址；<code>fork</code>在将父进程的用户内存复制到子进程时直接将该地址用作虚拟地址。</p>
+<p>有几个内核虚拟地址不是直接映射：</p>
+<ul>
+<li>蹦床页面(trampoline page)。它映射在虚拟地址空间的顶部；用户页表具有相同的映射。第4章讨论了蹦床页面的作用，但我们在这里看到了一个有趣的页表用例；一个物理页面（持有蹦床代码）在内核的虚拟地址空间中映射了两次：一次在虚拟地址空间的顶部，一次直接映射。</li>
+<li>内核栈页面。每个进程都有自己的内核栈，它将映射到偏高一些的地址，这样xv6在它之下就可以留下一个未映射的保护页(guard page)。保护页的PTE是无效的（也就是说<code>PTE_V</code>没有设置），所以如果内核溢出内核栈就会引发一个异常，内核触发<code>panic</code>。如果没有保护页，栈溢出将会覆盖其他内核内存，引发错误操作。恐慌崩溃（panic crash）是更可取的方案。<em>（注：Guard page不会浪费物理内存，它只是占据了虚拟地址空间的一段靠后的地址，但并不映射到物理地址空间。）</em></li>
+</ul>
+<h2 id="33创建一个地址空间">3.3创建一个地址空间</h2>
+<p>大多数用于操作地址空间和页表的xv6代码都写在 <em><strong>vm.c*</strong> (<a href="https://github.com/mit-pdos/xv6-riscv/blob/riscv//kernel/vm.c#L1" target="_blank" rel="noopener noreffer ">kernel/vm.c:1</a>) 中。其核心数据结构是<code>pagetable_t</code>，它实际上是指向RISC-V根页表页的指针；一个<code>pagetable_t</code>可以是内核页表，也可以是一个进程页表。最核心的函数是<code>walk</code>和<code>mappages</code>，前者为虚拟地址找到PTE，后者为新映射装载PTE。名称以<code>kvm</code>开头的函数操作内核页表；以<code>uvm</code>开头的函数操作用户页表；其他函数用于二者。<code>copyout</code>和<code>copyin</code>复制数据到用户虚拟地址或从用户虚拟地址复制数据，这些虚拟地址作为系统调用参数提供; 由于它们需要显式地翻译这些地址，以便找到相应的物理内存，故将它们写在</em>**vm.c***中。</p>
+<p>在启动的初期，main会调用kvminit，kvminit首先会分配一个物理内存页用来装根页表，后续调用kvmmap去安装内核需要的内存，这些转换包括 内核的指令和数据，到PHYSTOP的物理内存，以及实际上是设备的内存范围。实际上是设备。（即上图中的CLINT PLIC UARTO VIRTIO KERNBASE PHYSTOP TRAMPOLINE）</p>
+<p><code>kvmmap</code>(*<strong>kernel/vm.c*</strong>:127)调用<code>mappages</code>(*<strong>kernel/vm.c*</strong>:138)，<code>mappages</code>将范围虚拟地址到同等范围物理地址的映射装载到一个页表中。它以页面大小为间隔，为范围内的每个虚拟地址单独执行此操作。对于要映射的每个虚拟地址，<code>mappages</code>调用<code>walk</code>来查找该地址的PTE地址。然后，它初始化PTE以保存相关的物理页号、所需权限（<code>PTE_W</code>、<code>PTE_X</code>和/或<code>PTE_R</code>）以及用于标记PTE有效的<code>PTE_V</code>(*<strong>kernel/vm.c*</strong>:153)。先通过walk找到PTE，然后通过mappages装载PTE</p>
+<p>在查找PTE中的虚拟地址（参见图3.2）时，<code>walk</code>(*<strong>kernel/vm.c*</strong>:72)模仿RISC-V分页硬件。<code>walk</code>一次从3级页表中获取9个比特位。它使用上一级的9位虚拟地址来查找下一级页表或最终页面的PTE (*<strong>kernel/vm.c*</strong>:78)。如果PTE无效，则所需的页面还没有分配；如果设置了<code>alloc</code>参数，<code>walk</code>就会分配一个新的页表页面，并将其物理地址放在PTE中。它返回树中最低一级的PTE地址(*<strong>kernel/vm.c*</strong>:88)。</p>
+<p>上面的代码依赖于直接映射到内核虚拟地址空间中的物理内存。例如，当<code>walk</code>降低页表的级别时，它从PTE (*<strong>kernel/vm.c*</strong>:80)中提取下一级页表的（物理）地址，然后使用该地址作为虚拟地址来获取下一级的PTE (*<strong>kernel/vm.c*</strong>:78)。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl"> for(int level = 2; level &gt; 0; level--) {
+</span></span><span class="line"><span class="cl">    pte_t *pte = &amp;pagetable[PX(level, va)];
+</span></span><span class="line"><span class="cl">    if(*pte &amp; PTE_V) {
+</span></span><span class="line"><span class="cl">      pagetable = (pagetable_t)PTE2PA(*pte);
+</span></span><span class="line"><span class="cl">    } else {
+</span></span><span class="line"><span class="cl">      if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
+</span></span><span class="line"><span class="cl">        return 0;
+</span></span><span class="line"><span class="cl">      memset(pagetable, 0, PGSIZE);
+</span></span><span class="line"><span class="cl">      *pte = PA2PTE(pagetable) | PTE_V;
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">  }
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129892.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129892.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129892.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129892.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129892.png"
+        title="image-20230323213441931" /></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129922.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129922.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129922.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129922.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129922.png"
+        title="image-20230323213453571" /></p>
+<p>由于虚拟地址和物理地址直接映射，在这个函数中把va先当做虚拟地址获取第一个9位来获取根页表的PTE，获取到二级页表的物理地址后（每页4096B，所以低12位为0，获取pte之后由于pte的低10位是标志位，pte&raquo;10&laquo;12便是物理地址），将这个地址转换为虚拟地址即是二级页表的虚拟地址，然后便可以在通过va&raquo;12+level*9获取到PTE进而找到最后一级页表</p>
+<h2 id="34物理内存分配">3.4物理内存分配</h2>
+<p>内核必须在运行时为页表、用户内存、内核栈和管道缓冲区分配和释放物理内存。xv6使用内核末尾到<code>PHYSTOP</code>之间的物理内存进行运行时分配。它一次分配和释放整个4096字节的页面。它使用链表的数据结构将空闲页面记录下来。分配时需要从链表中删除页面；释放时需要将释放的页面添加到链表中。</p>
+<h2 id="35代码物理内存分配">3.5代码：物理内存分配</h2>
+<p>分配器(allocator)位于*<strong>kalloc.c*</strong>(*<strong>kernel/kalloc.c*</strong>:1)中。分配器的数据结构是可供分配的物理内存页的空闲列表。每个空闲页的列表元素是一个<code>struct run</code>(*<strong>kernel/kalloc.c*</strong>:17)。分配器从哪里获得内存来填充该数据结构呢？它将每个空闲页的<code>run</code>结构存储在空闲页本身，因为在那里没有存储其他东西。</p>
+<p><code>main</code>函数调用<code>kinit</code>(*<strong>kernel/kalloc.c*</strong>:27)来初始化分配器。<code>kinit</code>初始化空闲列表以保存从内核结束到<code>PHYSTOP</code>之间的每一页。xv6应该通过解析硬件提供的配置信息来确定有多少物理内存可用。然而，xv6假设机器有128兆字节的RAM。<code>kinit</code>调用<code>freerange</code>将内存添加到空闲列表中，在<code>freerange</code>中每页都会调用<code>kfree</code>。PTE只能引用在4096字节边界上对齐的物理地址（是4096的倍数），所以<code>freerange</code>使用<code>PGROUNDUP</code>来确保它只释放对齐的物理地址。分配器开始时没有内存；这些对<code>kfree</code>的调用给了它一些管理空间。</p>
+<p>分配器有时将地址视为整数，以便对其执行算术运算（例如，在<code>freerange</code>中遍历所有页面），有时将地址用作读写内存的指针（例如，操纵存储在每个页面中的<code>run</code>结构）；这种地址的双重用途是分配器代码充满C类型转换的主要原因。另一个原因是释放和分配从本质上改变了内存的类型。</p>
+<p>函数<code>kfree</code> (*<strong>kernel/kalloc.c*</strong>:47)首先将内存中的每一个字节设置为1。这将导致使用释放后的内存的代码（使用“悬空引用”）读取到垃圾信息而不是旧的有效内容，从而希望这样的代码更快崩溃。然后<code>kfree</code>将页面前置（头插法）到空闲列表中：它将<code>pa</code>转换为一个指向<code>struct run</code>的指针<code>r</code>，在<code>r-&gt;next</code>中记录空闲列表的旧开始，并将空闲列表设置为等于<code>r</code>。</p>
+<p><code>kalloc</code>删除并返回空闲列表中的第一个元素。</p>
+<h2 id="36进程地址空间">3.6进程地址空间</h2>
+<p>每个进程都有一个单独的页表，当xv6在进程之间切换时，也会更改页表。如图2.3所示，一个进程的用户内存从虚拟地址零开始，可以增长到MAXVA (*<strong>kernel/riscv.h*</strong>:348)，原则上允许一个进程内存寻址空间为256G。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129717.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129717.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129717.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129717.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129717.png"
+        title="image-20230324132116284" /></p>
+<p>当进程向xv6请求更多的用户内存时，xv6首先使用<code>kalloc</code>来分配物理页面。然后，它将PTE添加到进程的页表中，指向新的物理页面。Xv6在这些PTE中设置<code>PTE_W</code>、<code>PTE_X</code>、<code>PTE_R</code>、<code>PTE_U</code>和<code>PTE_V</code>标志。大多数进程不使用整个用户地址空间；xv6在未使用的PTE中留空<code>PTE_V</code>。</p>
+<p>我们在这里看到了一些使用页表的很好的例子。首先，不同进程的页表将用户地址转换为物理内存的不同页面，这样每个进程都拥有私有内存。第二，每个进程看到的自己的内存空间都是以0地址起始的连续虚拟地址，而进程的物理内存可以是非连续的。第三，内核在用户地址空间的顶部映射一个带有蹦床（trampoline）代码的页面，这样在所有地址空间都可以看到一个单独的物理内存页面。</p>
+<p>图3.4更详细地显示了xv6中执行态进程的用户内存布局。栈是单独一个页面，显示的是由<code>exec</code>创建后的初始内容。包含命令行参数的字符串以及指向它们的指针数组位于栈的最顶部。再往下是允许程序在<code>main</code>处开始启动的值（即<code>main</code>的地址、<code>argc</code>、<code>argv</code>），这些值产生的效果就像刚刚调用了<code>main(argc, argv)</code>一样。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129219.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129219.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129219.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129219.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129219.png"
+        title="image-20230324132648102" /></p>
+<p>为了检测用户栈是否溢出了所分配栈内存，xv6在栈正下方放置了一个无效的保护页（guard page）。如果用户栈溢出并且进程试图使用栈下方的地址，那么由于映射无效（<code>PTE_V</code>为0）硬件将生成一个页面故障异常。当用户栈溢出时，实际的操作系统可能会自动为其分配更多内存。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129123.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129123.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129123.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129123.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312129123.png"
+        title="image-20230324132823706" /></p>
+<h2 id="37-sbrk">3.7 sbrk</h2>
+<p><code>sbrk</code>是一个用于进程<strong>减少或增长其内存</strong>的系统调用。这个系统调用由函数<code>growproc</code>实现(*<strong>kernel/proc.c*</strong>:239)。<code>growproc</code>根据<code>n</code>是正的还是负的调用<code>uvmalloc</code>或<code>uvmdealloc</code>。<code>uvmalloc</code>(*<strong>kernel/vm.c*</strong>:229)用<code>kalloc</code>分配物理内存，并用<code>mappages</code>将PTE添加到用户页表中。<code>uvmdealloc</code>调用<code>uvmunmap</code>(*<strong>kernel/vm.c*</strong>:174)，<code>uvmunmap</code>使用<code>walk</code>来查找对应的PTE，并使用<code>kfree</code>来释放PTE引用的物理内存。</p>
+<p>XV6使用进程的页表，不仅是告诉硬件如何映射用户虚拟地址，也是明晰哪一个物理页面已经被分配给该进程的唯一记录。这就是为什么释放用户内存（在<code>uvmunmap</code>中）需要检查用户页表的原因。</p>
+<p>在heap中获取内存</p>
+<h2 id="38-exec">3.8 exec</h2>
+<p>Stack是单独一个页面，显示的是由<code>exec</code>创建后的初始内容</p>
+<p>lab3</p>
+<p>allocproc分配进程，而在procinit中所有的内核栈都在其中设置，把这个功能迁移到allocproc中，为proc中新增的字段kernel_pagetable赋值</p>
+<h1 id="lab3">lab3</h1>
+<h2 id="print-a-page-table">Print a page table</h2>
+<p>定义一个名为<code>vmprint()</code>的函数。它应当接收一个<code>pagetable_t</code>作为参数，并以下面描述的格式打印该页表。在<code>exec.c</code>中的<code>return argc</code>之前插入<code>if(p-&gt;pid==1) vmprint(p-&gt;pagetable)</code>，以打印第一个进程的页表。如果你通过了<code>pte printout</code>测试的<code>make grade</code>，你将获得此作业的满分。</p>
+<ul>
+<li>
+<p>首先现在exec.c的return argc之前插入if(p-&gt;pid==1) vmprint(p-&gt;pagetable)</p>
+</li>
+<li>
+<p>然后观察kernel/vm.c中的freewalk方法</p>
+</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">// Recursively free page-table pages.
+</span></span><span class="line"><span class="cl">// All leaf mappings must already have been removed.
+</span></span><span class="line"><span class="cl">void
+</span></span><span class="line"><span class="cl">freewalk(pagetable_t pagetable)
+</span></span><span class="line"><span class="cl">{
+</span></span><span class="line"><span class="cl">  // there are 2^9 = 512 PTEs in a page table.
+</span></span><span class="line"><span class="cl">  for(int i = 0; i &lt; 512; i++){
+</span></span><span class="line"><span class="cl">    pte_t pte = pagetable[i];
+</span></span><span class="line"><span class="cl">    if((pte &amp; PTE_V) &amp;&amp; (pte &amp; (PTE_R|PTE_W|PTE_X)) == 0){
+</span></span><span class="line"><span class="cl">      // this PTE points to a lower-level page table.
+</span></span><span class="line"><span class="cl">      uint64 child = PTE2PA(pte);
+</span></span><span class="line"><span class="cl">      freewalk((pagetable_t)child);
+</span></span><span class="line"><span class="cl">      pagetable[i] = 0;
+</span></span><span class="line"><span class="cl">    } else if(pte &amp; PTE_V){
+</span></span><span class="line"><span class="cl">      panic(&#34;freewalk: leaf&#34;);
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">  }
+</span></span><span class="line"><span class="cl">  kfree((void*)pagetable);
+</span></span><span class="line"><span class="cl">}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>首先会遍历第一级页表，当遇到有效的页表并且不是最后一级，就会递归。RWX均为0表示不是最后一层，因为最后一层页表中的页表项至少有一个为1</p>
+<p>根据freewalk函数便可去仿照写出vmprint函数</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/**
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * @param pagetable 所要打印的页表
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * @param level 页表的层级
+</span></span></span><span class="line"><span class="cl"><span class="cm"> */</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">_vmprint</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">,</span> <span class="kt">int</span> <span class="n">level</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// there are 2^9 = 512 PTEs in a page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">512</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">pte_t</span> <span class="n">pte</span> <span class="o">=</span> <span class="n">pagetable</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// PTE_V is a flag for whether the page table is valid
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_V</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">level</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="nf">printf</span><span class="p">(</span><span class="s">&#34; &#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;..&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">      <span class="n">uint64</span> <span class="n">child</span> <span class="o">=</span> <span class="nf">PTE2PA</span><span class="p">(</span><span class="n">pte</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%d: pte %p pa %p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pte</span><span class="p">,</span> <span class="n">child</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="k">if</span><span class="p">((</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">PTE_R</span><span class="o">|</span><span class="n">PTE_W</span><span class="o">|</span><span class="n">PTE_X</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// this PTE points to a lower-level page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="nf">_vmprint</span><span class="p">((</span><span class="kt">pagetable_t</span><span class="p">)</span><span class="n">child</span><span class="p">,</span> <span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cm">/**
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * @brief vmprint 打印页表
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * @param pagetable 所要打印的页表
+</span></span></span><span class="line"><span class="cl"><span class="cm"> */</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">vmprint</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;page table %p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">pagetable</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">_vmprint</span><span class="p">(</span><span class="n">pagetable</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在<code>_vmprint</code>中，首先判断是否有效，并根据level打印出对应的..表示第几层，如果其还有下层页表，那么就递归调用<code>_vmprint</code></p>
+<ul>
+<li>最后在kernel/defs.h加上新增函数的声明</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">void            vmprint(pagetable_t);
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="a-kernel-page-table-per-process">A kernel page table per process</h2>
+<p>Xv6有一个单独的用于在内核中执行程序时的内核页表。内核页表直接映射（恒等映射）到物理地址，也就是说内核虚拟地址<code>x</code>映射到物理地址仍然是<code>x</code>。Xv6还为每个进程的用户地址空间提供了一个单独的页表，只包含该进程用户内存的映射，从虚拟地址0开始。因为内核页表不包含这些映射，所以用户地址在内核中无效。因此，当内核需要使用在系统调用中传递的用户指针（例如，传递给<code>write()</code>的缓冲区指针）时，内核必须首先将指针转换为物理地址。本节和下一节的目标是允许内核直接解引用用户指针。</p>
+<blockquote>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">你的第一项工作是修改内核来让每一个进程在内核中执行时使用它自己的内核页表的副本。修改struct proc来为每一个进程维护一个内核页表，修改调度程序使得切换进程时也切换内核页表。对于这个步骤，每个进程的内核页表都应当与现有的的全局内核页表完全一致。如果你的usertests程序正确运行了，那么你就通过了这个实验。
+</span></span></code></pre></td></tr></table>
+</div>
+</div></blockquote>
+<ul>
+<li>首先在kernel/proc.h的proc结构体中添加进程的内核页表成员变量</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl">  <span class="kt">pagetable_t</span> <span class="n">kernelpt</span><span class="p">;</span>      <span class="c1">// Kernel page table
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>需要初始化进程的内核页表，在vm.c中添加一个新的函数proc_kpt_init，用于在allocproc中，另外需要一个辅助函数uvmmap与kvmmap类似，kvmmap用于对内核的内核页表进行映射，而uvmmap用于对进程的内核页表进行映射。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Just follow the kvmmap on vm.c
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">uvmmap</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">va</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">pa</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">sz</span><span class="p">,</span> <span class="kt">int</span> <span class="n">perm</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">if</span><span class="p">(</span><span class="nf">mappages</span><span class="p">(</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="n">sz</span><span class="p">,</span> <span class="n">pa</span><span class="p">,</span> <span class="n">perm</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;uvmmap&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Create a kernel page table for the process
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">pagetable_t</span>
+</span></span><span class="line"><span class="cl"><span class="nf">proc_kpt_init</span><span class="p">(){</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">pagetable_t</span> <span class="n">kernelpt</span> <span class="o">=</span> <span class="nf">uvmcreate</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">  <span class="k">if</span> <span class="p">(</span><span class="n">kernelpt</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">uvmmap</span><span class="p">(</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">UART0</span><span class="p">,</span> <span class="n">UART0</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">uvmmap</span><span class="p">(</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">VIRTIO0</span><span class="p">,</span> <span class="n">VIRTIO0</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">uvmmap</span><span class="p">(</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">CLINT</span><span class="p">,</span> <span class="n">CLINT</span><span class="p">,</span> <span class="mh">0x10000</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">uvmmap</span><span class="p">(</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">PLIC</span><span class="p">,</span> <span class="n">PLIC</span><span class="p">,</span> <span class="mh">0x400000</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">uvmmap</span><span class="p">(</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">KERNBASE</span><span class="p">,</span> <span class="n">KERNBASE</span><span class="p">,</span> <span class="p">(</span><span class="n">uint64</span><span class="p">)</span><span class="n">etext</span><span class="o">-</span><span class="n">KERNBASE</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_X</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">uvmmap</span><span class="p">(</span><span class="n">kernelpt</span><span class="p">,</span> <span class="p">(</span><span class="n">uint64</span><span class="p">)</span><span class="n">etext</span><span class="p">,</span> <span class="p">(</span><span class="n">uint64</span><span class="p">)</span><span class="n">etext</span><span class="p">,</span> <span class="n">PHYSTOP</span><span class="o">-</span><span class="p">(</span><span class="n">uint64</span><span class="p">)</span><span class="n">etext</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">uvmmap</span><span class="p">(</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">TRAMPOLINE</span><span class="p">,</span> <span class="p">(</span><span class="n">uint64</span><span class="p">)</span><span class="n">trampoline</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_X</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="n">kernelpt</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后在kernel/proc.c里面的<code>allocproc</code>调用。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// An empty user page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pagetable</span> <span class="o">=</span> <span class="nf">proc_pagetable</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pagetable</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">freeproc</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Init the kernal page table
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">p</span><span class="o">-&gt;</span><span class="n">kernelpt</span> <span class="o">=</span> <span class="nf">proc_kpt_init</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">kernelpt</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">freeproc</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">...</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>为了确保每一个进程的内核页表都关于该进程的内核栈有一个映射。我们需要将<code>procinit</code>方法中相关的代码迁移到<code>allocproc</code>方法中。很明显就是下面这段代码，将其剪切到上述内核页表初始化的代码后。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Allocate a page for the process&#39;s kernel stack.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Map it high in memory, followed by an invalid
+</span></span></span><span class="line"><span class="cl"><span class="c1">// guard page.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">char</span> <span class="o">*</span><span class="n">pa</span> <span class="o">=</span> <span class="nf">kalloc</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span><span class="p">(</span><span class="n">pa</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;kalloc&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">uint64</span> <span class="n">va</span> <span class="o">=</span> <span class="nf">KSTACK</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">proc</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="nf">uvmmap</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="p">(</span><span class="n">uint64</span><span class="p">)</span><span class="n">pa</span><span class="p">,</span> <span class="n">PGSIZE</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">p</span><span class="o">-&gt;</span><span class="n">kstack</span> <span class="o">=</span> <span class="n">va</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>修改scheduler()来讲进程的内核页表加载进SATP寄存器中。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Switch h/w page table register to the kernel&#39;s page table,
+</span></span></span><span class="line"><span class="cl"><span class="c1">// and enable paging.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">kvminithart</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">w_satp</span><span class="p">(</span><span class="nf">MAKE_SATP</span><span class="p">(</span><span class="n">kernel_pagetable</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">sfence_vma</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>kvminithart</code>是用于原先的内核页表，我们将进程的内核页表传进去就可以。在<em>vm.c</em>里面添加一个新方法<code>proc_inithart</code>。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Store kernel page table to SATP register
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">proc_inithart</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">kpt</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">w_satp</span><span class="p">(</span><span class="nf">MAKE_SATP</span><span class="p">(</span><span class="n">kpt</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">sfence_vma</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后在<code>scheduler()</code>内调用即可，但在结束的时候，需要切换回原先的<code>kernel_pagetable</code>。直接调用调用上面的<code>kvminithart()</code>就能把Xv6的内核页表加载回去。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="n">p</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">=</span> <span class="n">RUNNING</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">c</span><span class="o">-&gt;</span><span class="n">proc</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Store the kernal page table into the SATP
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">proc_inithart</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">kernelpt</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">swtch</span><span class="p">(</span><span class="o">&amp;</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">context</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">context</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Come back to the global kernel page table
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">kvminithart</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">...</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>在freeproc中释放进程的内核页表，首先需要释放页表内的内核栈，调用uvmunmap可以解除虚拟地址到物理地址的映射并将物理内存释放</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// free the kernel stack in the RAM
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">uvmunmap</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">kstack</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">p</span><span class="o">-&gt;</span><span class="n">kstack</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后释放进程的内核页表，先在<em>kernel/proc.c</em>里面添加一个方法<code>proc_freekernelpt</code>。如下，历遍整个内核页表，然后将所有有效的页表项清空为零。如果这个页表项不在最后一层的页表上，需要继续进行递归，每次遍历完页表之后就会将其物理空间释放。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">proc_freekernelpt</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">kernelpt</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// similar to the freewalk method
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// there are 2^9 = 512 PTEs in a page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">512</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">pte_t</span> <span class="n">pte</span> <span class="o">=</span> <span class="n">kernelpt</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">(</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_V</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="n">kernelpt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">      <span class="k">if</span> <span class="p">((</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">PTE_R</span><span class="o">|</span><span class="n">PTE_W</span><span class="o">|</span><span class="n">PTE_X</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">        <span class="n">uint64</span> <span class="n">child</span> <span class="o">=</span> <span class="nf">PTE2PA</span><span class="p">(</span><span class="n">pte</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">proc_freekernelpt</span><span class="p">((</span><span class="kt">pagetable_t</span><span class="p">)</span><span class="n">child</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="nf">kfree</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">kernelpt</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>
+<p>修改<code>vm.c</code>中的<code>kvmpa</code>，将原先的<code>kernel_pagetable</code>改成<code>myproc()-&gt;kernelpt</code>，使用进程的内核页表。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;spinlock.h&#34; </span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&#34;proc.h&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="n">uint64</span>
+</span></span><span class="line"><span class="cl"><span class="nf">kvmpa</span><span class="p">(</span><span class="n">uint64</span> <span class="n">va</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">uint64</span> <span class="n">off</span> <span class="o">=</span> <span class="n">va</span> <span class="o">%</span> <span class="n">PGSIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">pte_t</span> <span class="o">*</span><span class="n">pte</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">uint64</span> <span class="n">pa</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="n">pte</span> <span class="o">=</span> <span class="nf">walk</span><span class="p">(</span><span class="nf">myproc</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span> <span class="c1">// 修改这里
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">if</span><span class="p">(</span><span class="n">pte</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;kvmpa&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="k">if</span><span class="p">((</span><span class="o">*</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_V</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;kvmpa&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="n">pa</span> <span class="o">=</span> <span class="nf">PTE2PA</span><span class="p">(</span><span class="o">*</span><span class="n">pte</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="n">pa</span><span class="o">+</span><span class="n">off</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>最后讲定义的函数加入kernel/defs.h</p>
+</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span>            <span class="nf">proc_freekernelpt</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span>            <span class="nf">uvmmap</span><span class="p">(</span><span class="kt">pagetable_t</span><span class="p">,</span> <span class="n">uint64</span><span class="p">,</span> <span class="n">uint64</span><span class="p">,</span> <span class="n">uint64</span><span class="p">,</span> <span class="kt">int</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">pagetable_t</span>     <span class="nf">proc_kpt_init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span> <span class="c1">// 用于内核页表的初始化
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span>            <span class="nf">proc_inithart</span><span class="p">(</span><span class="kt">pagetable_t</span><span class="p">);</span> <span class="c1">// 将进程的内核页表保存到SATP寄存器
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="copyincopyinstr">copyin/copyinstr</h2>
+<p>第三个实验是讲用户空间的映射添加到内核页表，目的就是用户空间传递的地址内核可以直接解引用，如果不这么做那么用户态传递的指针，内核需要转换为物理地址之后才能够进行memmove，修改之后memmove直接可以用两个地址即可。</p>
+<p>该方案依赖于用户虚拟地址范围不与内核用于其自己的指令和数据的虚拟地址范围重叠。xv6 为用户地址空间使用从零开始的虚拟地址，幸运的是内核的内存从更高的地址开始。但是，该方案确实将用户进程的最大大小限制为小于内核的最低虚拟地址。内核启动后，该地址在 xv6 中为<code>0xC000000</code>，即 PLIC 寄存器的地址；</p>
+<p>此图是内核空间布局图</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130873.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130873.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130873.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130873.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130873.png"
+        title="image-20230328210348290" /></p>
+<p>下图是用户空间布局图，其虚拟地址不可超过PLIC</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130334.png"
+        data-srcset="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130334.png, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130334.png 1.5x, https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130334.png 2x"
+        data-sizes="auto"
+        alt="https://jiejiesks.oss-cn-beijing.aliyuncs.com/Note/202310312130334.png"
+        title="image-20230328210424802" /></p>
+<ul>
+<li>
+<p>首先添加复制函数。需要注意的是，在内核模式下，无法访问设置了<code>PTE_U</code>的页面，所以我们要将其移除。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span>
+</span></span><span class="line"><span class="cl"><span class="nf">u2kvmcopy</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">,</span> <span class="kt">pagetable_t</span> <span class="n">kernelpt</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">oldsz</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">newsz</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">pte_t</span> <span class="o">*</span><span class="n">pte_from</span><span class="p">,</span> <span class="o">*</span><span class="n">pte_to</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">oldsz</span> <span class="o">=</span> <span class="nf">PGROUNDUP</span><span class="p">(</span><span class="n">oldsz</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="k">for</span> <span class="p">(</span><span class="n">uint64</span> <span class="n">i</span> <span class="o">=</span> <span class="n">oldsz</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">newsz</span><span class="p">;</span> <span class="n">i</span> <span class="o">+=</span> <span class="n">PGSIZE</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">((</span><span class="n">pte_from</span> <span class="o">=</span> <span class="nf">walk</span><span class="p">(</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;u2kvmcopy: src pte does not exist&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">((</span><span class="n">pte_to</span> <span class="o">=</span> <span class="nf">walk</span><span class="p">(</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">      <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;u2kvmcopy: pte walk failed&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">uint64</span> <span class="n">pa</span> <span class="o">=</span> <span class="nf">PTE2PA</span><span class="p">(</span><span class="o">*</span><span class="n">pte_from</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">uint</span> <span class="n">flags</span> <span class="o">=</span> <span class="p">(</span><span class="nf">PTE_FLAGS</span><span class="p">(</span><span class="o">*</span><span class="n">pte_from</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="o">~</span><span class="n">PTE_U</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="o">*</span><span class="n">pte_to</span> <span class="o">=</span> <span class="nf">PA2PTE</span><span class="p">(</span><span class="n">pa</span><span class="p">)</span> <span class="o">|</span> <span class="n">flags</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>然后在内核更改进程的用户映射的每一处 （<code>fork()</code>, <code>exec()</code>, 和<code>sbrk()</code>），都复制一份到进程的内核页表。</p>
+<ul>
+<li><code>exec()</code>：</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span>
+</span></span><span class="line"><span class="cl"><span class="nf">exec</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="p">...</span>
+</span></span><span class="line"><span class="cl">  <span class="n">sp</span> <span class="o">=</span> <span class="n">sz</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">stackbase</span> <span class="o">=</span> <span class="n">sp</span> <span class="o">-</span> <span class="n">PGSIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="c1">// 添加复制逻辑
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="nf">u2kvmcopy</span><span class="p">(</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">kernelpt</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sz</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="c1">// Push argument strings, prepare rest of stack in ustack.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">for</span><span class="p">(</span><span class="n">argc</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">argv</span><span class="p">[</span><span class="n">argc</span><span class="p">];</span> <span class="n">argc</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>fork()</code>:</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span>
+</span></span><span class="line"><span class="cl"><span class="nf">fork</span><span class="p">(</span><span class="kt">void</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">  <span class="p">...</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// Copy user memory from parent to child.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">if</span><span class="p">(</span><span class="nf">uvmcopy</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">np</span><span class="o">-&gt;</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">sz</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">freeproc</span><span class="p">(</span><span class="n">np</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">np</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="n">np</span><span class="o">-&gt;</span><span class="n">sz</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">sz</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">...</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// 复制到新进程的内核页表
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="nf">u2kvmcopy</span><span class="p">(</span><span class="n">np</span><span class="o">-&gt;</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">np</span><span class="o">-&gt;</span><span class="n">kernelpt</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">-&gt;</span><span class="n">sz</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>sbrk()</code>， 在<em>kernel/sysproc.c</em>里面找到<code>sys_sbrk(void)</code>，可以知道只有<code>growproc</code>是负责将用户内存增加或缩小 n 个字节。以防止用户进程增长到超过<code>PLIC</code>的地址，我们需要给它加个限制。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span>
+</span></span><span class="line"><span class="cl"><span class="nf">growproc</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">uint</span> <span class="n">sz</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">struct</span> <span class="n">proc</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nf">myproc</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="n">sz</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">sz</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">if</span><span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 加上PLIC限制
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="nf">PGROUNDUP</span><span class="p">(</span><span class="n">sz</span> <span class="o">+</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">PLIC</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">      <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">((</span><span class="n">sz</span> <span class="o">=</span> <span class="nf">uvmalloc</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">sz</span><span class="p">,</span> <span class="n">sz</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 复制一份到内核页表
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">u2kvmcopy</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">kernelpt</span><span class="p">,</span> <span class="n">sz</span> <span class="o">-</span> <span class="n">n</span><span class="p">,</span> <span class="n">sz</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">){</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sz</span> <span class="o">=</span> <span class="nf">uvmdealloc</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">sz</span><span class="p">,</span> <span class="n">sz</span> <span class="o">+</span> <span class="n">n</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="n">p</span><span class="o">-&gt;</span><span class="n">sz</span> <span class="o">=</span> <span class="n">sz</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>更改userinit和copyin、copyinstr</p>
+</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">p</span><span class="o">-&gt;</span><span class="n">sz</span> <span class="o">=</span> <span class="n">PGSIZE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="nf">u2kvmcopy</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">kernelpt</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">sz</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Copy from user to kernel.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Copy len bytes to dst from virtual address srcva in a given page table.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Return 0 on success, -1 on error.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span>
+</span></span><span class="line"><span class="cl"><span class="nf">copyin</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">srcva</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">len</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="nf">copyin_new</span><span class="p">(</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">srcva</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Copy a null-terminated string from user to kernel.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Copy bytes to dst from virtual address srcva in a given page table,
+</span></span></span><span class="line"><span class="cl"><span class="c1">// until a &#39;\0&#39;, or max.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Return 0 on success, -1 on error.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span>
+</span></span><span class="line"><span class="cl"><span class="nf">copyinstr</span><span class="p">(</span><span class="kt">pagetable_t</span> <span class="n">pagetable</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">srcva</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">max</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="nf">copyinstr_new</span><span class="p">(</span><span class="n">pagetable</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">srcva</span><span class="p">,</span> <span class="n">max</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>最后将copyin、copyinstr添加至kernel/defs.h</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// vmcopyin.c
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span>             <span class="nf">copyin_new</span><span class="p">(</span><span class="kt">pagetable_t</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="n">uint64</span><span class="p">,</span> <span class="n">uint64</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span>             <span class="nf">copyinstr_new</span><span class="p">(</span><span class="kt">pagetable_t</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="n">uint64</span><span class="p">,</span> <span class="n">uint64</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2023-10-31</span>
+            </div></div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/6.s081_lab3/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="https://www.zhouxingjie.work/6.s081_lab3/" data-title="6.s081_lab3"><i class="fab fa-twitter fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="https://www.zhouxingjie.work/6.s081_lab3/"><i class="fab fa-facebook-square fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Hacker News" data-sharer="hackernews" data-url="https://www.zhouxingjie.work/6.s081_lab3/" data-title="6.s081_lab3"><i class="fab fa-hacker-news fa-fw" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="https://www.zhouxingjie.work/6.s081_lab3/" data-title="6.s081_lab3"><i data-svg-src="/lib/simple-icons/icons/line.min.svg" aria-hidden="true"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="https://www.zhouxingjie.work/6.s081_lab3/" data-title="6.s081_lab3"><i class="fab fa-weibo fa-fw" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="/">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/6.s081_lab2/" class="prev" rel="prev" title="6.s081_lab2"><i class="fas fa-angle-left fa-fw" aria-hidden="true"></i>6.s081_lab2</a>
+            <a href="/6.s081_lab4/" class="next" rel="next" title="6.s081_lab4">6.s081_lab4<i class="fas fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.120.1">Hugo</a> | Theme - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden="true"></i> LoveIt</a>
+                </div><div class="footer-line" itemscope itemtype="http://schema.org/CreativeWork"><i class="far fa-copyright fa-fw" aria-hidden="true"></i><span itemprop="copyrightYear">2019 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">zhouxingjie</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw" aria-hidden="true"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw" aria-hidden="true"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/katex/katex.min.css"><link rel="stylesheet" href="/lib/cookieconsent/cookieconsent.min.css"><script type="text/javascript" src="/lib/autocomplete/autocomplete.min.js"></script><script type="text/javascript" src="/lib/lunr/lunr.min.js"></script><script type="text/javascript" src="/lib/lazysizes/lazysizes.min.js"></script><script type="text/javascript" src="/lib/clipboard/clipboard.min.js"></script><script type="text/javascript" src="/lib/sharer/sharer.min.js"></script><script type="text/javascript" src="/lib/katex/katex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/auto-render.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/copy-tex.min.js"></script><script type="text/javascript" src="/lib/katex/contrib/mhchem.min.js"></script><script type="text/javascript" src="/lib/cookieconsent/cookieconsent.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":50},"comment":{},"cookieconsent":{"content":{"dismiss":"Got it!","link":"Learn more","message":"This website uses Cookies to improve your experience."},"enable":true,"palette":{"button":{"background":"#f0f0f0"},"popup":{"background":"#1aa3ff"}},"theme":"edgeless"},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":true,"left":"\\begin{equation}","right":"\\end{equation}"},{"display":true,"left":"\\begin{equation*}","right":"\\end{equation*}"},{"display":true,"left":"\\begin{align}","right":"\\end{align}"},{"display":true,"left":"\\begin{align*}","right":"\\end{align*}"},{"display":true,"left":"\\begin{alignat}","right":"\\end{alignat}"},{"display":true,"left":"\\begin{alignat*}","right":"\\end{alignat*}"},{"display":true,"left":"\\begin{gather}","right":"\\end{gather}"},{"display":true,"left":"\\begin{CD}","right":"\\end{CD}"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"highlightTag":"em","lunrIndexURL":"/index.json","maxResultLength":10,"noResultsFound":"No results found","snippetLength":50,"type":"lunr"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>
