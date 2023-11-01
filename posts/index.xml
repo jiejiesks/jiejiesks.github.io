@@ -4,7 +4,15 @@
         <link>https://www.zhouxingjie.work/posts/</link>
         <description>All Posts | Zhou X&#39;s Blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouxingjie0721@gamil.com (zhouxingjie)</managingEditor>
-            <webMaster>zhouxingjie0721@gamil.com (zhouxingjie)</webMaster><lastBuildDate>Wed, 01 Nov 2023 10:08:43 &#43;0800</lastBuildDate><atom:link href="https://www.zhouxingjie.work/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>zhouxingjie0721@gamil.com (zhouxingjie)</webMaster><lastBuildDate>Wed, 01 Nov 2023 10:14:16 &#43;0800</lastBuildDate><atom:link href="https://www.zhouxingjie.work/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Test1</title>
+    <link>https://www.zhouxingjie.work/test1/</link>
+    <pubDate>Wed, 01 Nov 2023 10:14:16 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/test1/</guid>
+    <description><![CDATA[1111111111]]></description>
+</item>
+<item>
     <title>STL</title>
     <link>https://www.zhouxingjie.work/stl/</link>
     <pubDate>Wed, 01 Nov 2023 10:08:43 &#43;0800</pubDate>
@@ -75,14 +83,6 @@
     <author>zhouxingjie</author>
     <guid>https://www.zhouxingjie.work/6.s081_lab4/</guid>
     <description><![CDATA[Chapter 4 4.1RISC-V陷入机制 每个RISC-V CPU都有一组控制寄存器，内核通过向这些寄存器写入内容来告诉CPU如何处理陷阱，内核可以读取这]]></description>
-</item>
-<item>
-    <title>6.s081_lab3</title>
-    <link>https://www.zhouxingjie.work/6.s081_lab3/</link>
-    <pubDate>Tue, 31 Oct 2023 21:40:24 &#43;0800</pubDate>
-    <author>zhouxingjie</author>
-    <guid>https://www.zhouxingjie.work/6.s081_lab3/</guid>
-    <description><![CDATA[Chapter 3 3.1页式硬件 该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中]]></description>
 </item>
 </channel>
 </rss>
