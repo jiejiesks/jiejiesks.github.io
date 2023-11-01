@@ -1,0 +1,16 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>c&#43;&#43; - Category - Zhou X&#39;s Blog</title>
+        <link>https://www.zhouxingjie.work/categories/c&#43;&#43;/</link>
+        <description>c&#43;&#43; - Category - Zhou X&#39;s Blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouxingjie0721@gamil.com (zhouxingjie)</managingEditor>
+            <webMaster>zhouxingjie0721@gamil.com (zhouxingjie)</webMaster><lastBuildDate>Wed, 01 Nov 2023 10:08:43 &#43;0800</lastBuildDate><atom:link href="https://www.zhouxingjie.work/categories/c&#43;&#43;/" rel="self" type="application/rss+xml" /><item>
+    <title>STL</title>
+    <link>https://www.zhouxingjie.work/stl/</link>
+    <pubDate>Wed, 01 Nov 2023 10:08:43 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/stl/</guid>
+    <description><![CDATA[STL容器 STL序列式容器 array数组 array 容器是 C++ 11 标准中新增的 序列容器，简单地理解，它就是在 C++ 普通数组的基础上，添加了一些成员函数和全局函]]></description>
+</item>
+</channel>
+</rss>

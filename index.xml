@@ -4,9 +4,17 @@
         <link>https://www.zhouxingjie.work/</link>
         <description>这是我的全新 Hugo 网站</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouxingjie0721@gamil.com (zhouxingjie)</managingEditor>
-            <webMaster>zhouxingjie0721@gamil.com (zhouxingjie)</webMaster><lastBuildDate>Tue, 31 Oct 2023 21:40:43 &#43;0800</lastBuildDate>
+            <webMaster>zhouxingjie0721@gamil.com (zhouxingjie)</webMaster><lastBuildDate>Wed, 01 Nov 2023 10:08:43 &#43;0800</lastBuildDate>
             <atom:link href="https://www.zhouxingjie.work/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>STL</title>
+    <link>https://www.zhouxingjie.work/stl/</link>
+    <pubDate>Wed, 01 Nov 2023 10:08:43 &#43;0800</pubDate>
+    <author>zhouxingjie</author>
+    <guid>https://www.zhouxingjie.work/stl/</guid>
+    <description><![CDATA[STL容器 STL序列式容器 array数组 array 容器是 C++ 11 标准中新增的 序列容器，简单地理解，它就是在 C++ 普通数组的基础上，添加了一些成员函数和全局函]]></description>
+</item>
+<item>
     <title>6.s081_lab11</title>
     <link>https://www.zhouxingjie.work/6.s081_lab11/</link>
     <pubDate>Tue, 31 Oct 2023 21:40:43 &#43;0800</pubDate>
@@ -77,14 +85,6 @@
     <author>zhouxingjie</author>
     <guid>https://www.zhouxingjie.work/6.s081_lab3/</guid>
     <description><![CDATA[Chapter 3 3.1页式硬件 该树的根是一个4096字节的页表页，其中包含512个PTE，每个PTE中包含该树下一级页表页的物理地址（PPN）。这些页中]]></description>
-</item>
-<item>
-    <title>6.s081_lab2</title>
-    <link>https://www.zhouxingjie.work/6.s081_lab2/</link>
-    <pubDate>Tue, 31 Oct 2023 21:40:22 &#43;0800</pubDate>
-    <author>zhouxingjie</author>
-    <guid>https://www.zhouxingjie.work/6.s081_lab2/</guid>
-    <description><![CDATA[chapter 2 2.2用户态、核心态、系统调用 RISC-V分为三个模式machine mode,supervisor mode and user mode 在机器模式下执行的指令具有完全权限；CPU以机器模式启动。]]></description>
 </item>
 </channel>
 </rss>
